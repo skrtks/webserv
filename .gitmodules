@@ -1,0 +1,6 @@
+[submodule "libft"]
+	path = libft
+	url = https://github.com/pde-bakk/libft.git
+[submodule "getnextline"]
+	path = getnextline
+	url = https://github.com/pde-bakk/getnextline.git
