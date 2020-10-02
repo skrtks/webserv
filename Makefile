@@ -6,7 +6,7 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/02 19:23:17 by peerdb        ########   odam.nl          #
+#    Updated: 2020/10/02 19:47:45 by peerdb        ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -35,7 +35,6 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@$(CC) $(CFLAGS) $(OBJS) $(GNL) $(LIBFT) -o $@
 
 %.a: %
-	@echo $@ depends on $<
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
 	@make -s -C $<
 	@cp $</$@ .
