@@ -10,6 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <iostream>
+
 int main() {
-	return 1;
+	std::cout << "Hello world!" << std::endl;
+	return 0;
 }
