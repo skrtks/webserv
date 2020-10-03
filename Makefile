@@ -11,7 +11,7 @@
 # **************************************************************************** #
 
 NAME = webserv
-SRCS = main.cpp
+SRCS = main.cpp connection.cpp
 CC = clang++
 CFLAGS = -Wall -Werror -Wextra -pedantic -std=c++98
 OBJS = $(SRCS:.cpp=.o)
