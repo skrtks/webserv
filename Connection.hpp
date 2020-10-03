@@ -31,7 +31,7 @@ class Connection {
 	fd_set master;    // master file descriptor list
 	fd_set readFds;  // temp file descriptor list for select()
 	void addConnection();
-	void receiveRequest();
+	void receiveRequest() const;
 	void sentReply() const;
 	void closeConnection(int fd);
 public:

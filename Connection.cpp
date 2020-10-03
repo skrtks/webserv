@@ -84,7 +84,7 @@ void Connection::addConnection() {
 	std::cout << "New client connected" << std::endl;
 }
 
-void Connection::receiveRequest() {
+void Connection::receiveRequest() const {
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
