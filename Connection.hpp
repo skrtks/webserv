@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef WEBSERV_CONNECTION_HPP
-#define WEBSERV_CONNECTION_HPP
+#ifndef CONNECTION_HPP
+#define CONNECTION_HPP
 
 #include <iostream>
 #include <stdexcept>
@@ -42,4 +42,4 @@ public:
 };
 
 
-#endif //WEBSERV_CONNECTION_HPP
+#endif //CONNECTION_HPP
