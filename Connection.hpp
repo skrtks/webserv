@@ -32,7 +32,7 @@ class Connection {
 	fd_set readFds;  // temp file descriptor list for select()
 	void addConnection();
 	void receiveRequest() const;
-	void sentReply() const;
+	void sentReply(const std::string &msg) const;
 	void closeConnection(int fd);
 public:
 	Connection();

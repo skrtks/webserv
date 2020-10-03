@@ -62,7 +62,8 @@ void Connection::startListening() {
 				else { // Handle request & return response
 					receiveRequest();
 					// TODO: process request
-					sentReply();
+					std::string msg = "Thank you for your request, in the future you'll get a proper reply\n";
+					sentReply(msg);
 					closeConnection(i);
 				}
 			}
@@ -102,10 +103,10 @@ void Connection::receiveRequest() const {
 	std::cout << "REQUEST: \n" << request;
 }
 
-void Connection::sentReply() const {
+void Connection::sentReply(const std::string &msg) const {
 	// TODO: send proper reply
-	char msg[] = "Thank you for your request, in the future you'll get a proper reply\n";
-	if ((send(connectionFd, msg, 68, 0) == -1))
+
+	if ((send(connectionFd, msg.c_str(), 68, 0) == -1))
 		throw std::runtime_error("Error sending reply");
 }
 
