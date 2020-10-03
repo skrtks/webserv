@@ -29,6 +29,11 @@ $(NAME): $(OBJS)
 	@echo "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
 	@$(CC) $(CFLAGS) $(OBJS) -o $@
 
+asan: $(SRCS)
+	@echo "$(PREFIX)$(GREEN) Bundling executable with address sanitizer support... $(END)$(NAME)"
+	@$(CC) $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer -O1 $(SRCS) -o $(NAME)
+
+
 %.o: %.cpp
 	@echo "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
 	@clang++ -Wall -Werror -Wextra -pedantic -std=c++98 -c $< -o $@
