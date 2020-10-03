@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <zconf.h>
+#include "Connection.hpp"
 
 #define PORT 8080	// The port we will be listening on TODO: set through config file
 #define BACKLOG 5	// how many pending connections queue will hold
@@ -59,6 +60,7 @@ void setupConnection() {
 	// Keep track of the biggest fd on the list
 	fdMax = socketFd;
 
+	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
 		readFds = master;
 		if (select(fdMax+1, &readFds, NULL, NULL, NULL) == -1)
@@ -79,6 +81,7 @@ void setupConnection() {
 				else { // Handle request & return response
 					// Loop to receive complete request, even if buffer is smaller
 					// TODO: instead of looping only on bytesReceived, add timeout?
+					request.clear();
 					do {
 						bytesReceived = recv(connectionFd, buf, BUFLEN - 1, 0);
 						if (bytesReceived == -1)
@@ -95,9 +98,9 @@ void setupConnection() {
 					if ((send(connectionFd, msg, 68, 0) == -1))
 						throw std::runtime_error("Error sending reply");
 
-					close(i); // bye!
+					// Closing connection after response has been send
+					close(i);
 					FD_CLR(i, &master);
-					request.clear();
 				}
 			}
 		}
@@ -108,12 +111,22 @@ void setupConnection() {
 }
 
 int main() {
+//	try {
+//		setupConnection();
+//	}
+//	catch (std::runtime_error &e) {
+//		std::cout << e.what() << std::endl;
+//	}
+	// TODO: restart server in proper way after exception
+
+
+	Connection connection;
 	try {
-		setupConnection();
+		connection.setUpConnection();
+		connection.startListening();
 	}
 	catch (std::runtime_error &e) {
 		std::cout << e.what() << std::endl;
 	}
-	// TODO: restart server in proper way after exception
 	return 0;
 }
