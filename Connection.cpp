@@ -108,16 +108,18 @@ void Connection::receiveRequest() const {
 
 void Connection::sendReply(const std::string &msg) const {
 	// TODO: send proper reply
-	std::string resp = "HTTP/1.1 200 OK\nServer: nginx/1.19.3\nDate: Mon, 05 Oct 2020 10:23:13 GMT\nContent-Type: text/html\nContent-Length: 76729\nLast-Modified: Mon, 05 Oct 2020 10:11:22 GMT\nConnection: keep-alive\nETag: \"5f7af14a-8375\"\nAccept-Ranges: bytes\n\n";
+	std::string resp = "HTTP/1.1 200 OK\nContent-Length: 612\n\n";
 	(void)msg;
-	int fd = open("/Users/skorteka/.brew/var/www/string.html", O_RDONLY);
-	int len = lseek(fd, 0, SEEK_END);
-	lseek(fd, 0, SEEK_SET);
-	char *buf = new char[len];
-	read(fd, buf, len);
+	int fd = open("/usr/local/var/www/index.html", O_RDONLY); // TODO: error check please
+	if (fd == -1)
+		throw std::runtime_error(strerror(errno));
+	int ret = 0;
+	char buf[1024];
+	while ((ret = read(fd, buf, 1024)) != 0) {
+		resp += buf;
+		memset(buf, 0, 1024);
+	}
 	if ((send(connectionFd, resp.c_str(), resp.length(), 0) == -1))
-		throw std::runtime_error("Error sending reply");
-	if ((send(connectionFd, buf, len, 0) == -1))
 		throw std::runtime_error("Error sending reply");
 }
 
