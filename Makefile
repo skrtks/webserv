@@ -6,14 +6,19 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/02 19:47:45 by peerdb        ########   odam.nl          #
+#    Updated: 2020/10/06 12:20:34 by peerdb        ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-SRCS = parser.cpp
-CC = clang++
-CFLAGS = -Wall -Werror -Wextra -pedantic -std=c++98
+SRCS = main.cpp parser.cpp
+CFLAGS = -Wall -Werror -Wextra -pedantic -ansi
+CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -ansi -std=c++98
+ifdef DEBUG
+ CFLAGS += -g -fsanitize=address
+ CXXFLAGS += -g -fsanitize=address
+endif
+
 OBJS = $(SRCS:.cpp=.o)
 GNL = getnextline.a
 LIBFT = libft.a
@@ -32,7 +37,7 @@ all: $(NAME)
 
 $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
-	@$(CC) $(CFLAGS) $(OBJS) $(GNL) $(LIBFT) -o $@
+	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) -o $@
 
 %.a: %
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
@@ -41,7 +46,7 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	
 %.o: %.cpp
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
-	@clang++ -Wall -Werror -Wextra -pedantic -std=c++98 -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean fclean re all
 
@@ -57,3 +62,6 @@ fclean: clean
 	@make fclean -s -C libft
 
 re: fclean all
+
+run: clean all
+	./webserv

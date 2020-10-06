@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/02 23:02:27 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/06 12:13:06 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,9 +77,4 @@ void	parse() {
 		
 	}
 	
-}
-
-
-int main() {
-	parse();
 }
