@@ -82,7 +82,7 @@ void Connection::startListening() {
 					int fd = open("/usr/local/var/www/index.html", O_RDONLY);
 					if (fd == -1)
 						throw std::runtime_error(strerror(errno));
-					int ret = 0;
+					int ret;
 					char buf[1024];
 					do {
 						ret = read(fd, buf, 1024);
@@ -117,7 +117,6 @@ void Connection::receiveRequest() const {
 	std::string request;
 	int bytesReceived;
 	// Loop to receive complete request, even if buffer is smaller
-	// TODO: instead of looping only on bytesReceived, add timeout?
 	request.clear();
 	memset(buf, 0, BUFLEN); // TODO: make this ft_memset
 	do {
