@@ -23,7 +23,7 @@
 
 #define PORT 8080	// The port we will be listening on TODO: set through config file
 #define BACKLOG 5	// how many pending connections queue will hold
-#define BUFLEN 1024
+#define BUFLEN 8192
 
 class Connection {
 	int socketFd, connectionFd, fdMax;

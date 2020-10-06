@@ -67,7 +67,7 @@ void Connection::startListening() {
 					addConnection();
 				}
 				else { // Handle request & return response
-//					receiveRequest(); // TODO: Find out whu recv when loading with browser but not with telnet
+					receiveRequest(); // TODO: Find out whu recv when loading with browser but not with telnet
 					// TODO: process request
 					std::string msg = "Thank you for your request, in the future you'll get a proper reply\n";
 					// get length of file:
@@ -105,9 +105,9 @@ void Connection::receiveRequest() const {
 		bytesReceived = recv(connectionFd, buf, BUFLEN - 1, 0);
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
-		request.append(buf);
+		request += buf;
 		memset(buf, 0, BUFLEN); // TODO: make this ft_memset
-	} while (bytesReceived > 0);
+	} while (bytesReceived == BUFLEN - 1);
 	std::cout << "REQUEST: \n" << request;
 }
 
