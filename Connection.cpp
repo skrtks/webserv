@@ -28,8 +28,13 @@ Connection::~Connection() {
 }
 
 void Connection::setUpConnection() {
+	int opt = 1;
 	if (!(socketFd = socket(AF_INET, SOCK_STREAM, 0)))
-		throw std::runtime_error("Failed to create socket");
+		throw std::runtime_error(strerror(errno));
+
+	if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+		throw std::runtime_error(strerror(errno));
+	}
 
 	// Fill struct with info about port and ip
 	server.sin_family = AF_INET; // ipv4
@@ -38,14 +43,14 @@ void Connection::setUpConnection() {
 
 	// Associate the socket with a port and ip
 	if (bind(socketFd, (struct sockaddr *)&server, sizeof(server)) < 0) {
-		throw std::runtime_error("Failed to bind");
+		throw std::runtime_error(strerror(errno));
 	}
 }
 
 void Connection::startListening() {
 	// Start listening for connections on port set in sFd, mac BACKLOG waiting connections
 	if (listen(socketFd, BACKLOG))
-		throw std::runtime_error("Error during listen");
+		throw std::runtime_error(strerror(errno));
 	// Add the listening socket to the master list
 	FD_SET(socketFd, &master);
 	// Keep track of the biggest fd on the list
@@ -54,7 +59,7 @@ void Connection::startListening() {
 	while (true) {
 		readFds = master;
 		if (select(fdMax + 1, &readFds, NULL, NULL, NULL) == -1)
-			throw std::runtime_error("Error in select call");
+			throw std::runtime_error(strerror(errno));
 		// Go through existing connections looking for data to read
 		for (int i = 0; i <= fdMax; i++) {
 			if (FD_ISSET(i, &readFds)) { // Returns true if fd is active
@@ -81,7 +86,7 @@ void Connection::addConnection() {
 	// Accept one connection from backlog
 	addr_size = sizeof their_addr;
 	if ((connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0)
-		throw std::runtime_error("Error accepting connection");
+		throw std::runtime_error(strerror(errno));
 	FD_SET(connectionFd, &master); // Add new connection to the set
 	if (connectionFd > fdMax)
 		fdMax = connectionFd;
@@ -99,7 +104,7 @@ void Connection::receiveRequest() const {
 	do {
 		bytesReceived = recv(connectionFd, buf, BUFLEN - 1, 0);
 		if (bytesReceived == -1)
-			throw std::runtime_error("Error receiving request");
+			throw std::runtime_error(strerror(errno));
 		request.append(buf);
 		memset(buf, 0, BUFLEN); // TODO: make this ft_memset
 	} while (bytesReceived > 0);
@@ -108,19 +113,28 @@ void Connection::receiveRequest() const {
 
 void Connection::sendReply(const std::string &msg) const {
 	// TODO: send proper reply
-	std::string resp = "HTTP/1.1 200 OK\nContent-Length: 612\n\n";
+	std::string resp = "HTTP/1.1 200 OK\n"
+					   "Server: Webserv/0.1\n"
+					   "Date: Tue, 06 Oct 2020 08:35:16 GMT\n"
+					   "Content-Type: text/html\n"
+					   "Content-Length: 612\n"
+					   "Last-Modified: Tue, 11 Aug 2020 14:52:34 GMT\n"
+					   "Connection: keep-alive\n"
+					   "ETag: \"5f32b0b2-264\"\n"
+					   "Accept-Ranges: bytes\n\n";
 	(void)msg;
-	int fd = open("/usr/local/var/www/index.html", O_RDONLY); // TODO: error check please
+	int fd = open("/usr/local/var/www/index.html", O_RDONLY);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno));
 	int ret = 0;
 	char buf[1024];
-	while ((ret = read(fd, buf, 1024)) != 0) {
+	do {
+		ret = read(fd, buf, 1024);
 		resp += buf;
 		memset(buf, 0, 1024);
-	}
+	} while (ret > 0);
 	if ((send(connectionFd, resp.c_str(), resp.length(), 0) == -1))
-		throw std::runtime_error("Error sending reply");
+		throw std::runtime_error(strerror(errno));
 }
 
 void Connection::closeConnection(int fd) {
