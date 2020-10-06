@@ -11,7 +11,7 @@
 # **************************************************************************** #
 
 NAME = webserv
-SRCS = main.cpp
+SRCS = main.cpp Connection.cpp
 CC = clang++
 CFLAGS = -Wall -Werror -Wextra -pedantic -std=c++98
 OBJS = $(SRCS:.cpp=.o)
@@ -28,6 +28,11 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	@echo "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
 	@$(CC) $(CFLAGS) $(OBJS) -o $@
+
+asan: $(SRCS)
+	@echo "$(PREFIX)$(GREEN) Bundling executable with address sanitizer support... $(END)$(NAME)"
+	@$(CC) $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer -O1 $(SRCS) -o $(NAME)
+
 
 %.o: %.cpp
 	@echo "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"

@@ -10,9 +10,18 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <iostream>
+#include "Connection.hpp"
 
 int main() {
-	std::cout << "Hello world!" << std::endl;
+	Connection server;
+
+	try {
+		server.setUpConnection();
+		server.startListening();
+	}
+	catch (std::runtime_error &e) {
+		std::cout << e.what() << std::endl;
+	}
+	// TODO: restart server in proper way after exception
 	return 0;
 }
