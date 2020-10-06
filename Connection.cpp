@@ -67,11 +67,30 @@ void Connection::startListening() {
 					addConnection();
 				}
 				else { // Handle request & return response
-					receiveRequest(); // TODO: Find out whu recv when loading with browser but not with telnet
+					receiveRequest();
+
 					// TODO: process request
-					std::string msg = "Thank you for your request, in the future you'll get a proper reply\n";
-					// get length of file:
-					sendReply(msg);
+					std::string resp = "HTTP/1.1 200 OK\n"
+									   "Server: Webserv/0.1\n"
+									   "Date: Tue, 06 Oct 2020 08:35:16 GMT\n"
+									   "Content-Type: text/html\n"
+									   "Content-Length: 612\n"
+									   "Last-Modified: Tue, 11 Aug 2020 14:52:34 GMT\n"
+									   "Connection: keep-alive\n"
+									   "ETag: \"5f32b0b2-264\"\n"
+									   "Accept-Ranges: bytes\n\n";
+					int fd = open("/usr/local/var/www/index.html", O_RDONLY);
+					if (fd == -1)
+						throw std::runtime_error(strerror(errno));
+					int ret = 0;
+					char buf[1024];
+					do {
+						ret = read(fd, buf, 1024);
+						resp += buf;
+						memset(buf, 0, 1024);
+					} while (ret > 0);
+
+					sendReply(resp);
 					closeConnection(i);
 				}
 			}
@@ -113,27 +132,8 @@ void Connection::receiveRequest() const {
 
 void Connection::sendReply(const std::string &msg) const {
 	// TODO: send proper reply
-	std::string resp = "HTTP/1.1 200 OK\n"
-					   "Server: Webserv/0.1\n"
-					   "Date: Tue, 06 Oct 2020 08:35:16 GMT\n"
-					   "Content-Type: text/html\n"
-					   "Content-Length: 612\n"
-					   "Last-Modified: Tue, 11 Aug 2020 14:52:34 GMT\n"
-					   "Connection: keep-alive\n"
-					   "ETag: \"5f32b0b2-264\"\n"
-					   "Accept-Ranges: bytes\n\n";
-	(void)msg;
-	int fd = open("/usr/local/var/www/index.html", O_RDONLY);
-	if (fd == -1)
-		throw std::runtime_error(strerror(errno));
-	int ret = 0;
-	char buf[1024];
-	do {
-		ret = read(fd, buf, 1024);
-		resp += buf;
-		memset(buf, 0, 1024);
-	} while (ret > 0);
-	if ((send(connectionFd, resp.c_str(), resp.length(), 0) == -1))
+
+	if ((send(connectionFd, msg.c_str(), msg.length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
 }
 
