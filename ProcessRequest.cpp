@@ -51,7 +51,6 @@ void ProcessRequest::processRequestLine() {
 	if (numSpaces != 2) {
 		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
 	}
-
 	size_t pos = _rawRequest.find(' ', 0);
 	if (pos > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
@@ -76,8 +75,8 @@ void ProcessRequest::processRequestLine() {
 	if (pos2 > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
 	ret = _rawRequest.substr(pos, pos2 - pos);
-	mainVersion = static_cast<int>(std::strtol(ret.c_str(), NULL, 10));
-	subVersion = static_cast<int>(std::strtol(ret.c_str() + 2, NULL, 10));
+	mainVersion = std::atoi(ret.c_str()); // TODO: use ft_atoi
+	subVersion = std::atoi(ret.c_str() + 2); // TODO: use ft_atoi
 	_version = std::make_pair(mainVersion, subVersion);
 }
 
