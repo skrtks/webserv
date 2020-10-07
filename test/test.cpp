@@ -7,7 +7,7 @@ TEST_CASE( "Parsing request", "[Request]" ) {
 	ProcessRequest reqProcces;
 
 	SECTION( "Correct input 1" ) {
-		std::string request = "GET /index.html HTTP/1.1\r\n";
+		std::string request = "GET /index.html HTTP/1.1\r\nData: bla\r\n";
 		reqProcces.setRawRequest(request);
 
 		reqProcces.processRequestLine();
@@ -107,6 +107,36 @@ TEST_CASE( "Parsing request", "[Request]" ) {
 	}
 	SECTION( "incorrect input 12" ) {
 		std::string request = "HEAD/ HTTP/ 1.0\r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS( reqProcces.processRequestLine() );
+	}
+	SECTION( "incorrect input 13" ) {
+		std::string request = "HEAD/ HTTP/1.0 \r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS( reqProcces.processRequestLine() );
+	}
+	SECTION( "incorrect input 14" ) {
+		std::string request = "HEAD / HTTP/1.0 \r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS( reqProcces.processRequestLine() );
+	}
+	SECTION( "incorrect input 15" ) {
+		std::string request = "HEAD / HTTP/1.0 \n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS( reqProcces.processRequestLine() );
+	}
+	SECTION( "incorrect input 16" ) {
+		std::string request = "HEAD / HTTP/1.0\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS( reqProcces.processRequestLine() );
+	}
+	SECTION( "incorrect input 16" ) {
+		std::string request = "HEAD / HTTP/1.0";
 		reqProcces.setRawRequest(request);
 
 		REQUIRE_THROWS( reqProcces.processRequestLine() );

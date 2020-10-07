@@ -42,6 +42,10 @@ void ProcessRequest::processRequestLine() {
 	if (_rawRequest[0] == ' ') {
 		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
 	}
+
+	if (_rawRequest.find("\r\n", 0) == std::string::npos) {
+		throw std::runtime_error("No CRLF found in request"); // TODO: replace with correct http error
+	}
 	// Check if there is 2 spaces in pline
 	int numSpaces = 0;
 	for (int i = 0; _rawRequest[i] != '\r'; i++) {
@@ -78,6 +82,9 @@ void ProcessRequest::processRequestLine() {
 	mainVersion = std::atoi(ret.c_str()); // TODO: use ft_atoi
 	subVersion = std::atoi(ret.c_str() + 2); // TODO: use ft_atoi
 	_version = std::make_pair(mainVersion, subVersion);
+
+	// Remove Request Line from _rawRequest
+	_rawRequest.erase(0, pos + 5);
 }
 
 method ProcessRequest::getMethod() const {
