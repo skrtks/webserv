@@ -6,12 +6,12 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/07 19:07:01 by pde-bakk      ########   odam.nl          #
+#    Updated: 2020/10/07 21:05:48 by pde-bakk      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-SRCS = main.cpp parser.cpp Server.cpp
+SRCS = main.cpp parser.cpp Server.cpp Servermanager.cpp
 CFLAGS = -Wall -Werror -Wextra -pedantic
 CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11
 ifdef DEBUG

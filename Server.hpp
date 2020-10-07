@@ -6,24 +6,13 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/07 18:01:36 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/07 21:09:37 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 # include "webserv.hpp"
-# include <cstddef>
-# include <string>
-# include <map>
-# include "getnextline/get_next_line.hpp"
-enum E {
-	e1,
-	e2,
-	e3,
-	e4,
-	e5
-};
 
 class Server {
 	public:
@@ -42,11 +31,16 @@ class Server {
 		void	seterrorpage(const std::string& errorpage);
 		std::string	geterrorpage() const;
 		void		setup(int fd);
+		bool		getsuccess() const;
+		void		clear();
 	private:
 		size_t _port;
 		std::string _host, _server_name;
 		size_t _client_body_size;
 		std::string _error_page;
+		bool	_success;
 };
+
+std::ostream& operator<<(std::ostream& o, const Server& x);
 
 #endif
