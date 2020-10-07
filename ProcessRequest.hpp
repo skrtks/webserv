@@ -43,13 +43,24 @@ enum headerType {
 	WWW_AUTHENTICATE
 };
 
+enum method {
+	GET, // These are mandatory according to rfc's
+	HEAD, // These are mandatory according to rfc's
+	POST,
+	PUT
+};
+
 class ProcessRequest {
+	method _method;
+	std::string _uri;
+	std::pair<int, int> _version;
 	std::vector<std::pair<headerType, std::string> > _headers;
 	std::string _rawRequest;
 public:
 	ProcessRequest();
 	virtual ~ProcessRequest();
 	void parseRequest();
+	void processFirstLine();
 };
 
 

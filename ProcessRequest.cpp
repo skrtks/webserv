@@ -27,8 +27,25 @@ ProcessRequest::ProcessRequest() {
 }
 
 ProcessRequest::~ProcessRequest() {
+	processFirstLine();
+	// TODO: get first line
+	// TODO: extract headers
+	// TODO: execute header
+	// TODO: generate response
+	// TODO: return respons
+
 }
 
 void ProcessRequest::parseRequest() {
 
+}
+
+void ProcessRequest::processFirstLine() {
+	size_t pos = _rawRequest.find(' ', 0);
+	std::string res = _rawRequest.substr(0, pos);
+	std::string methods[] = {"GET", "HEAD", "POST", "PUT"};
+	for (int i = 0; i < 4; i++) {
+		if (methods[i] == res)
+			_method = i;
+	}
 }
