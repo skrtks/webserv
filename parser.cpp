@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/06 12:13:06 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/07 19:14:26 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,17 @@
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
+#include <map>
 #include "getnextline/get_next_line.hpp"
 extern "C" {
 	#include "libft/libft.h"
 }
-#define COMMENT_CHAR '#'
 
-int		is_comment(std::string str) {
+int		is_first_char(std::string str, char find) {
 	int i = 0;
 	while (str[i] && iswhitespace(str[i]))
 		++i;
-	if (str[i] == COMMENT_CHAR)
+	if (str[i] == find)
 		return (1);
 	return (0);
 }
@@ -39,42 +39,27 @@ void	get_key_value(std::string &str, std::string &key, std::string& value) {
 	value = str.substr(vbegin, vend - vbegin);
 }
 
-void	new_server(int fd) {
+Server	new_server(int fd) {
 	Server serv;
-	std::string str;
-
-	while (get_next_line(fd, str) > 0) {
-		std::string key, value;
-		if (is_comment(str))
-			continue ;
-		try {
-			get_key_value(str, key, value);
-			std::cout << "key = " << key << ", & value = " << value << std::endl;
-		}
-		catch (std::exception& e) { }
-	}
+	serv.setup(fd);
+	return serv;
 }
 
 void	parse() {
 	// int		brackets = 0;
-	int		fd = open("default.conf", O_RDONLY);
+	int		fd = open("nginx.conf", O_RDONLY);
 	std::string	str;
-	Server	serv;
+	Server	tmp;
 	
 	while (get_next_line(fd, str) > 0) {
-		if (is_comment(str)) {
-			// std::cout << str << " is a comment" << std::endl;
+		if (is_first_char(str))
 			continue ;
-		}
 		try {
 			if (str != "" && str.compare(str.find_first_not_of(" \t\n"), ft_strlen("server {"), "server {") == 0)
-				new_server(fd);
+				tmp = new_server(fd);
 		}
 		catch (std::exception& e) {
 			std::cerr << "haha" << std::endl;
 		}
-		// std::cout << "after " << line << ", brackets = " << brackets << std::endl;
-		
 	}
-	
 }

@@ -6,12 +6,11 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/02 16:00:45 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/06 12:13:26 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/07 15:40:14 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <iostream>
-void	parse();
+#include "webserv.hpp"
 
 int main() {
 	std::cout << "Hello world!" << std::endl;
