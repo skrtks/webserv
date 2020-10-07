@@ -30,8 +30,9 @@ class Connection {
 	struct sockaddr_in server; // Will contain info about port and ip
 	fd_set master;    // master file descriptor list
 	fd_set readFds;  // temp file descriptor list for select()
+	std::string _rawRequest;
 	void addConnection();
-	void receiveRequest() const;
+	void receiveRequest();
 	void sendReply(const std::string &msg) const;
 	void closeConnection(int fd);
 public:

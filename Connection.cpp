@@ -13,6 +13,7 @@
 #include <fstream>
 #include <fcntl.h>
 #include "Connection.hpp"
+#include "ProcessRequest.hpp"
 
 Connection::Connection() {
 	FD_ZERO(&master);
@@ -48,6 +49,7 @@ void Connection::setUpConnection() {
 }
 
 void Connection::startListening() {
+	ProcessRequest requestProcessor;
 	// Start listening for connections on port set in sFd, mac BACKLOG waiting connections
 	if (listen(socketFd, BACKLOG))
 		throw std::runtime_error(strerror(errno));
@@ -68,7 +70,7 @@ void Connection::startListening() {
 				}
 				else { // Handle request & return response
 					receiveRequest();
-
+					requestProcessor.parseRequest(_rawRequest);
 					// TODO: process request
 					std::string resp = "HTTP/1.1 200 OK\n"
 									   "Server: Webserv/0.1\n"
@@ -112,7 +114,7 @@ void Connection::addConnection() {
 	std::cout << "New client connected" << std::endl;
 }
 
-void Connection::receiveRequest() const {
+void Connection::receiveRequest() {
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
@@ -126,6 +128,7 @@ void Connection::receiveRequest() const {
 		request += buf;
 		memset(buf, 0, BUFLEN); // TODO: make this ft_memset
 	} while (bytesReceived == BUFLEN - 1);
+	_rawRequest = request;
 	std::cout << "REQUEST: \n" << request;
 }
 
