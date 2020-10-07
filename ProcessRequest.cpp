@@ -37,8 +37,11 @@ void ProcessRequest::processRequestLine() {
 	int mainVersion;
 	int subVersion;
 	size_t eoRequestLine = _rawRequest.find("\r\n", 0);
+	size_t pos;
+	size_t pos2;
+	std::string ret;
 
-	// Chekc if first char is space
+	// Check if first char is space
 	if (_rawRequest[0] == ' ') {
 		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
 	}
@@ -55,17 +58,17 @@ void ProcessRequest::processRequestLine() {
 	if (numSpaces != 2) {
 		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
 	}
-	size_t pos = _rawRequest.find(' ', 0);
+	pos = _rawRequest.find(' ', 0);
 	if (pos > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
-	std::string ret = _rawRequest.substr(0, pos);
+	ret = _rawRequest.substr(0, pos);
 	std::map<std::string, method>::iterator it = _methodMap.find(ret);
 	if (it != _methodMap.end()) {
 		_method = it->second;
 	}
 	else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
 	pos++;
-	size_t pos2 = _rawRequest.find(' ', pos);
+	pos2 = _rawRequest.find(' ', pos);
 	if (pos2 > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
 	ret = _rawRequest.substr(pos, pos2 - pos);
