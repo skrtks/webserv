@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include <iostream>
+#include <cstdlib>
 #include "ProcessRequest.hpp"
 
 ProcessRequest::ProcessRequest() {
@@ -34,18 +35,14 @@ void ProcessRequest::parseRequest(const std::string &req) {
 }
 
 void ProcessRequest::processRequestLine() {
-	int mainVersion;
-	int subVersion;
 	size_t eoRequestLine = _rawRequest.find("\r\n", 0);
 	size_t pos;
 	size_t pos2;
-	std::string ret;
 
 	// Check if first char is space
 	if (_rawRequest[0] == ' ') {
 		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
 	}
-
 	if (_rawRequest.find("\r\n", 0) == std::string::npos) {
 		throw std::runtime_error("No CRLF found in request"); // TODO: replace with correct http error
 	}
@@ -58,22 +55,20 @@ void ProcessRequest::processRequestLine() {
 	if (numSpaces != 2) {
 		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
 	}
-	pos = _rawRequest.find(' ', 0);
-	if (pos > eoRequestLine)
-		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
-	ret = _rawRequest.substr(0, pos);
-	std::map<std::string, method>::iterator it = _methodMap.find(ret);
-	if (it != _methodMap.end()) {
-		_method = it->second;
-	}
-	else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
+	extractMethod(eoRequestLine, pos);
 	pos++;
-	pos2 = _rawRequest.find(' ', pos);
-	if (pos2 > eoRequestLine)
-		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
-	ret = _rawRequest.substr(pos, pos2 - pos);
-	_uri = ret;
+	extractUri(eoRequestLine, pos, pos2);
 	pos++;
+	extractVersion(eoRequestLine, pos, pos2);
+	// Remove Request Line from _rawRequest
+	_rawRequest.erase(0, pos + 5);
+}
+
+void ProcessRequest::extractVersion(size_t eoRequestLine, size_t &pos, size_t &pos2) {
+	int mainVersion;
+	int subVersion;
+	std::string ret;
+
 	pos = _rawRequest.find("HTTP/", pos);
 	if (pos > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
@@ -85,9 +80,30 @@ void ProcessRequest::processRequestLine() {
 	mainVersion = std::atoi(ret.c_str()); // TODO: use ft_atoi
 	subVersion = std::atoi(ret.c_str() + 2); // TODO: use ft_atoi
 	_version = std::make_pair(mainVersion, subVersion);
+}
 
-	// Remove Request Line from _rawRequest
-	_rawRequest.erase(0, pos + 5);
+void ProcessRequest::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
+	std::string ret;
+
+	pos2 = _rawRequest.find(' ', pos);
+	if (pos2 > eoRequestLine)
+		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	ret = _rawRequest.substr(pos, pos2 - pos);
+	_uri = ret;
+}
+
+void ProcessRequest::extractMethod(size_t eoRequestLine, size_t& pos) {
+	std::string ret;
+
+	pos = _rawRequest.find(' ', 0);
+	if (pos > eoRequestLine)
+		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	ret = _rawRequest.substr(0, pos);
+	std::__1::map<std::string, method>::iterator it = _methodMap.find(ret);
+	if (it != _methodMap.end()) {
+		_method = it->second;
+	}
+	else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
 }
 
 method ProcessRequest::getMethod() const {

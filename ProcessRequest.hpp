@@ -17,12 +17,6 @@
 #include <string>
 #include <map>
 
-//Accept-Charsets ◦ Accept-Language ◦ Allow
-//◦ Authorization
-//◦ Content-Language ◦ Content-Length
-//◦ Content-Location ◦ Content-Type
-//◦ Date ◦ Host
-
 enum headerType {
 	ACCEPT_CHARSET,
 	ACCEPT_LANGUAGE,
@@ -68,6 +62,9 @@ public:
 	const std::string& getUri() const;
 	const std::pair<int, int>& getVersion() const;
 	void setRawRequest(const std::string& rawRequest);
+	void extractMethod(size_t eoRequestLine, size_t& pos);
+	void extractUri(size_t eoRequestLine, size_t pos, size_t pos2);
+	void extractVersion(size_t eoRequestLine, size_t& pos, size_t &pos2);
 };
 
 
