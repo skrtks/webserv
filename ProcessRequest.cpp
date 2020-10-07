@@ -10,42 +10,89 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <iostream>
 #include "ProcessRequest.hpp"
 
 ProcessRequest::ProcessRequest() {
-	_rawRequest = "GET /yosemite.jpg HTTP/1.1\n"
-				  "Host: localhost:8080\n"
-				  "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:81.0) Gecko/20100101 Firefox/81.0\n"
-				  "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\n"
-				  "Accept-Language: nl,en-US;q=0.7,en;q=0.3\n"
-				  "Accept-Encoding: chunked\n"
-				  "DNT: 1\n"
-				  "Connection: keep-alive\n"
-				  "Upgrade-Insecure-Requests: 1\n"
-				  "Pragma: no-cache\n"
-				  "Cache-Control: no-cache\n";
+	_methodMap["GET"] = GET;
+	_methodMap["HEAD"] = HEAD;
+	_methodMap["POST"] = POST;
+	_methodMap["PUT"] = PUT;
 }
 
 ProcessRequest::~ProcessRequest() {
-	processFirstLine();
+}
+
+void ProcessRequest::parseRequest(const std::string &req) {
+	_rawRequest = req;
+	processRequestLine();
 	// TODO: get first line
 	// TODO: extract headers
 	// TODO: execute header
 	// TODO: generate response
 	// TODO: return respons
-
 }
 
-void ProcessRequest::parseRequest() {
+void ProcessRequest::processRequestLine() {
+	int mainVersion;
+	int subVersion;
+	size_t eoRequestLine = _rawRequest.find("\r\n", 0);
 
-}
-
-void ProcessRequest::processFirstLine() {
-	size_t pos = _rawRequest.find(' ', 0);
-	std::string res = _rawRequest.substr(0, pos);
-	std::string methods[] = {"GET", "HEAD", "POST", "PUT"};
-	for (int i = 0; i < 4; i++) {
-		if (methods[i] == res)
-			_method = i;
+	// Chekc if first char is space
+	if (_rawRequest[0] == ' ') {
+		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
 	}
+	// Check if there is 2 spaces in pline
+	int numSpaces = 0;
+	for (int i = 0; _rawRequest[i] != '\r'; i++) {
+		if (_rawRequest[i] == ' ')
+			numSpaces++;
+	}
+	if (numSpaces != 2) {
+		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
+	}
+
+	size_t pos = _rawRequest.find(' ', 0);
+	if (pos > eoRequestLine)
+		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	std::string ret = _rawRequest.substr(0, pos);
+	std::map<std::string, method>::iterator it = _methodMap.find(ret);
+	if (it != _methodMap.end()) {
+		_method = it->second;
+	}
+	else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
+	pos++;
+	size_t pos2 = _rawRequest.find(' ', pos);
+	if (pos2 > eoRequestLine)
+		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	ret = _rawRequest.substr(pos, pos2 - pos);
+	_uri = ret;
+	pos++;
+	pos = _rawRequest.find("HTTP/", pos);
+	if (pos > eoRequestLine)
+		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	pos += 5;
+	pos2 = _rawRequest.find("\r\n", pos);
+	if (pos2 > eoRequestLine)
+		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	ret = _rawRequest.substr(pos, pos2 - pos);
+	mainVersion = static_cast<int>(std::strtol(ret.c_str(), NULL, 10));
+	subVersion = static_cast<int>(std::strtol(ret.c_str() + 2, NULL, 10));
+	_version = std::make_pair(mainVersion, subVersion);
+}
+
+method ProcessRequest::getMethod() const {
+	return _method;
+}
+
+const std::string& ProcessRequest::getUri() const {
+	return _uri;
+}
+
+void ProcessRequest::setRawRequest(const std::string& rawRequest) {
+	_rawRequest = rawRequest;
+}
+
+const std::pair<int, int>& ProcessRequest::getVersion() const {
+	return _version;
 }

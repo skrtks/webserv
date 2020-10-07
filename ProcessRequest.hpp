@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 //Accept-Charsets ◦ Accept-Language ◦ Allow
 //◦ Authorization
@@ -54,13 +55,19 @@ class ProcessRequest {
 	method _method;
 	std::string _uri;
 	std::pair<int, int> _version;
+	std::map<std::string, method> _methodMap;
+//	std::map<std::string, headerType> _headerMap;
 	std::vector<std::pair<headerType, std::string> > _headers;
 	std::string _rawRequest;
 public:
 	ProcessRequest();
 	virtual ~ProcessRequest();
-	void parseRequest();
-	void processFirstLine();
+	void parseRequest(const std::string &req);
+	void processRequestLine();
+	method getMethod() const;
+	const std::string& getUri() const;
+	const std::pair<int, int>& getVersion() const;
+	void setRawRequest(const std::string& rawRequest);
 };
 
 
