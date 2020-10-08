@@ -6,20 +6,24 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/08 16:39:28 by pde-bakk      ########   odam.nl          #
+#    Updated: 2020/10/08 22:55:44 by pde-bakk      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-SRCS = main.cpp parser.cpp split.cpp Server.cpp Servermanager.cpp Location.cpp
-CFLAGS = -Wall -Werror -Wextra -pedantic
-CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11
+PARSE_DIR = ./Configparser
+FILES = main parser split Server Servermanager Location
+SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
+OBJS = $(SRCS:.cpp=.o)
+INCLUDE = -Iincludes
+
+CFLAGS = -Wall -Werror -Wextra -pedantic -Ofast
+CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
 ifdef DEBUG
  CFLAGS += -g -fsanitize=address
  CXXFLAGS += -g -fsanitize=address
 endif
 
-OBJS = $(SRCS:.cpp=.o)
 GNL = getnextline.a
 LIBFT = libft.a
 ifeq ($(shell uname), Linux)
@@ -37,7 +41,7 @@ all: $(NAME)
 
 $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
-	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) -o $@
+	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
 
 %.a: %
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
@@ -46,18 +50,19 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	
 %.o: %.cpp
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 .PHONY: clean fclean re all
 
 clean:
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
-	@rm -f $(OBJS) libft/*.o getnextline/*.o
+	@rm -f $(OBJS)
+	@make clean -s -C getnextline
+	@make clean -s -C libft
 
 fclean: clean
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing executable $(END)$(OUT_DIR)"
-	@rm -f webserv
-	@rm -rf webserv.dSYM *.a
+	@rm -rf webservwebserv.dSYM *.a
 	@make fclean -s -C getnextline
 	@make fclean -s -C libft
 
