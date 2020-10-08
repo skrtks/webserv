@@ -50,14 +50,14 @@ class ProcessRequest {
 	std::string _uri;
 	std::pair<int, int> _version;
 	std::map<std::string, method> _methodMap;
-//	std::map<std::string, headerType> _headerMap;
-	std::vector<std::pair<headerType, std::string> > _headers;
+	std::map<std::string, headerType> _headerMap;
+	std::map<headerType, std::string> _headers;
 	std::string _rawRequest;
 public:
 	ProcessRequest();
 	virtual ~ProcessRequest();
 	void parseRequest(const std::string &req);
-	void processRequestLine();
+	void parseRequestLine();
 	method getMethod() const;
 	const std::string& getUri() const;
 	const std::pair<int, int>& getVersion() const;
@@ -65,6 +65,7 @@ public:
 	void extractMethod(size_t eoRequestLine, size_t& pos);
 	void extractUri(size_t eoRequestLine, size_t pos, size_t pos2);
 	void extractVersion(size_t eoRequestLine, size_t& pos, size_t &pos2);
+	void parseHeaders();
 };
 
 

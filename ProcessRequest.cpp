@@ -19,6 +19,24 @@ ProcessRequest::ProcessRequest() {
 	_methodMap["HEAD"] = HEAD;
 	_methodMap["POST"] = POST;
 	_methodMap["PUT"] = PUT;
+	_headerMap["ACCEPT_CHARSET"] = ACCEPT_CHARSET;
+	_headerMap["ACCEPT_LANGUAGE"] = ACCEPT_LANGUAGE;
+	_headerMap["ALLOW"] = ALLOW;
+	_headerMap["AUTHORIZATION"] = AUTHORIZATION;
+	_headerMap["CONTENT_LANGUAGE"] = CONTENT_LANGUAGE;
+	_headerMap["CONTENT_LENGTH"] = CONTENT_LENGTH;
+	_headerMap["CONTENT_LOCATION"] = CONTENT_LOCATION;
+	_headerMap["CONTENT_TYPE"] = CONTENT_TYPE;
+	_headerMap["DATE"] = DATE;
+	_headerMap["HOST"] = HOST;
+	_headerMap["LAST_MODIFIED"] = LAST_MODIFIED;
+	_headerMap["LOCATION"] = LOCATION;
+	_headerMap["REFERER"] = REFERER;
+	_headerMap["RETRY_AFTER"] = RETRY_AFTER;
+	_headerMap["SERVER"] = SERVER;
+	_headerMap["TRANSFER_ENCODING"] = TRANSFER_ENCODING;
+	_headerMap["USER_AGENT"] = USER_AGENT;
+	_headerMap["WWW_AUTHENTICATE"] = WWW_AUTHENTICATE;
 }
 
 ProcessRequest::~ProcessRequest() {
@@ -26,14 +44,15 @@ ProcessRequest::~ProcessRequest() {
 
 void ProcessRequest::parseRequest(const std::string &req) {
 	_rawRequest = req;
-	processRequestLine();
+	parseRequestLine();
+	parseHeaders();
 	// TODO: extract headers
 	// TODO: execute header
 	// TODO: generate response
 	// TODO: return respons
 }
 
-void ProcessRequest::processRequestLine() {
+void ProcessRequest::parseRequestLine() {
 	size_t eoRequestLine = _rawRequest.find("\r\n", 0);
 	size_t pos = 0;
 	size_t pos2 = 0;
@@ -119,4 +138,23 @@ void ProcessRequest::setRawRequest(const std::string& rawRequest) {
 
 const std::pair<int, int>& ProcessRequest::getVersion() const {
 	return _version;
+}
+
+void ProcessRequest::parseHeaders() {
+	while (!_rawRequest.empty()) {
+		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
+		if (_rawRequest[0] == ' ')
+			throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+		size_t pos = _rawRequest.find(':', 0);
+		if (pos > eoRequestLine)
+			throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+		std::string header = _rawRequest.substr(0, pos);
+		std::string value = _rawRequest.substr(pos + 1);
+		std::__1::map<std::string, headerType>::iterator it = _headerMap.find(header);
+		if (it != _headerMap.end()) {
+			_headers.insert(std::make_pair(it->second, value));
+		}
+		else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
+		_rawRequest.erase(0, eoRequestLine);
+	}
 }
