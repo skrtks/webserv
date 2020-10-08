@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include "Connection.hpp"
 #include "ParseRequest.hpp"
+#include <string.h>
 
 Connection::Connection() {
 	FD_ZERO(&master);
