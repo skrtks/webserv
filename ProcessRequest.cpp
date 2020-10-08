@@ -141,20 +141,44 @@ const std::pair<int, int>& ProcessRequest::getVersion() const {
 }
 
 void ProcessRequest::parseHeaders() {
+	std::string upperHeader;
+	int owsOffset;
 	while (!_rawRequest.empty()) {
+		upperHeader.clear();
 		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
-		if (_rawRequest[0] == ' ')
-			throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
-		size_t pos = _rawRequest.find(':', 0);
-		if (pos > eoRequestLine)
-			throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
-		std::string header = _rawRequest.substr(0, pos);
-		std::string value = _rawRequest.substr(pos + 1);
-		std::__1::map<std::string, headerType>::iterator it = _headerMap.find(header);
-		if (it != _headerMap.end()) {
-			_headers.insert(std::make_pair(it->second, value));
+		if (eoRequestLine != 0) {
+			if (_rawRequest[0] == ' ')
+				throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+			size_t pos = _rawRequest.find(':', 0);
+			if (pos > eoRequestLine)
+				throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+			std::string header = _rawRequest.substr(0, pos);
+			for (char i : header) {
+				if (i == ' ')
+					throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+			}
+			pos++;
+			for (int i = pos; _rawRequest[i] == ' '; i++)
+				pos++;
+			owsOffset = 0;
+			for (int i = eoRequestLine - 1; i >= 0 && _rawRequest[i] == ' '; --i) {
+				owsOffset++;
+			}
+			std::string value = _rawRequest.substr(pos, eoRequestLine - pos - owsOffset);
+			if (value.empty() || _rawRequest[pos] == '\r')
+				throw std::runtime_error("Empty value"); // TODO: replace with correct http error
+			for (int i = 0; header[i]; i++) {
+				upperHeader += std::toupper(header[i]);
+			}
+			std::__1::map<std::string, headerType>::iterator it = _headerMap.find(upperHeader);
+			if (it != _headerMap.end()) {
+				_headers.insert(std::make_pair(it->second, value));
+			}
 		}
-		else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
-		_rawRequest.erase(0, eoRequestLine);
+		_rawRequest.erase(0, eoRequestLine + 2);
 	}
+}
+
+const std::map<headerType, std::string>& ProcessRequest::getHeaders() const {
+	return _headers;
 }

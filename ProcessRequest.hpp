@@ -59,6 +59,7 @@ public:
 	void parseRequest(const std::string &req);
 	void parseRequestLine();
 	method getMethod() const;
+	const std::map<headerType, std::string>& getHeaders() const;
 	const std::string& getUri() const;
 	const std::pair<int, int>& getVersion() const;
 	void setRawRequest(const std::string& rawRequest);
