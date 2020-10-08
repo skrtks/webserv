@@ -140,6 +140,7 @@ const std::pair<int, int>& ProcessRequest::getVersion() const {
 	return _version;
 }
 
+// Parse headers and store them in _headers (map)
 void ProcessRequest::parseHeaders() {
 	std::string upperHeader;
 	int owsOffset;
@@ -158,23 +159,29 @@ void ProcessRequest::parseHeaders() {
 					throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
 			}
 			pos++;
+			// 'Skip' over OWS at beginning of value string
 			for (int i = pos; _rawRequest[i] == ' '; i++)
 				pos++;
 			owsOffset = 0;
+			// Create offset for OWS at end of value string
 			for (int i = eoRequestLine - 1; i >= 0 && _rawRequest[i] == ' '; --i) {
 				owsOffset++;
 			}
+			// Extract value string and check if not empty or beginning with newline
 			std::string value = _rawRequest.substr(pos, eoRequestLine - pos - owsOffset);
-			if (value.empty() || _rawRequest[pos] == '\r')
+			if (value.empty() || _rawRequest[pos] == '\r') {
 				throw std::runtime_error("Empty value"); // TODO: replace with correct http error
+			}
 			for (int i = 0; header[i]; i++) {
 				upperHeader += std::toupper(header[i]);
 			}
+			// Match found header to correct headerType using map
 			std::__1::map<std::string, headerType>::iterator it = _headerMap.find(upperHeader);
 			if (it != _headerMap.end()) {
 				_headers.insert(std::make_pair(it->second, value));
 			}
 		}
+		// Erase processed line
 		_rawRequest.erase(0, eoRequestLine + 2);
 	}
 }
