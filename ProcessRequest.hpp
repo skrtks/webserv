@@ -49,9 +49,9 @@ class ProcessRequest {
 	method _method;
 	std::string _uri;
 	std::pair<int, int> _version;
+	std::map<headerType, std::string> _headers;
 	std::map<std::string, method> _methodMap;
 	std::map<std::string, headerType> _headerMap;
-	std::map<headerType, std::string> _headers;
 	std::string _rawRequest;
 public:
 	ProcessRequest();
