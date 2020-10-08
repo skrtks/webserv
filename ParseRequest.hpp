@@ -17,6 +17,8 @@
 #include <string>
 #include <string.h>
 #include <map>
+#include <stdexcept>
+#include <cstdlib>
 
 enum headerType {
 	ACCEPT_CHARSET,

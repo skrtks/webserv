@@ -10,10 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <cstdlib>
+
 #include "ParseRequest.hpp"
-#include <string.h>
-#include <stdexcept>
 
 ParseRequest::ParseRequest() {
 	_methodMap["GET"] = GET;
