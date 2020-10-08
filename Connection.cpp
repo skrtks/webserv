@@ -71,7 +71,8 @@ void Connection::startListening() {
 				else { // Handle request & return response
 					receiveRequest();
 					requestProcessor.parseRequest(_rawRequest);
-					// TODO: process request
+					// TODO: execute headers
+					// TODO: generate response
 					std::string resp = "HTTP/1.1 200 OK\n"
 									   "Server: Webserv/0.1\n"
 									   "Date: Tue, 06 Oct 2020 08:35:16 GMT\n"

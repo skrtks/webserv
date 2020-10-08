@@ -45,9 +45,6 @@ void ParseRequest::parseRequest(const std::string &req) {
 	_rawRequest = req;
 	parseRequestLine();
 	parseHeaders();
-	// TODO: execute headers
-	// TODO: generate response
-	// TODO: return respons
 }
 
 void ParseRequest::parseRequestLine() {
