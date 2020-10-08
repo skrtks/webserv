@@ -287,6 +287,41 @@ TEST_CASE( "Parse Headers", "[Request]") {
 			}
 	}
 
+	SECTION( "correct input 5" ) {
+		std::string request = "Host:    localhost:8080  \r\n"
+							  "DNT: 1\n"
+							  "location:   Amsterdam  \r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n"
+							  "User-Agent:    Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n"
+							  "Accept-Encoding: gzip, deflate\r\n"
+							  "Connection: keep-alive\r\n"
+							  "Upgrade-Insecure-Requests: 1\r\n"
+							  "Pragma: no-cache\r\n"
+							  "Cache-Control: no-cache\r\n\r\n";
+		reqProcces.setRawRequest(request);
+
+		reqProcces.parseHeaders();
+		std::map<headerType, std::string> headers = reqProcces.getHeaders();
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+			switch (it->first) {
+				case ACCEPT_LANGUAGE:
+					REQUIRE(it->second == "en-US,en;q=0.5");
+					break;
+				case HOST:
+					REQUIRE(it->second == "localhost:8080");
+					break;
+				case LOCATION:
+					REQUIRE(it->second == "Amsterdam");
+					break;
+				case USER_AGENT:
+					REQUIRE(it->second == "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0");
+					break;
+				default:
+					REQUIRE(headers.empty());
+			}
+	}
+
 	SECTION( "incorrect input 1" ) {
 		std::string request = "Host :    localhost:8080  \r\n"
 							  "User-Agent:    Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
