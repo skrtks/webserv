@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/08 14:56:24 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/08 18:07:29 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ class Server {
 		void		seterrorpage(const std::string& errorpage);
 		std::string	geterrorpage() const;
 		void		configurelocation(const std::string& in);
+		std::vector<Location> getlocations() const;
 		void		setup(int fd);
 		bool		getsuccess() const;
 		void		clear();
@@ -45,8 +46,9 @@ class Server {
 					_error_page;
 		bool	_success;
 		int		_fd;
+		std::vector<Location> _locations;
 };
 
-std::ostream& operator<<(std::ostream& o, const Server& x);
+std::ostream&	operator<<(std::ostream& o, const Server& x);
 
 #endif

@@ -5,8 +5,8 @@
 /*                                                     +:+                    */
 /*   By: pde-bakk <marvin@codam.nl>                   +#+                     */
 /*                                                   +#+                      */
-/*   Created: 2019/11/03 15:55:21 by pde-bakk       #+#    #+#                */
-/*   Updated: 2019/11/15 18:45:26 by pde-bakk      ########   odam.nl         */
+/*   Created: 2019/11/03 15:55:21 by pde-bakk      #+#    #+#                 */
+/*   Updated: 2020/10/08 16:12:08 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,16 +111,4 @@ char			**ft_split(char const *s, char c)
 			i++;
 	}
 	return (arr);
-}
-
-#include <stdio.h>
-
-int	main(void)
-{
-	int	i;
-
-	i = 0;
-	ft_split("hallo", 'l');
-	while (1)
-		i++;
 }

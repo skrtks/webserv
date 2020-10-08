@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 15:37:16 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/08 14:56:55 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/08 16:35:21 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define WEBSERV_HPP
 
 # include <cstddef>
+# include <cstring>
 # include <string>
 # include <map>
 # include <vector>
@@ -34,8 +35,10 @@ extern "C" {
 }
 
 // parser
-int		is_first_char(std::string str, char find = '#');
-void	get_key_value(std::string &str, std::string &key, std::string& value);
-void	parse(char *av);
+int							is_first_char(std::string str, char find = '#');
+void						get_key_value(std::string &str, std::string &key, std::string& value);
+void						parse(char *av);
+std::vector<std::string>	split(const std::string& s, const std::string& delim);
+
 
 #endif

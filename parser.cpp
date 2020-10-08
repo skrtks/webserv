@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/08 14:49:52 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/08 16:52:52 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void	get_key_value(std::string &str, std::string &key, std::string& value) {
 	size_t kend = str.find_first_of(" \t\n", kbegin);
 	key = str.substr(kbegin, kend - kbegin);
 	size_t vbegin = str.find_first_not_of(" \t\n", kend);
-	size_t vend = str.find_first_of(" \t\n\r#;", vbegin);
+	size_t vend = str.find_first_of("\n\r#;", vbegin);
 	value = str.substr(vbegin, vend - vbegin);
 }
 

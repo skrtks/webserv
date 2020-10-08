@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/08 14:56:10 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/08 19:02:28 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,8 @@ Server&	Server::operator=(const Server& x) {
 		this->_server_name = x._server_name;
 		this->_client_body_size = x._client_body_size;
 		this->_error_page = x._error_page;
+		this->_success = x._success;
+		this->_locations = x._locations;
 	}
 	return *this;
 }
@@ -87,8 +89,16 @@ bool	Server::getsuccess() const {
 	return this->_success;
 }
 
-void	configurelocation(const std::string& in) {
-	Location	loc;
+void	Server::configurelocation(const std::string& in) {
+	std::vector<std::string> v = split(in, " \t\r\n\v\f\0");
+	Location	loc(v[0]);
+	loc.setup(this->_fd);
+	// if succesful
+	this->_locations.push_back(loc);
+}
+
+std::vector<Location>	Server::getlocations() const {
+	return this->_locations;
 }
 
 void	Server::clear() {
@@ -101,12 +111,14 @@ void	Server::clear() {
 }
 
 void	Server::setup(int fd) {
+	this->_fd = fd;
 	std::map<std::string, void (Server::*)(const std::string&)> m;
 	m["port"] = &Server::setport;
 	m["host"] = &Server::sethost;
 	m["server_name"] = &Server::setservername;
 	m["LIMIT_CLIENT_BODY_SIZE"] = &Server::setclientbodysize;
 	m["DEFAULT_ERROR_PAGE"] = &Server::seterrorpage;
+	m["location"] = &Server::configurelocation;
 	std::string str;
 	this->_success = true;
 
@@ -114,7 +126,7 @@ void	Server::setup(int fd) {
 		std::string key, value;
 		if (is_first_char(str) || str == "") //checks for comment char #
 			continue ;
-		if (is_first_char(str, '}'))
+		if (is_first_char(str, '}')) // End of server block
 			break ;
 		try {
 			get_key_value(str, key, value);
@@ -122,7 +134,7 @@ void	Server::setup(int fd) {
 			(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 		}
 		catch (std::exception& e) {
-			std::cerr << "key=" << key <<  ",exception: " << e.what() << std::endl << std::endl;
+			std::cerr << "key=\"" << key << "\", exception =\"" << e.what() << "\"." << std::endl;
 			this->_success = false;
 		}
 	}
@@ -137,5 +149,10 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "error page = " << x.geterrorpage() << std::endl;
 	o << "client body limit = " << x.getclientbodysize() << std::endl << std::endl;
+	std::vector<Location> v = x.getlocations();
+	for (size_t i = 0; i < v.size(); i++) {
+		o << v[i];
+	}
+	o << std::endl;
 	return o;
 }
