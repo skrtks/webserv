@@ -156,7 +156,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 
 		reqProcces.parseHeaders();
 		std::map<headerType, std::string> headers = reqProcces.getHeaders();
-		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++) {
 			switch (it->first) {
 				case ACCEPT_LANGUAGE:
 					REQUIRE(it->second == "en-US,en;q=0.5");
@@ -173,6 +173,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 				default:
 					REQUIRE(headers.empty());
 			}
+		}
 	}
 
 	SECTION( "correct input 2" ) {
@@ -185,7 +186,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 
 		reqProcces.parseHeaders();
 		std::map<headerType, std::string> headers = reqProcces.getHeaders();
-		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++) {
 			switch (it->first) {
 				case ACCEPT_LANGUAGE:
 					REQUIRE(it->second == "en-US,en;q=0.5");
@@ -202,6 +203,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 				default:
 					REQUIRE(headers.empty());
 			}
+		}
 	}
 
 	SECTION( "correct input 3" ) {
@@ -211,7 +213,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 
 		reqProcces.parseHeaders();
 		std::map<headerType, std::string> headers = reqProcces.getHeaders();
-		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++) {
 			switch (it->first) {
 				case ACCEPT_LANGUAGE:
 					REQUIRE(it->second == "en-US,en;q=0.5");
@@ -228,6 +230,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 				default:
 					REQUIRE(headers.empty());
 			}
+		}
 	}
 
 	SECTION( "correct input 3" ) {
@@ -240,7 +243,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 
 		reqProcces.parseHeaders();
 		std::map<headerType, std::string> headers = reqProcces.getHeaders();
-		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++) {
 			switch (it->first) {
 				case ACCEPT_LANGUAGE:
 					REQUIRE(it->second == "en-US,en;q=0.5");
@@ -257,6 +260,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 				default:
 					REQUIRE(headers.empty());
 			}
+		}
 	}
 
 	SECTION( "correct input 4" ) {
@@ -268,7 +272,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 
 		reqProcces.parseHeaders();
 		std::map<headerType, std::string> headers = reqProcces.getHeaders();
-		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++) {
 			switch (it->first) {
 				case ACCEPT_LANGUAGE:
 					REQUIRE(it->second == "en-US,en;q=0.5");
@@ -285,6 +289,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 				default:
 					REQUIRE(headers.empty());
 			}
+		}
 	}
 
 	SECTION( "correct input 5" ) {
@@ -303,7 +308,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 
 		reqProcces.parseHeaders();
 		std::map<headerType, std::string> headers = reqProcces.getHeaders();
-		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++) {
 			switch (it->first) {
 				case ACCEPT_LANGUAGE:
 					REQUIRE(it->second == "en-US,en;q=0.5");
@@ -320,6 +325,7 @@ TEST_CASE( "Parse Headers", "[Request]") {
 				default:
 					REQUIRE(headers.empty());
 			}
+		}
 	}
 
 	SECTION( "incorrect input 1" ) {

@@ -23,6 +23,7 @@
 #include <fstream>
 #include <fcntl.h>
 #include "ParseRequest.hpp"
+#include "ExecuteHeaders.hpp"
 
 #include <string.h>
 
@@ -36,7 +37,7 @@ class Connection {
 	fd_set master;    // master file descriptor list
 	fd_set readFds;  // temp file descriptor list for select()
 	std::string _rawRequest;
-	request_s parsedRequest;
+	request_s _parsedRequest;
 	void addConnection();
 	void receiveRequest();
 	void sendReply(const std::string &msg) const;
