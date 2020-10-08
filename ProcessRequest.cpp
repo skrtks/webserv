@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <iostream>
 #include <cstdlib>
 #include "ProcessRequest.hpp"
 
@@ -46,8 +45,7 @@ void ProcessRequest::parseRequest(const std::string &req) {
 	_rawRequest = req;
 	parseRequestLine();
 	parseHeaders();
-	// TODO: extract headers
-	// TODO: execute header
+	// TODO: execute headers
 	// TODO: generate response
 	// TODO: return respons
 }
@@ -124,22 +122,6 @@ void ProcessRequest::extractMethod(size_t eoRequestLine, size_t& pos) {
 	else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
 }
 
-method ProcessRequest::getMethod() const {
-	return _method;
-}
-
-const std::string& ProcessRequest::getUri() const {
-	return _uri;
-}
-
-void ProcessRequest::setRawRequest(const std::string& rawRequest) {
-	_rawRequest = rawRequest;
-}
-
-const std::pair<int, int>& ProcessRequest::getVersion() const {
-	return _version;
-}
-
 // Parse headers and store them in _headers (map)
 void ProcessRequest::parseHeaders() {
 	std::string upperHeader;
@@ -154,8 +136,8 @@ void ProcessRequest::parseHeaders() {
 			if (pos > eoRequestLine)
 				throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
 			std::string header = _rawRequest.substr(0, pos);
-			for (char i : header) {
-				if (i == ' ')
+			for (int i = 0; header[i]; i++) {
+				if (header[i] == ' ')
 					throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
 			}
 			pos++;
@@ -186,6 +168,24 @@ void ProcessRequest::parseHeaders() {
 	}
 }
 
+// MARK: getters & setters
+
 const std::map<headerType, std::string>& ProcessRequest::getHeaders() const {
 	return _headers;
+}
+
+method ProcessRequest::getMethod() const {
+	return _method;
+}
+
+const std::string& ProcessRequest::getUri() const {
+	return _uri;
+}
+
+void ProcessRequest::setRawRequest(const std::string& rawRequest) {
+	_rawRequest = rawRequest;
+}
+
+const std::pair<int, int>& ProcessRequest::getVersion() const {
+	return _version;
 }
