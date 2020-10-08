@@ -20,6 +20,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <zconf.h>
+#include "ParseRequest.hpp"
 
 #define PORT 8080	// The port we will be listening on TODO: set through config file
 #define BACKLOG 5	// how many pending connections queue will hold
@@ -31,6 +32,7 @@ class Connection {
 	fd_set master;    // master file descriptor list
 	fd_set readFds;  // temp file descriptor list for select()
 	std::string _rawRequest;
+	request_s parsedRequest;
 	void addConnection();
 	void receiveRequest();
 	void sendReply(const std::string &msg) const;

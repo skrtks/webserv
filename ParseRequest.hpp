@@ -45,6 +45,13 @@ enum method {
 	PUT
 };
 
+struct request_s {
+	method method;
+	std::string uri;
+	std::pair<int, int> version;
+	std::map<headerType, std::string> headers;
+};
+
 class ParseRequest {
 	method _method;
 	std::string _uri;
@@ -56,7 +63,7 @@ class ParseRequest {
 public:
 	ParseRequest();
 	virtual ~ParseRequest();
-	void parseRequest(const std::string &req);
+	request_s parseRequest(const std::string &req);
 	void parseRequestLine();
 	method getMethod() const;
 	const std::map<headerType, std::string>& getHeaders() const;

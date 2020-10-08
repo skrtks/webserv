@@ -41,10 +41,17 @@ ParseRequest::ParseRequest() {
 ParseRequest::~ParseRequest() {
 }
 
-void ParseRequest::parseRequest(const std::string &req) {
+request_s ParseRequest::parseRequest(const std::string &req) {
+	request_s request;
 	_rawRequest = req;
 	parseRequestLine();
 	parseHeaders();
+
+	request.headers = _headers;
+	request.method = _method;
+	request.version = _version;
+	request.uri = _uri;
+	return (request);
 }
 
 void ParseRequest::parseRequestLine() {

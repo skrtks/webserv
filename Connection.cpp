@@ -70,7 +70,7 @@ void Connection::startListening() {
 				}
 				else { // Handle request & return response
 					receiveRequest();
-					requestProcessor.parseRequest(_rawRequest);
+					parsedRequest = requestProcessor.parseRequest(_rawRequest);
 					// TODO: execute headers
 					// TODO: generate response
 					std::string resp = "HTTP/1.1 200 OK\n"
