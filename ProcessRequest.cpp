@@ -27,7 +27,6 @@ ProcessRequest::~ProcessRequest() {
 void ProcessRequest::parseRequest(const std::string &req) {
 	_rawRequest = req;
 	processRequestLine();
-	// TODO: get first line
 	// TODO: extract headers
 	// TODO: execute header
 	// TODO: generate response
@@ -36,8 +35,8 @@ void ProcessRequest::parseRequest(const std::string &req) {
 
 void ProcessRequest::processRequestLine() {
 	size_t eoRequestLine = _rawRequest.find("\r\n", 0);
-	size_t pos;
-	size_t pos2;
+	size_t pos = 0;
+	size_t pos2 = 0;
 
 	// Check if first char is space
 	if (_rawRequest[0] == ' ') {
