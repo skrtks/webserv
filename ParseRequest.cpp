@@ -12,6 +12,8 @@
 
 #include <cstdlib>
 #include "ParseRequest.hpp"
+#include <string.h>
+#include <stdexcept>
 
 ParseRequest::ParseRequest() {
 	_methodMap["GET"] = GET;
@@ -119,7 +121,7 @@ void ParseRequest::extractMethod(size_t eoRequestLine, size_t& pos) {
 	if (pos > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
 	ret = _rawRequest.substr(0, pos);
-	std::__1::map<std::string, method>::iterator it = _methodMap.find(ret);
+	std::map<std::string, method>::iterator it = _methodMap.find(ret);
 	if (it != _methodMap.end()) {
 		_method = it->second;
 	}
@@ -162,7 +164,7 @@ void ParseRequest::parseHeaders() {
 				upperHeader += std::toupper(header[i]);
 			}
 			// Match found header to correct headerType using map
-			std::__1::map<std::string, headerType>::iterator it = _headerMap.find(upperHeader);
+			std::map<std::string, headerType>::iterator it = _headerMap.find(upperHeader);
 			if (it != _headerMap.end()) {
 				_headers.insert(std::make_pair(it->second, value));
 			}
