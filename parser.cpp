@@ -6,21 +6,11 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/07 21:24:14 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/08 14:49:52 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
-#include "Servermanager.hpp"
-#include <string>
-#include <iostream>
-#include <fcntl.h>
-#include <unistd.h>
-#include <map>
-#include "getnextline/get_next_line.hpp"
-extern "C" {
-	#include "libft/libft.h"
-}
+#include "webserv.hpp"
 
 int		is_first_char(std::string str, char find) {
 	int i = 0;
@@ -40,9 +30,15 @@ void	get_key_value(std::string &str, std::string &key, std::string& value) {
 	value = str.substr(vbegin, vend - vbegin);
 }
 
-void	parse() {
-	// int		brackets = 0;
-	int		fd = open("nginx.conf", O_RDONLY);
+void	parse(char *av) {
+	struct stat statstruct;
+	int fd;
+	if (av && stat(av, &statstruct) != -1)
+		fd = open(av, O_RDONLY);
+	else
+		fd = open("configfiles/nginx.conf", O_RDONLY);
+	if (fd < 0)
+		return ;
 	std::string	str;
 	Servermanager	skrtks;
 	Server	tmp;
@@ -64,6 +60,7 @@ void	parse() {
 			std::cerr << "haha" << std::endl;
 		}
 	}
+	close(fd);
 	for (size_t i = 0; i < skrtks.size(); i++)
 		std::cout << skrtks[i];
 }

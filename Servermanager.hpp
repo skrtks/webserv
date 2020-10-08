@@ -6,15 +6,17 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 20:23:33 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/07 21:04:12 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/08 14:46:15 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVERMANAGER_HPP
 # define SERVERMANAGER_HPP
 
-# include "webserv.hpp"
 # include "Server.hpp"
+# include "webserv.hpp"
+
+class Server;
 
 class Servermanager {
 	public:

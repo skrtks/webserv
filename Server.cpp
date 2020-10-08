@@ -6,14 +6,19 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/07 21:25:46 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/08 14:56:10 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(void) : _port(80), _host("127.0.0.1"),
-		_client_body_size(1000000), _error_page("error.html"), _success(false) {
+Server::Server(void) : _port(80), _client_body_size(1000000),
+		_host("127.0.0.1"), _error_page("error.html"), _success(false) {
+}
+
+Server::Server(int fd) : _port(80), _client_body_size(1000000),
+		_host("127.0.0.1"), _error_page("error.html"), _success(false) {
+	this->_fd = fd;
 }
 
 Server::~Server(void) {
@@ -82,6 +87,10 @@ bool	Server::getsuccess() const {
 	return this->_success;
 }
 
+void	configurelocation(const std::string& in) {
+	Location	loc;
+}
+
 void	Server::clear() {
 	this->_port = -1;
 	this->_host = "";
@@ -113,7 +122,7 @@ void	Server::setup(int fd) {
 			(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 		}
 		catch (std::exception& e) {
-			std::cerr << "exception: " << e.what() << std::endl << std::endl;
+			std::cerr << "key=" << key <<  ",exception: " << e.what() << std::endl << std::endl;
 			this->_success = false;
 		}
 	}
