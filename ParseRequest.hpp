@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PROCESSREQUEST_HPP
-#define PROCESSREQUEST_HPP
+#ifndef PARSEREQUEST_HPP
+#define PARSEREQUEST_HPP
 
 #include <vector>
 #include <string>
@@ -45,7 +45,7 @@ enum method {
 	PUT
 };
 
-class ProcessRequest {
+class ParseRequest {
 	method _method;
 	std::string _uri;
 	std::pair<int, int> _version;
@@ -54,8 +54,8 @@ class ProcessRequest {
 	std::map<std::string, headerType> _headerMap;
 	std::string _rawRequest;
 public:
-	ProcessRequest();
-	virtual ~ProcessRequest();
+	ParseRequest();
+	virtual ~ParseRequest();
 	void parseRequest(const std::string &req);
 	void parseRequestLine();
 	method getMethod() const;
@@ -70,4 +70,4 @@ public:
 };
 
 
-#endif //PROCESSREQUEST_HPP
+#endif //PARSEREQUEST_HPP

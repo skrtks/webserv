@@ -13,7 +13,7 @@
 #include <fstream>
 #include <fcntl.h>
 #include "Connection.hpp"
-#include "ProcessRequest.hpp"
+#include "ParseRequest.hpp"
 
 Connection::Connection() {
 	FD_ZERO(&master);
@@ -49,7 +49,7 @@ void Connection::setUpConnection() {
 }
 
 void Connection::startListening() {
-	ProcessRequest requestProcessor;
+	ParseRequest requestProcessor;
 	// Start listening for connections on port set in sFd, mac BACKLOG waiting connections
 	if (listen(socketFd, BACKLOG))
 		throw std::runtime_error(strerror(errno));
