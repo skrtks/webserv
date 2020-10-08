@@ -142,3 +142,198 @@ TEST_CASE( "Parsing request", "[Request]" ) {
 		REQUIRE_THROWS(reqProcces.parseRequestLine() );
 	}
 }
+
+TEST_CASE( "Parse Headers", "[Request]") {
+	ProcessRequest reqProcces;
+
+	SECTION( "correct input 1" ) {
+		std::string request = "Host: localhost:8080\r\n"
+							  "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location: Amsterdam\r\n"
+							  "Accept-Language: en-US,en;q=0.5\r\n";
+
+		reqProcces.setRawRequest(request);
+
+		reqProcces.parseHeaders();
+		std::map<headerType, std::string> headers = reqProcces.getHeaders();
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+			switch (it->first) {
+				case ACCEPT_LANGUAGE:
+					REQUIRE(it->second == "en-US,en;q=0.5");
+					break;
+				case HOST:
+					REQUIRE(it->second == "localhost:8080");
+					break;
+				case LOCATION:
+					REQUIRE(it->second == "Amsterdam");
+					break;
+				case USER_AGENT:
+					REQUIRE(it->second == "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0");
+					break;
+				default:
+					REQUIRE(headers.empty());
+			}
+	}
+
+	SECTION( "correct input 2" ) {
+		std::string request = "Host:    localhost:8080\r\n"
+							  "User-Agent:    Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location:   Amsterdam\r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n";
+
+		reqProcces.setRawRequest(request);
+
+		reqProcces.parseHeaders();
+		std::map<headerType, std::string> headers = reqProcces.getHeaders();
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+			switch (it->first) {
+				case ACCEPT_LANGUAGE:
+					REQUIRE(it->second == "en-US,en;q=0.5");
+					break;
+				case HOST:
+					REQUIRE(it->second == "localhost:8080");
+					break;
+				case LOCATION:
+					REQUIRE(it->second == "Amsterdam");
+					break;
+				case USER_AGENT:
+					REQUIRE(it->second == "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0");
+					break;
+				default:
+					REQUIRE(headers.empty());
+			}
+	}
+
+	SECTION( "correct input 3" ) {
+		std::string request = "";
+
+		reqProcces.setRawRequest(request);
+
+		reqProcces.parseHeaders();
+		std::map<headerType, std::string> headers = reqProcces.getHeaders();
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+			switch (it->first) {
+				case ACCEPT_LANGUAGE:
+					REQUIRE(it->second == "en-US,en;q=0.5");
+					break;
+				case HOST:
+					REQUIRE(it->second == "localhost:8080");
+					break;
+				case LOCATION:
+					REQUIRE(it->second == "Amsterdam");
+					break;
+				case USER_AGENT:
+					REQUIRE(it->second == "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0");
+					break;
+				default:
+					REQUIRE(headers.empty());
+			}
+	}
+
+	SECTION( "correct input 3" ) {
+		std::string request = "Host:    localhost:8080\r\n"
+							  "User-Agent:    Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location:   Amsterdam\r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n";
+
+		reqProcces.setRawRequest(request);
+
+		reqProcces.parseHeaders();
+		std::map<headerType, std::string> headers = reqProcces.getHeaders();
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+			switch (it->first) {
+				case ACCEPT_LANGUAGE:
+					REQUIRE(it->second == "en-US,en;q=0.5");
+					break;
+				case HOST:
+					REQUIRE(it->second == "localhost:8080");
+					break;
+				case LOCATION:
+					REQUIRE(it->second == "Amsterdam");
+					break;
+				case USER_AGENT:
+					REQUIRE(it->second == "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0");
+					break;
+				default:
+					REQUIRE(headers.empty());
+			}
+	}
+
+	SECTION( "correct input 4" ) {
+		std::string request = "Host:    localhost:8080  \r\n"
+							  "User-Agent:    Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location:   Amsterdam  \r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n\r\n";
+		reqProcces.setRawRequest(request);
+
+		reqProcces.parseHeaders();
+		std::map<headerType, std::string> headers = reqProcces.getHeaders();
+		for (std::map<headerType, std::string>::iterator it=headers.begin(); it!=headers.end(); it++)
+			switch (it->first) {
+				case ACCEPT_LANGUAGE:
+					REQUIRE(it->second == "en-US,en;q=0.5");
+					break;
+				case HOST:
+					REQUIRE(it->second == "localhost:8080");
+					break;
+				case LOCATION:
+					REQUIRE(it->second == "Amsterdam");
+					break;
+				case USER_AGENT:
+					REQUIRE(it->second == "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0");
+					break;
+				default:
+					REQUIRE(headers.empty());
+			}
+	}
+
+	SECTION( "incorrect input 1" ) {
+		std::string request = "Host :    localhost:8080  \r\n"
+							  "User-Agent:    Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location:   Amsterdam  \r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n\r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS(reqProcces.parseHeaders() );
+	}
+
+	SECTION( "incorrect input 2" ) {
+		std::string request = "Host: localhost:8080\r\n"
+							  "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location: \r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n\r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS(reqProcces.parseHeaders() );
+	}
+
+	SECTION( "incorrect input 3" ) {
+		std::string request = "Host: localhost:8080\r\n"
+							  "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location: AMS\r\n"
+							  " Accept-Language:en-US,en;q=0.5\r\n\r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS(reqProcces.parseHeaders() );
+	}
+
+	SECTION( "incorrect input 4" ) {
+		std::string request = "Host: localhost:8080\r\n"
+							  "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "loca tion: AMS\r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n\r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_THROWS(reqProcces.parseHeaders() );
+	}
+
+	SECTION( "incorrect input 5" ) {
+		std::string request = "\r\nHost: localhost:8080\r\n"
+							  "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:68.0) Gecko/20100101 Firefox/68.0\r\n"
+							  "location: AMS\r\n"
+							  "Accept-Language:en-US,en;q=0.5\r\n\r\n";
+		reqProcces.setRawRequest(request);
+
+		REQUIRE_NOTHROW(reqProcces.parseHeaders() );
+	}
+}
