@@ -20,6 +20,10 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <zconf.h>
+#include <fstream>
+#include <fcntl.h>
+#include "ParseRequest.hpp"
+
 #include <string.h>
 
 #define PORT 8080	// The port we will be listening on TODO: set through config file
@@ -31,8 +35,10 @@ class Connection {
 	struct sockaddr_in server; // Will contain info about port and ip
 	fd_set master;    // master file descriptor list
 	fd_set readFds;  // temp file descriptor list for select()
+	std::string _rawRequest;
+	request_s parsedRequest;
 	void addConnection();
-	void receiveRequest() const;
+	void receiveRequest();
 	void sendReply(const std::string &msg) const;
 	void closeConnection(int fd);
 public:
