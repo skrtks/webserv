@@ -68,17 +68,18 @@ public:
 	virtual ~ParseRequest();
 	ParseRequest(const ParseRequest &obj);
 	ParseRequest& operator== (const ParseRequest &obj);
+
 	request_s parseRequest(const std::string &req);
 	void parseRequestLine();
-	method getMethod() const;
-	const std::map<headerType, std::string>& getHeaders() const;
-	const std::string& getUri() const;
-	const std::pair<int, int>& getVersion() const;
+	void parseHeaders();
 	void setRawRequest(const std::string& rawRequest);
 	void extractMethod(size_t eoRequestLine, size_t& pos);
 	void extractUri(size_t eoRequestLine, size_t pos, size_t pos2);
 	void extractVersion(size_t eoRequestLine, size_t& pos, size_t &pos2);
-	void parseHeaders();
+	method getMethod() const;
+	const std::map<headerType, std::string>& getHeaders() const;
+	const std::string& getUri() const;
+	const std::pair<int, int>& getVersion() const;
 };
 
 
