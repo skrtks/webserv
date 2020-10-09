@@ -29,6 +29,14 @@ Connection::Connection(const Connection &obj) {
 	*this = obj;
 }
 
+Connection& Connection::operator== (const Connection &obj) {
+	if (this == &obj) {
+		return *this;
+	}
+	*this = obj;
+	return *this;
+}
+
 void Connection::setUpConnection() {
 	int opt = 1;
 	if (!(_socketFd = socket(AF_INET, SOCK_STREAM, 0)))

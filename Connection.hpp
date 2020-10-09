@@ -45,6 +45,7 @@ class Connection {
 public:
 	Connection();
 	Connection(const Connection &obj);
+	Connection& operator== (const Connection &obj);
 	virtual ~Connection();
 
 	void setUpConnection();
