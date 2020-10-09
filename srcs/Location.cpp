@@ -6,11 +6,12 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 14:50:52 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/08 19:03:42 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 14:27:05 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Location.hpp"
+
 
 Location::Location() {
 	this->_success = false;
@@ -20,6 +21,7 @@ Location::Location() {
 Location::Location(std::string& location_match) {
 	this->_success = false;
 	this->_location_match = location_match;
+	this->_autoindex = "off";
 }
 
 Location::~Location() {
@@ -44,7 +46,10 @@ Location&	Location::operator=(const Location& x) {
 
 //setters
 void	Location::setroot(const std::string& in) {
+	struct stat statstruct;
 	this->_root = in;
+	if (stat(_root.c_str(), &statstruct) == -1)
+		this->_success = false;
 }
 void	Location::setautoindex(const std::string& in) {
 	this->_autoindex = in;
@@ -90,6 +95,7 @@ void	Location::setup(int fd) {
 	m["index"] = &Location::setindex;
 	m["cgi"] = &Location::setcgi;
 	std::string str;
+	this->_success = true;
 	
 	while (get_next_line(fd, str) > 0) {
 		std::string key, value;
@@ -104,10 +110,12 @@ void	Location::setup(int fd) {
 		}
 		catch (std::exception& e) {
 			std::cerr << "key=\"" << key << "\", exception =\"" << e.what() << "\"." << std::endl;
-			// set success to false;
+			this->_success = false;
 		}
 	}
-	//check if settings correct
+	if (this->_indexes.size() == 0)
+		this->_indexes.push_back("index.html");
+	//check if settings correct?
 }
 
 std::ostream&	operator<<(std::ostream& o, const Location& x) {
