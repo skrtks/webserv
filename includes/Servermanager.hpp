@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 20:23:33 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/08 14:46:15 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 15:07:57 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ class Servermanager {
 		Servermanager& operator +=(const Server& x);
 		Server		operator[](const size_t n) const;
 		size_t		size() const;
+		void		clear();
 	private:
 		std::vector<Server> _servers;	
 };

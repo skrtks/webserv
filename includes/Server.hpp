@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/08 18:07:29 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 15:02:35 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,15 +36,12 @@ class Server {
 		void		configurelocation(const std::string& in);
 		std::vector<Location> getlocations() const;
 		void		setup(int fd);
-		bool		getsuccess() const;
-		void		clear();
 	private:
 		size_t	_port,
 				_client_body_size;
 		std::string _host,
 					_server_name,
 					_error_page;
-		bool	_success;
 		int		_fd;
 		std::vector<Location> _locations;
 };

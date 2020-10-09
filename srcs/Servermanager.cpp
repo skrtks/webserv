@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 20:37:58 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/07 21:06:50 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 15:08:21 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,4 +40,8 @@ Server	Servermanager::operator[](const size_t n) const {
 
 size_t	Servermanager::size() const {
 	return this->_servers.size();
+}
+
+void	Servermanager::clear() {
+	this->_servers.clear();
 }

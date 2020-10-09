@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/09 14:47:02 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 15:13:09 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,21 +41,22 @@ Servermanager	parse(char *av) {
 	if (fd < 0)
 		return skrtks;
 	std::string	str;
-	Server	tmp;
 	
 	while (ft::get_next_line(fd, str) > 0) {
 		if (is_first_char(str) || str == "")
 			continue ;
 		try {
+			Server	tmp;
 			if (str != "" && str.compare(str.find_first_not_of(" \t\n"), ft_strlen("server {"), "server {") == 0) {
 				tmp.setup(fd);
-				if (tmp.getsuccess())
-					skrtks += tmp;
-				tmp.clear();
+				skrtks += tmp;
 			}
 		}
 		catch (std::exception& e) {
 			std::cerr << "threw an exception in parse try block: " << e.what() << std::endl;
+			close(fd);
+			skrtks.clear();
+			exit(1);
 		}
 	}
 	close(fd);
