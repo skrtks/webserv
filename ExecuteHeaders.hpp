@@ -20,6 +20,8 @@ class ExecuteHeaders {
 public:
 	ExecuteHeaders();
 	virtual ~ExecuteHeaders();
+	ExecuteHeaders(const ExecuteHeaders &obj);
+	ExecuteHeaders& operator== (const ExecuteHeaders &obj);
 	void startExecution(request_s request);
 	void handleACCEPT_CHARSET(const std::string &value);
 	void handleACCEPT_LANGUAGE(const std::string &value);

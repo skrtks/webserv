@@ -37,6 +37,18 @@ ExecuteHeaders::ExecuteHeaders() {
 ExecuteHeaders::~ExecuteHeaders() {
 }
 
+ExecuteHeaders::ExecuteHeaders(const ExecuteHeaders &obj) {
+	*this = obj;
+}
+
+ExecuteHeaders& ExecuteHeaders::operator== (const ExecuteHeaders &obj) {
+	if (this == &obj) {
+		return *this;
+	}
+	*this = obj;
+	return *this;
+}
+
 void ExecuteHeaders::startExecution(request_s request) {
 	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 		(this->*(_functionMap.at(it->first)))(it->second);
