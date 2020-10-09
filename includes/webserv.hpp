@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 15:37:16 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/09 14:43:57 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 15:19:45 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@
 
 # include "../getnextline/get_next_line.hpp"
 # include "Server.hpp"
+# include "Connection.hpp"
+# include "ParseRequest.hpp"
 # include "Servermanager.hpp"
 # include "Location.hpp"
 extern "C" {

@@ -6,13 +6,12 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/08 22:55:44 by pde-bakk      ########   odam.nl          #
+#    Updated: 2020/10/09 15:18:50 by pde-bakk      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-PARSE_DIR = ./Configparser
-FILES = main parser split Server Servermanager Location
+FILES = main parser split Server Servermanager Location Connection ParseRequest
 SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
@@ -20,8 +19,8 @@ INCLUDE = -Iincludes
 CFLAGS = -Wall -Werror -Wextra -pedantic -Ofast
 CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
 ifdef DEBUG
- CFLAGS += -g -fsanitize=address
- CXXFLAGS += -g -fsanitize=address
+ CFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
+ CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 endif
 
 GNL = getnextline.a
