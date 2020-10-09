@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include "Catch2.h"
-#include "../ParseRequest.hpp"
+#include "ParseRequest.hpp"
 
 TEST_CASE( "Parsing request", "[Request]" ) {
 
