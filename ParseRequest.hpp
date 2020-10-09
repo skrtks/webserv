@@ -66,6 +66,8 @@ class ParseRequest {
 public:
 	ParseRequest();
 	virtual ~ParseRequest();
+	ParseRequest(const ParseRequest &obj);
+	ParseRequest& operator== (const ParseRequest &obj);
 	request_s parseRequest(const std::string &req);
 	void parseRequestLine();
 	method getMethod() const;

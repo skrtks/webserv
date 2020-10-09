@@ -41,6 +41,19 @@ ParseRequest::ParseRequest() {
 ParseRequest::~ParseRequest() {
 }
 
+ParseRequest::ParseRequest(const ParseRequest &obj) {
+	*this = obj;
+}
+
+ParseRequest& ParseRequest::operator== (const ParseRequest &obj) {
+	if (this == &obj) {
+		return *this;
+	}
+	*this = obj;
+	return *this;
+}
+
+
 request_s ParseRequest::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;
