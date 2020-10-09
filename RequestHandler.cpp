@@ -50,9 +50,11 @@ RequestHandler& RequestHandler::operator== (const RequestHandler &obj) {
 }
 
 void RequestHandler::handleRequest(request_s request) {
+	// todo: set method, set path to requested file, check http version
 	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 		(this->*(_functionMap.at(it->first)))(it->second);
 	}
+	// todo: generate respons and return
 }
 
 void RequestHandler::handleACCEPT_CHARSET(const std::string &value) {
