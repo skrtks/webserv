@@ -11,7 +11,7 @@
 # **************************************************************************** #
 
 NAME = webserv
-SRCS = main.cpp Connection.cpp ParseRequest.cpp ExecuteHeaders.cpp
+SRCS = main.cpp Connection.cpp RequestParser.cpp RequestHandler.cpp
 CC = clang++
 CFLAGS = -Wall -Werror -Wextra -pedantic -std=c++98
 OBJS = $(SRCS:.cpp=.o)

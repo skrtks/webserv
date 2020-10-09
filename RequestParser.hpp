@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PARSEREQUEST_HPP
-#define PARSEREQUEST_HPP
+#ifndef REQUESTPARSER_HPP
+#define REQUESTPARSER_HPP
 
 #include <vector>
 #include <string>
@@ -55,7 +55,7 @@ struct request_s {
 	std::map<headerType, std::string> headers;
 };
 
-class ParseRequest {
+class RequestParser {
 	method _method;
 	std::string _uri;
 	std::pair<int, int> _version;
@@ -64,10 +64,10 @@ class ParseRequest {
 	std::map<std::string, headerType> _headerMap;
 	std::string _rawRequest;
 public:
-	ParseRequest();
-	virtual ~ParseRequest();
-	ParseRequest(const ParseRequest &obj);
-	ParseRequest& operator== (const ParseRequest &obj);
+	RequestParser();
+	virtual ~RequestParser();
+	RequestParser(const RequestParser &obj);
+	RequestParser& operator== (const RequestParser &obj);
 
 	request_s parseRequest(const std::string &req);
 	void parseRequestLine();
@@ -83,4 +83,4 @@ public:
 };
 
 
-#endif //PARSEREQUEST_HPP
+#endif //REQUESTPARSER_HPP

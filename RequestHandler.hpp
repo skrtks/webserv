@@ -10,19 +10,19 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef EXECUTEHEADERS_HPP
-#define EXECUTEHEADERS_HPP
+#ifndef REQUESTHANDLER_HPP
+#define REQUESTHANDLER_HPP
 
-#include "ParseRequest.hpp"
+#include "RequestParser.hpp"
 
-class ExecuteHeaders {
-	std::map<headerType, void (ExecuteHeaders::*)(const std::string &value)> _functionMap;
+class RequestHandler {
+	std::map<headerType, void (RequestHandler::*)(const std::string &value)> _functionMap;
 public:
-	ExecuteHeaders();
-	virtual ~ExecuteHeaders();
-	ExecuteHeaders(const ExecuteHeaders &obj);
-	ExecuteHeaders& operator== (const ExecuteHeaders &obj);
-	void startExecution(request_s request);
+	RequestHandler();
+	virtual ~RequestHandler();
+	RequestHandler(const RequestHandler &obj);
+	RequestHandler& operator== (const RequestHandler &obj);
+	void handleRequest(request_s request);
 	void handleACCEPT_CHARSET(const std::string &value);
 	void handleACCEPT_LANGUAGE(const std::string &value);
 	void handleALLOW(const std::string &value);
@@ -44,4 +44,4 @@ public:
 };
 
 
-#endif //EXECUTEHEADERS_HPP
+#endif //REQUESTHANDLER_HPP

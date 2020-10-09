@@ -22,8 +22,8 @@
 #include <zconf.h>
 #include <fstream>
 #include <fcntl.h>
-#include "ParseRequest.hpp"
-#include "ExecuteHeaders.hpp"
+#include "RequestParser.hpp"
+#include "RequestHandler.hpp"
 
 #include <string.h>
 

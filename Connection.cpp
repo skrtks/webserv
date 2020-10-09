@@ -58,8 +58,8 @@ void Connection::setUpConnection() {
 }
 
 void Connection::startListening() {
-	ParseRequest requestProcessor;
-	ExecuteHeaders executeHeaders;
+	RequestParser requestParser;
+	RequestHandler requestHandler;
 	// Start listening for connections on port set in sFd, mac BACKLOG waiting connections
 	if (listen(_socketFd, BACKLOG))
 		throw std::runtime_error(strerror(errno));
@@ -80,8 +80,8 @@ void Connection::startListening() {
 				}
 				else { // Handle request & return response
 					receiveRequest();
-					_parsedRequest = requestProcessor.parseRequest(_rawRequest);
-					executeHeaders.startExecution(_parsedRequest);
+					_parsedRequest = requestParser.parseRequest(_rawRequest);
+					requestHandler.handleRequest(_parsedRequest);
 					// TODO: execute headers
 					// TODO: generate response
 					std::string resp = "HTTP/1.1 200 OK\n"

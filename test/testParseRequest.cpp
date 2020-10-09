@@ -1,10 +1,10 @@
 #define CATCH_CONFIG_MAIN
 #include "Catch2.h"
-#include "../ParseRequest.hpp"
+#include "../RequestParser.hpp"
 
 TEST_CASE( "Parsing request", "[Request]" ) {
 
-	ParseRequest reqProcces;
+	RequestParser reqProcces;
 
 	SECTION( "Correct input 1" ) {
 		std::string request = "GET /index.html HTTP/1.1\r\nData: bla\r\n";
@@ -144,7 +144,7 @@ TEST_CASE( "Parsing request", "[Request]" ) {
 }
 
 TEST_CASE( "Parse Headers", "[Request]") {
-	ParseRequest reqProcces;
+	RequestParser reqProcces;
 
 	SECTION( "correct input 1" ) {
 		std::string request = "Host: localhost:8080\r\n"
