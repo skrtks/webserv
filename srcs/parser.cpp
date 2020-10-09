@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/09 14:29:01 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 14:47:02 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ Servermanager	parse(char *av) {
 	std::string	str;
 	Server	tmp;
 	
-	while (get_next_line(fd, str) > 0) {
+	while (ft::get_next_line(fd, str) > 0) {
 		if (is_first_char(str) || str == "")
 			continue ;
 		try {

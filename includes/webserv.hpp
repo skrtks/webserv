@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 15:37:16 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/08 22:50:34 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 14:43:57 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,10 @@ class Servermanager;
 int							is_first_char(std::string str, char find = '#');
 void						get_key_value(std::string &str, std::string &key, std::string& value);
 Servermanager				parse(char *av);
-std::vector<std::string>	split(const std::string& s, const std::string& delim);
+
+namespace ft {
+	std::vector<std::string>	split(const std::string& s, const std::string& delim);	
+}
 
 
 #endif

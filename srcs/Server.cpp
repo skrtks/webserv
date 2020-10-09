@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/09 13:49:06 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 14:47:15 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ bool	Server::getsuccess() const {
 }
 
 void	Server::configurelocation(const std::string& in) {
-	std::vector<std::string> v = split(in, " \t\r\n\v\f\0");
+	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f\0");
 	Location	loc(v[0]);
 	loc.setup(this->_fd);
 	// if succesful
@@ -122,7 +122,7 @@ void	Server::setup(int fd) {
 	std::string str;
 	this->_success = true;
 
-	while (get_next_line(fd, str) > 0) {
+	while (ft::get_next_line(fd, str) > 0) {
 		std::string key, value;
 		if (is_first_char(str) || str == "") //checks for comment char #
 			continue ;

@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 14:50:52 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/09 14:27:05 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/09 14:47:08 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,13 +55,13 @@ void	Location::setautoindex(const std::string& in) {
 	this->_autoindex = in;
 }
 void	Location::setallow_method(const std::string& in) {
-	this->_allow_method = split(in, " \t\r\n\v\f");
+	this->_allow_method = ft::split(in, " \t\r\n\v\f");
 }
 void	Location::setindex(const std::string& in) {
-	this->_indexes = split(in, " \t\r\n\v\f");
+	this->_indexes = ft::split(in, " \t\r\n\v\f");
 }
 void	Location::setcgi(const std::string& in) {
-	this->_cgi = split(in, " \t\r\n\v\f");
+	this->_cgi = ft::split(in, " \t\r\n\v\f");
 }
 
 //getters
@@ -97,7 +97,7 @@ void	Location::setup(int fd) {
 	std::string str;
 	this->_success = true;
 	
-	while (get_next_line(fd, str) > 0) {
+	while (ft::get_next_line(fd, str) > 0) {
 		std::string key, value;
 		if (is_first_char(str) || str == "") // checks for comments or empty lines
 			continue ;
