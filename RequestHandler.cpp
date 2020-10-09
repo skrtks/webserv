@@ -12,6 +12,9 @@
 
 #include "RequestHandler.hpp"
 #include <iostream>
+#include <fstream>
+#include <fcntl.h>
+#include <zconf.h>
 
 RequestHandler::RequestHandler() {
 	_functionMap[ACCEPT_CHARSET] = &RequestHandler::handleACCEPT_CHARSET;
@@ -49,12 +52,31 @@ RequestHandler& RequestHandler::operator== (const RequestHandler &obj) {
 	return *this;
 }
 
-void RequestHandler::handleRequest(request_s request) {
+std::string RequestHandler::handleRequest(request_s request) {
 	// todo: set method, set path to requested file, check http version
 	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 		(this->*(_functionMap.at(it->first)))(it->second);
 	}
+	generateResponse();
+	return _response;
 	// todo: generate respons and return
+}
+
+void RequestHandler::generateResponse() {
+	_response = "HTTP/1.1 200 OK\n"
+			   "Server: Webserv/0.1\n"
+			   "Content-Type: text/html\n"
+			   "Content-Length: 5336\n";
+	int fd = open("/Users/skorteka/Desktop/vrijdag.html", O_RDONLY);
+	if (fd == -1)
+		throw std::runtime_error(strerror(errno));
+	int ret;
+	char buf[1024];
+	do {
+		ret = read(fd, buf, 1024);
+		_response += buf;
+		memset(buf, 0, 1024);
+	} while (ret > 0);
 }
 
 void RequestHandler::handleACCEPT_CHARSET(const std::string &value) {

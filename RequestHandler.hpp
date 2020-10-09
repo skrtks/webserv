@@ -17,12 +17,15 @@
 
 class RequestHandler {
 	std::map<headerType, void (RequestHandler::*)(const std::string &value)> _functionMap;
+	std::string _response;
 public:
 	RequestHandler();
 	virtual ~RequestHandler();
 	RequestHandler(const RequestHandler &obj);
 	RequestHandler& operator== (const RequestHandler &obj);
-	void handleRequest(request_s request);
+
+	std::string handleRequest(request_s request);
+
 	void handleACCEPT_CHARSET(const std::string &value);
 	void handleACCEPT_LANGUAGE(const std::string &value);
 	void handleALLOW(const std::string &value);
@@ -41,6 +44,7 @@ public:
 	void handleTRANSFER_ENCODING(const std::string &value);
 	void handleUSER_AGENT(const std::string &value);
 	void handleWWW_AUTHENTICAT(const std::string &value);
+	void generateResponse();
 };
 
 

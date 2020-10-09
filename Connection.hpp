@@ -20,8 +20,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <zconf.h>
-#include <fstream>
-#include <fcntl.h>
 #include "RequestParser.hpp"
 #include "RequestHandler.hpp"
 

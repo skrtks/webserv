@@ -60,6 +60,7 @@ void Connection::setUpConnection() {
 void Connection::startListening() {
 	RequestParser requestParser;
 	RequestHandler requestHandler;
+	std::string response;
 	// Start listening for connections on port set in sFd, mac BACKLOG waiting connections
 	if (listen(_socketFd, BACKLOG))
 		throw std::runtime_error(strerror(errno));
@@ -81,30 +82,8 @@ void Connection::startListening() {
 				else { // Handle request & return response
 					receiveRequest();
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
-					requestHandler.handleRequest(_parsedRequest);
-					// TODO: execute headers
-					// TODO: generate response
-					std::string resp = "HTTP/1.1 200 OK\n"
-									   "Server: Webserv/0.1\n"
-									   "Date: Tue, 06 Oct 2020 08:35:16 GMT\n"
-									   "Content-Type: text/html\n"
-									   "Content-Length: 612\n"
-									   "Last-Modified: Tue, 11 Aug 2020 14:52:34 GMT\n"
-									   "Connection: keep-alive\n"
-									   "ETag: \"5f32b0b2-264\"\n"
-									   "Accept-Ranges: bytes\n\n";
-					int fd = open("/usr/local/var/www/index.html", O_RDONLY);
-					if (fd == -1)
-						throw std::runtime_error(strerror(errno));
-					int ret;
-					char buf[1024];
-					do {
-						ret = read(fd, buf, 1024);
-						resp += buf;
-						memset(buf, 0, 1024);
-					} while (ret > 0);
-
-					sendReply(resp);
+					response = requestHandler.handleRequest(_parsedRequest);
+					sendReply(response);
 					closeConnection(i);
 				}
 			}
