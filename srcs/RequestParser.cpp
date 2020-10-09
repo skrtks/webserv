@@ -11,9 +11,9 @@
 /* ************************************************************************** */
 
 
-#include "ParseRequest.hpp"
+#include "../includes/RequestParser.hpp"
 
-ParseRequest::ParseRequest() {
+RequestParser::RequestParser() {
 	_methodMap["GET"] = GET;
 	_methodMap["HEAD"] = HEAD;
 	_methodMap["POST"] = POST;
@@ -38,10 +38,23 @@ ParseRequest::ParseRequest() {
 	_headerMap["WWW-AUTHENTICATE"] = WWW_AUTHENTICATE;
 }
 
-ParseRequest::~ParseRequest() {
+RequestParser::~RequestParser() {
 }
 
-request_s ParseRequest::parseRequest(const std::string &req) {
+RequestParser::RequestParser(const RequestParser &obj) {
+	*this = obj;
+}
+
+RequestParser& RequestParser::operator== (const RequestParser &obj) {
+	if (this == &obj) {
+		return *this;
+	}
+	*this = obj;
+	return *this;
+}
+
+
+request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;
 	parseRequestLine();
@@ -54,7 +67,7 @@ request_s ParseRequest::parseRequest(const std::string &req) {
 	return (request);
 }
 
-void ParseRequest::parseRequestLine() {
+void RequestParser::parseRequestLine() {
 	size_t eoRequestLine = _rawRequest.find("\r\n", 0);
 	size_t pos = 0;
 	size_t pos2 = 0;
@@ -84,7 +97,7 @@ void ParseRequest::parseRequestLine() {
 	_rawRequest.erase(0, pos + 5);
 }
 
-void ParseRequest::extractVersion(size_t eoRequestLine, size_t &pos, size_t &pos2) {
+void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &pos2) {
 	int mainVersion;
 	int subVersion;
 	std::string ret;
@@ -102,7 +115,7 @@ void ParseRequest::extractVersion(size_t eoRequestLine, size_t &pos, size_t &pos
 	_version = std::make_pair(mainVersion, subVersion);
 }
 
-void ParseRequest::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
+void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
 	std::string ret;
 
 	pos2 = _rawRequest.find(' ', pos);
@@ -112,7 +125,7 @@ void ParseRequest::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
 	_uri = ret;
 }
 
-void ParseRequest::extractMethod(size_t eoRequestLine, size_t& pos) {
+void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 	std::string ret;
 
 	pos = _rawRequest.find(' ', 0);
@@ -127,7 +140,7 @@ void ParseRequest::extractMethod(size_t eoRequestLine, size_t& pos) {
 }
 
 // Parse headers and store them in _headers (map)
-void ParseRequest::parseHeaders() {
+void RequestParser::parseHeaders() {
 	std::string upperHeader;
 	int owsOffset;
 	while (!_rawRequest.empty()) {
@@ -174,22 +187,22 @@ void ParseRequest::parseHeaders() {
 
 // MARK: getters & setters
 
-const std::map<headerType, std::string>& ParseRequest::getHeaders() const {
+const std::map<headerType, std::string>& RequestParser::getHeaders() const {
 	return _headers;
 }
 
-method ParseRequest::getMethod() const {
+method RequestParser::getMethod() const {
 	return _method;
 }
 
-const std::string& ParseRequest::getUri() const {
+const std::string& RequestParser::getUri() const {
 	return _uri;
 }
 
-void ParseRequest::setRawRequest(const std::string& rawRequest) {
+void RequestParser::setRawRequest(const std::string& rawRequest) {
 	_rawRequest = rawRequest;
 }
 
-const std::pair<int, int>& ParseRequest::getVersion() const {
+const std::pair<int, int>& RequestParser::getVersion() const {
 	return _version;
 }

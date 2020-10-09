@@ -11,7 +11,7 @@
 # **************************************************************************** #
 
 NAME = webserv
-FILES = main parser split Server Servermanager Location Connection ParseRequest
+FILES = main parser split Server Servermanager Location Connection RequestParser RequestHandler
 SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
@@ -46,7 +46,7 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
 	@make -s -C $<
 	@cp $</$@ .
-	
+
 %.o: %.cpp
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
 	@$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@

@@ -20,9 +20,8 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <zconf.h>
-#include <fstream>
-#include <fcntl.h>
-#include "ParseRequest.hpp"
+#include "RequestParser.hpp"
+#include "RequestHandler.hpp"
 
 #include <string.h>
 
@@ -31,19 +30,22 @@
 #define BUFLEN 8192
 
 class Connection {
-	int socketFd, connectionFd, fdMax;
-	struct sockaddr_in server; // Will contain info about port and ip
-	fd_set master;    // master file descriptor list
-	fd_set readFds;  // temp file descriptor list for select()
+	int _socketFd, _connectionFd, _fdMax;
+	struct sockaddr_in _server; // Will contain info about port and ip
+	fd_set _master;    // master file descriptor list
+	fd_set _readFds;  // temp file descriptor list for select()
 	std::string _rawRequest;
-	request_s parsedRequest;
+	request_s _parsedRequest;
 	void addConnection();
 	void receiveRequest();
 	void sendReply(const std::string &msg) const;
 	void closeConnection(int fd);
 public:
 	Connection();
+	Connection(const Connection &obj);
+	Connection& operator== (const Connection &obj);
 	virtual ~Connection();
+
 	void setUpConnection();
 	void startListening();
 };

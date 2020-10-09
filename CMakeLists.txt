@@ -6,20 +6,15 @@ include_directories(includes srcs getnextline libft)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_CXX_FLAGS "-pedantic -std=c++98 -Wall -Werror -Wextra")
 
-add_executable(webserv includes/Connection.hpp
+add_executable(webserv getnextline/get_next_line.cpp
+        getnextline/get_next_line.hpp
+        includes/Connection.hpp
         includes/Location.hpp
         includes/ParseRequest.hpp
+        includes/RequestParser.hpp
         includes/Server.hpp
         includes/Servermanager.hpp
         includes/webserv.hpp
-        srcs/Connection.cpp
-        srcs/Location.cpp
-        srcs/main.cpp
-        srcs/parser.cpp
-        srcs/ParseRequest.cpp
-        srcs/Server.cpp
-        srcs/Servermanager.cpp
-        srcs/split.cpp
         libft/ft_atoi.c
         libft/ft_bzero.c
         libft/ft_calloc.c
@@ -55,5 +50,13 @@ add_executable(webserv includes/Connection.hpp
         libft/ft_tolower.c
         libft/ft_toupper.c
         libft/libft.h
-        getnextline/get_next_line.cpp
-        getnextline/get_next_line.hpp)
+        srcs/Connection.cpp
+        srcs/Location.cpp
+        srcs/main.cpp
+        srcs/parser.cpp
+        srcs/RequestParser.cpp
+        srcs/Server.cpp
+        srcs/Servermanager.cpp
+        srcs/split.cpp
+        includes/RequestHandler.hpp
+        srcs/RequestHandler.cpp)
