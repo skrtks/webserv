@@ -15,8 +15,6 @@
 
 #include "Location.hpp"
 
-class Location;
-
 class Server {
 	public:
 		Server();

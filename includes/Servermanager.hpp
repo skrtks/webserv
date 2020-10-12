@@ -15,8 +15,7 @@
 
 # include <cstddef>
 # include <vector>
-
-class Server;
+# include "Server.hpp"
 
 class Servermanager {
 	public:
