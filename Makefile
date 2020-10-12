@@ -64,6 +64,7 @@ fclean: clean
 	@rm -rf webservwebserv.dSYM *.a
 	@make fclean -s -C getnextline
 	@make fclean -s -C libft
+	@rm -rf $(NAME)
 
 re: fclean all
 
