@@ -45,3 +45,7 @@ size_t	Servermanager::size() const {
 void	Servermanager::clear() {
 	this->_servers.clear();
 }
+
+const std::vector<Server>& Servermanager::getServers() const {
+	return _servers;
+}

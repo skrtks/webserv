@@ -55,15 +55,16 @@ void Connection::setUpConnection() {
 	if (bind(_socketFd, (struct sockaddr *)&_server, sizeof(_server)) < 0) {
 		throw std::runtime_error(strerror(errno));
 	}
+
+	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
+	if (listen(_socketFd, BACKLOG))
+		throw std::runtime_error(strerror(errno));
 }
 
 void Connection::startListening() {
 	RequestParser requestParser;
 	RequestHandler requestHandler;
 	std::string response;
-	// Start listening for connections on port set in sFd, mac BACKLOG waiting connections
-	if (listen(_socketFd, BACKLOG))
-		throw std::runtime_error(strerror(errno));
 	// Add the listening socket to the master list
 	FD_SET(_socketFd, &_master);
 	// Keep track of the biggest fd on the list
@@ -134,4 +135,8 @@ void Connection::closeConnection(int fd) {
 	// Closing connection after response has been send
 	close(fd);
 	FD_CLR(fd, &_master);
+}
+
+void Connection::setServers(const std::vector<Server>& servers) {
+	_servers = servers;
 }

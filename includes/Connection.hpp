@@ -22,11 +22,14 @@
 #include <zconf.h>
 #include "RequestParser.hpp"
 #include "RequestHandler.hpp"
+#include "Server.hpp"
 
 #include <string.h>
 
-#define PORT 8080	// The port we will be listening on TODO: set through config file
-#define BACKLOG 5	// how many pending connections queue will hold
+class Server;
+
+#define PORT 8080
+#define BACKLOG 5
 #define BUFLEN 8192
 
 class Connection {
@@ -36,6 +39,7 @@ class Connection {
 	fd_set _readFds;  // temp file descriptor list for select()
 	std::string _rawRequest;
 	request_s _parsedRequest;
+	std::vector<Server> _servers;
 	void addConnection();
 	void receiveRequest();
 	void sendReply(const std::string &msg) const;
@@ -48,6 +52,7 @@ public:
 
 	void setUpConnection();
 	void startListening();
+	void setServers(const std::vector<Server>& servers);
 };
 
 

@@ -10,7 +10,6 @@ add_executable(webserv getnextline/get_next_line.cpp
         getnextline/get_next_line.hpp
         includes/Connection.hpp
         includes/Location.hpp
-        includes/ParseRequest.hpp
         includes/RequestParser.hpp
         includes/Server.hpp
         includes/Servermanager.hpp

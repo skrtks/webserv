@@ -21,6 +21,7 @@ int main(int argc, char **argv) {
 	for (size_t i = 0; i < manager.size(); i++)
 		std::cout << manager[i];
 
+	server.setServers(manager.getServers());
 	try {
 		server.setUpConnection();
 		server.startListening();

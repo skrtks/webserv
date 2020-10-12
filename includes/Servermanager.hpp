@@ -28,8 +28,9 @@ class Servermanager {
 		Server		operator[](const size_t n) const;
 		size_t		size() const;
 		void		clear();
-	private:
-		std::vector<Server> _servers;	
+	const std::vector<Server>& getServers() const;
+private:
+		std::vector<Server> _servers;
 };
 
 #endif
