@@ -18,12 +18,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <pthread.h>
 #include <zconf.h>
 #include "RequestParser.hpp"
 #include "RequestHandler.hpp"
 #include "Server.hpp"
-
 #include <string.h>
 
 class Server;
@@ -40,7 +40,7 @@ class Connection {
 	std::string _rawRequest;
 	request_s _parsedRequest;
 	std::vector<Server> _servers;
-	void addConnection();
+	int addConnection();
 	void receiveRequest();
 	void sendReply(const std::string &msg) const;
 	void closeConnection(int fd);

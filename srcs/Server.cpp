@@ -122,6 +122,14 @@ void	Server::setup(int fd) {
 		throw std::runtime_error("invalid setting in server block");
 }
 
+int Server::getSocketFd() const {
+	return _socketFd;
+}
+
+void Server::setSocketFd(int socketFd) {
+	_socketFd = socketFd;
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "error page = " << x.geterrorpage() << std::endl;

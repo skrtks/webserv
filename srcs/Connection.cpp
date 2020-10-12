@@ -39,36 +39,50 @@ Connection& Connection::operator== (const Connection &obj) {
 
 void Connection::setUpConnection() {
 	int opt = 1;
-	if (!(_socketFd = socket(AF_INET, SOCK_STREAM, 0)))
-		throw std::runtime_error(strerror(errno));
+	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
+		if (!(_socketFd = socket(AF_INET, SOCK_STREAM, 0)))
+			throw std::runtime_error(strerror(errno));
 
-	if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
-		throw std::runtime_error(strerror(errno));
+		if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+			throw std::runtime_error(strerror(errno));
+		}
+
+		// Fill struct with info about port and ip
+		_server.sin_family = AF_INET; // ipv4
+		if (it->gethost() == "localhost") {
+			_server.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
+		}
+		else {
+			_server.sin_addr.s_addr = inet_addr(it->gethost().c_str());
+		}
+		_server.sin_port = htons(it->getport()); // set port (htons translates host bit order to network order)
+
+		// Associate the socket with a port and ip
+		if (bind(_socketFd, (struct sockaddr*) &_server, sizeof(_server)) < 0) {
+			throw std::runtime_error(strerror(errno));
+		}
+
+		// Start listening for connections on port set in sFd, max BACKLOG waiting connections
+		if (listen(_socketFd, BACKLOG))
+			throw std::runtime_error(strerror(errno));
+		it->setSocketFd(_socketFd);
 	}
-
-	// Fill struct with info about port and ip
-	_server.sin_family = AF_INET; // ipv4
-	_server.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
-	_server.sin_port = htons(PORT); // set port (htons translates host bit order to network order)
-
-	// Associate the socket with a port and ip
-	if (bind(_socketFd, (struct sockaddr *)&_server, sizeof(_server)) < 0) {
-		throw std::runtime_error(strerror(errno));
-	}
-
-	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
-	if (listen(_socketFd, BACKLOG))
-		throw std::runtime_error(strerror(errno));
 }
 
 void Connection::startListening() {
 	RequestParser requestParser;
 	RequestHandler requestHandler;
 	std::string response;
-	// Add the listening socket to the master list
-	FD_SET(_socketFd, &_master);
-	// Keep track of the biggest fd on the list
-	_fdMax = _socketFd;
+	std::vector<int> sockets;
+	std::map<int, int> whichServer; // key: connection Fd value: server Fd
+	int foundFd;
+	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
+		// Add the listening socket to the master list
+		FD_SET(it->getSocketFd(), &_master);
+		// Keep track of the biggest fd on the list
+		_fdMax = it->getSocketFd();
+		sockets.push_back(it->getSocketFd());
+	}
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
 		_readFds = _master;
@@ -77,12 +91,13 @@ void Connection::startListening() {
 		// Go through existing connections looking for data to read
 		for (int i = 0; i <= _fdMax; i++) {
 			if (FD_ISSET(i, &_readFds)) { // Returns true if fd is active
-				if (i == _socketFd) { // This means there is a new connection waiting to be accepted
-					addConnection();
+				if ((foundFd = find(sockets.begin(), sockets.end(), i) != sockets.end())) { // This means there is a new connection waiting to be accepted
+					whichServer.insert(std::make_pair(addConnection(), foundFd));
 				}
 				else { // Handle request & return response
 					receiveRequest();
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
+//					_parsedRequest.
 					response = requestHandler.handleRequest(_parsedRequest);
 					sendReply(response);
 					closeConnection(i);
@@ -92,7 +107,7 @@ void Connection::startListening() {
 	}
 }
 
-void Connection::addConnection() {
+int Connection::addConnection() {
 	struct sockaddr_storage their_addr = {}; // Will contain info about connecting client
 	socklen_t addr_size;
 
@@ -104,6 +119,7 @@ void Connection::addConnection() {
 	if (_connectionFd > _fdMax)
 		_fdMax = _connectionFd;
 	std::cout << "New client connected" << std::endl;
+	return _connectionFd;
 }
 
 void Connection::receiveRequest() {

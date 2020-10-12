@@ -53,6 +53,7 @@ struct request_s {
 	std::string uri;
 	std::pair<int, int> version;
 	std::map<headerType, std::string> headers;
+	Server server;
 };
 
 class RequestParser {

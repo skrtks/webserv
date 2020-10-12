@@ -36,13 +36,15 @@ class Server {
 		void		configurelocation(const std::string& in);
 		std::vector<Location> getlocations() const;
 		void		setup(int fd);
-	private:
+		int getSocketFd() const;
+		void setSocketFd(int socketFd);
+private:
 		size_t		_port,
 					_client_body_size;
 		std::string _host,
 					_server_name,
 					_error_page;
-		int			_fd;
+		int			_fd, _socketFd;
 		std::vector<Location> _locations;
 };
 
