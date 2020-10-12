@@ -13,7 +13,7 @@ add_executable(webserv getnextline/get_next_line.cpp
         includes/RequestParser.hpp
         includes/Server.hpp
         includes/Servermanager.hpp
-        includes/webserv.hpp
+        includes/libftGnl.hpp
         libft/ft_atoi.c
         libft/ft_bzero.c
         libft/ft_calloc.c

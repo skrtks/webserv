@@ -13,7 +13,10 @@
 #ifndef LOCATION_HPP
 # define LOCATION_HPP
 
-# include "webserv.hpp"
+# include <string>
+# include <map>
+# include <vector>
+
 
 class Location {
 	public:

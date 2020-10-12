@@ -13,8 +13,8 @@
 #ifndef SERVERMANAGER_HPP
 # define SERVERMANAGER_HPP
 
-# include "Server.hpp"
-# include "webserv.hpp"
+# include <cstddef>
+# include <vector>
 
 class Server;
 

@@ -13,12 +13,10 @@
 #ifndef REQUESTPARSER_HPP
 #define REQUESTPARSER_HPP
 
-#include <vector>
-#include <string>
-#include <string.h>
 #include <map>
 #include <stdexcept>
-#include <cstdlib>
+#include <string>
+#include <string.h>
 
 enum headerType {
 	ACCEPT_CHARSET,
@@ -53,7 +51,7 @@ struct request_s {
 	std::string uri;
 	std::pair<int, int> version;
 	std::map<headerType, std::string> headers;
-	Server server;
+//	Server server;
 };
 
 class RequestParser {

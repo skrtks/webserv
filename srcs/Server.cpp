@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "libftGnl.hpp"
 
 Server::Server(void) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html") {

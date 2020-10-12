@@ -11,6 +11,9 @@
 /* ************************************************************************** */
 
 #include "Connection.hpp"
+#include <iostream>
+#include <zconf.h>
+#include "RequestHandler.hpp"
 
 Connection::Connection() : _server(), _master(), _readFds() {
 	FD_ZERO(&_master);

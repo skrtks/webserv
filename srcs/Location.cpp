@@ -11,7 +11,8 @@
 /* ************************************************************************** */
 
 #include "Location.hpp"
-
+#include <sys/stat.h>
+#include "libftGnl.hpp"
 
 Location::Location() {
 	this->_location_match = "";

@@ -12,7 +12,6 @@
 
 #include "RequestHandler.hpp"
 #include <iostream>
-#include <fstream>
 #include <fcntl.h>
 #include <zconf.h>
 

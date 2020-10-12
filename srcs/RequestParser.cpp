@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 
-#include "../includes/RequestParser.hpp"
+#include "RequestParser.hpp"
 
 RequestParser::RequestParser() {
 	_methodMap["GET"] = GET;

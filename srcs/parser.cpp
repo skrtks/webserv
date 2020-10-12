@@ -10,7 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "webserv.hpp"
+#include <sys/stat.h>
+#include <Server.hpp>
+#include "libftGnl.hpp"
 
 int		is_first_char(std::string str, char find) {
 	int i = 0;

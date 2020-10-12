@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include <string>
-#include <iostream>
 #include <vector>
 
 namespace ft {
@@ -31,21 +30,3 @@ namespace ft {
 		return vec;
 	}
 }
-
-
-// int main( ) {
-// 	std::string s;
-// 	s = "hasta \t la vista\n motherfucker\t\n    bitch  ";
-// 	std::vector<std::string> vec;
-// 	vec = ft::split(s, " \t\n");
-// 	for (size_t i = 0; i < vec.size(); i++)
-// 		std::cout << "found: \"" << vec[i] << "\"." << std::endl;
-// 	s = "  /  {";
-// 	vec = ft::split(s, " \t\n");
-// 	for (size_t i = 0; i < vec.size(); i++)
-// 		std::cout << "found: \"" << vec[i] << "\"." << std::endl;
-// 	s = "{";
-// 	vec = ft::split(s, " \t\n");
-// 	for (size_t i = 0; i < vec.size(); i++)
-// 		std::cout << "found: \"" << vec[i] << "\"." << std::endl;
-// }

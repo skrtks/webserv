@@ -10,7 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "webserv.hpp"
+#include "Servermanager.hpp"
+#include "Connection.hpp"
+#include "libftGnl.hpp"
 
 int main(int argc, char **argv) {
 	Servermanager manager;

@@ -13,20 +13,9 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 
-#include <iostream>
-#include <stdexcept>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <zconf.h>
 #include "RequestParser.hpp"
-#include "RequestHandler.hpp"
 #include "Server.hpp"
-#include <string.h>
-
-class Server;
 
 #define PORT 8080
 #define BACKLOG 5

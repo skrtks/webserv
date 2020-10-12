@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Servermanager.hpp"
+#include "Server.hpp"
 
 Servermanager::Servermanager() : _servers() {
 }

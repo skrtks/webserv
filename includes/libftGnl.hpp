@@ -10,33 +10,15 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef WEBSERV_HPP
-# define WEBSERV_HPP
+#ifndef LIBFTGNL_HPP
+# define LIBFTGNL_HPP
 
-# include <cstddef>
-# include <cstring>
-# include <string>
-# include <map>
-# include <vector>
-# include <list>
-# include <stack>
-# include <queue>
-# include <iostream>
-# include <fcntl.h>
-# include <unistd.h>
-# include <sys/stat.h>
-
-# include "../getnextline/get_next_line.hpp"
-# include "Server.hpp"
-# include "Connection.hpp"
 # include "Servermanager.hpp"
-# include "Location.hpp"
+# include "../getnextline/get_next_line.hpp"
 extern "C" {
 	# include "../libft/libft.h"
 }
 
-class Servermanager;
-// parser
 int							is_first_char(std::string str, char find = '#');
 void						get_key_value(std::string &str, std::string &key, std::string& value);
 Servermanager				parse(char *av);
