@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/09 15:27:33 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/13 16:28:59 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,26 +17,32 @@
 
 class Server {
 	public:
+		//coplien form
 		Server();
 		Server(int fd);
 		~Server();
 		Server(const Server& x);
 		Server& 	operator=(const Server& x);
+
+		//setters
 		void		setport(const std::string& port);
-		size_t		getport() const;
 		void		sethost(const std::string& host);
-		std::string	gethost() const;
 		void		setservername(const std::string& servername);
-		std::string	getservername() const;
 		void		setclientbodysize(const std::string& clientbodysize);
-		size_t		getclientbodysize() const;
 		void		seterrorpage(const std::string& errorpage);
-		std::string	geterrorpage() const;
+		void		setSocketFd(int socketFd);
+	
+		//getters
+		size_t					getport() const;
+		std::string				gethost() const;
+		std::string				getservername() const;
+		size_t					getclientbodysize() const;
+		std::string				geterrorpage() const;
+		std::vector<Location> 	getlocations() const;
+		int						getSocketFd() const;
+	
 		void		configurelocation(const std::string& in);
-		std::vector<Location> getlocations() const;
 		void		setup(int fd);
-		int getSocketFd() const;
-		void setSocketFd(int socketFd);
 private:
 		size_t		_port,
 					_client_body_size;
