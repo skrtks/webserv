@@ -55,9 +55,9 @@ RequestHandler& RequestHandler::operator== (const RequestHandler &obj) {
 std::string RequestHandler::handleRequest(request_s request) {
 	// todo: set method, set path to requested file, check http version
 	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this for production
-	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
-		(this->*(_functionMap.at(it->first)))(it->second);
-	}
+//	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
+//		(this->*(_functionMap.at(it->first)))(it->second);
+//	}
 	generateResponse();
 	return _response;
 	// todo: generate respons and return
@@ -67,7 +67,7 @@ void RequestHandler::generateResponse() {
 	_response = "HTTP/1.1 200 OK\n"
 			   "Server: Webserv/0.1\n"
 			   "Content-Type: text/html\n"
-			   "Content-Length: 678\n";
+			   "Content-Length: 678\n\n";
 	int fd = open("/Users/skorteka/Desktop/webserv/htmlfiles/index.html", O_RDONLY);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno));
@@ -78,6 +78,8 @@ void RequestHandler::generateResponse() {
 		_response += buf;
 		memset(buf, 0, 1024);
 	} while (ret > 0);
+	_response  += "\n";
+	std::cout << "Response: \n" << _response << std::endl;
 }
 
 void RequestHandler::handleACCEPT_CHARSET(const std::string &value) {
