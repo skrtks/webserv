@@ -14,6 +14,7 @@
 #include <iostream>
 #include <zconf.h>
 #include "RequestHandler.hpp"
+#include "libftGnl.hpp"
 
 Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	FD_ZERO(&_master);
@@ -29,19 +30,41 @@ Connection::~Connection() {
 }
 
 Connection::Connection(const Connection &obj) {
-	*this = obj;
+	if (this != &obj) {
+		this->_connectionFd = obj._connectionFd;
+		this->_socketFd = obj._socketFd;
+		this->_connectionFd = obj._connectionFd;
+		this->_fdMax = obj._fdMax;
+		this->_serverAddr = obj._serverAddr;
+		this->_master = obj._master;
+		this->_readFds = obj._readFds;
+		this->_rawRequest = obj._rawRequest;
+		this->_parsedRequest = obj._parsedRequest;
+		this->_servers = obj._servers;
+		this->_serverMap = obj._serverMap;
+	}
 }
 
 Connection& Connection::operator== (const Connection &obj) {
-	if (this == &obj) {
-		return *this;
+	if (this != &obj) {
+		this->_connectionFd = obj._connectionFd;
+		this->_socketFd = obj._socketFd;
+		this->_connectionFd = obj._connectionFd;
+		this->_fdMax = obj._fdMax;
+		this->_serverAddr = obj._serverAddr;
+		this->_master = obj._master;
+		this->_readFds = obj._readFds;
+		this->_rawRequest = obj._rawRequest;
+		this->_parsedRequest = obj._parsedRequest;
+		this->_servers = obj._servers;
+		this->_serverMap = obj._serverMap;
 	}
-	*this = obj;
 	return *this;
 }
 
 void Connection::setUpConnection() {
 	int opt = 1;
+	ft_memset(&_serverAddr, 0, sizeof(_serverAddr));
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		if (!(_socketFd = socket(AF_INET, SOCK_STREAM, 0)))
 			throw std::runtime_error(strerror(errno));
@@ -62,6 +85,7 @@ void Connection::setUpConnection() {
 
 		// Associate the socket with a port and ip
 		if (bind(_socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
+			std::cout << "Cannot bind: " << errno << std::endl;
 			throw std::runtime_error(strerror(errno));
 		}
 

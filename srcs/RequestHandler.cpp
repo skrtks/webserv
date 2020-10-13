@@ -40,14 +40,15 @@ RequestHandler::~RequestHandler() {
 }
 
 RequestHandler::RequestHandler(const RequestHandler &obj) {
-	*this = obj;
+	this->_functionMap = obj._functionMap;
+	this->_response = obj._response;
 }
 
 RequestHandler& RequestHandler::operator== (const RequestHandler &obj) {
 	if (this == &obj) {
-		return *this;
+		this->_functionMap = obj._functionMap;
+		this->_response = obj._response;
 	}
-	*this = obj;
 	return *this;
 }
 

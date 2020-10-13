@@ -40,7 +40,7 @@ enum headerType {
 	WWW_AUTHENTICATE
 };
 
-enum method {
+enum e_method {
 	GET, // These are mandatory according to rfc's
 	HEAD, // These are mandatory according to rfc's
 	POST,
@@ -48,7 +48,7 @@ enum method {
 };
 
 struct request_s {
-	method method;
+	e_method method;
 	std::string uri;
 	std::pair<int, int> version;
 	std::map<headerType, std::string> headers;
@@ -56,11 +56,11 @@ struct request_s {
 };
 
 class RequestParser {
-	method _method;
+	e_method _method;
 	std::string _uri;
 	std::pair<int, int> _version;
 	std::map<headerType, std::string> _headers;
-	std::map<std::string, method> _methodMap;
+	std::map<std::string, e_method> _methodMap;
 	std::map<std::string, headerType> _headerMap;
 	std::string _rawRequest;
 public:
@@ -76,7 +76,7 @@ public:
 	void extractMethod(size_t eoRequestLine, size_t& pos);
 	void extractUri(size_t eoRequestLine, size_t pos, size_t pos2);
 	void extractVersion(size_t eoRequestLine, size_t& pos, size_t &pos2);
-	method getMethod() const;
+	e_method getMethod() const;
 	const std::map<headerType, std::string>& getHeaders() const;
 	const std::string& getUri() const;
 	const std::pair<int, int>& getVersion() const;

@@ -42,14 +42,25 @@ RequestParser::~RequestParser() {
 }
 
 RequestParser::RequestParser(const RequestParser &obj) {
-	*this = obj;
+	this->_method = obj._method;
+	this->_uri = obj._uri;
+	this->_version = obj._version;
+	this->_headers = obj._headers;
+	this->_methodMap = obj._methodMap;
+	this->_headerMap = obj._headerMap;
+	this->_rawRequest = obj._rawRequest;
 }
 
 RequestParser& RequestParser::operator== (const RequestParser &obj) {
-	if (this == &obj) {
-		return *this;
+	if (this != &obj) {
+		this->_method = obj._method;
+		this->_uri = obj._uri;
+		this->_version = obj._version;
+		this->_headers = obj._headers;
+		this->_methodMap = obj._methodMap;
+		this->_headerMap = obj._headerMap;
+		this->_rawRequest = obj._rawRequest;
 	}
-	*this = obj;
 	return *this;
 }
 
@@ -132,7 +143,7 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 	if (pos > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
 	ret = _rawRequest.substr(0, pos);
-	std::map<std::string, method>::iterator it = _methodMap.find(ret);
+	std::map<std::string, e_method>::iterator it = _methodMap.find(ret);
 	if (it != _methodMap.end()) {
 		_method = it->second;
 	}
@@ -191,7 +202,7 @@ const std::map<headerType, std::string>& RequestParser::getHeaders() const {
 	return _headers;
 }
 
-method RequestParser::getMethod() const {
+e_method RequestParser::getMethod() const {
 	return _method;
 }
 
