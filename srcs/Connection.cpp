@@ -19,20 +19,20 @@
 Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
-	_socketFd = 0;
 	_connectionFd = 0;
 	_fdMax = 0;
 }
 
 Connection::~Connection() {
-	close(_socketFd);
+	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
+		close(it->getSocketFd());
+	}
 	close(_connectionFd);
 }
 
 Connection::Connection(const Connection &obj) {
 	if (this != &obj) {
 		this->_connectionFd = obj._connectionFd;
-		this->_socketFd = obj._socketFd;
 		this->_connectionFd = obj._connectionFd;
 		this->_fdMax = obj._fdMax;
 		this->_serverAddr = obj._serverAddr;
@@ -48,7 +48,6 @@ Connection::Connection(const Connection &obj) {
 Connection& Connection::operator== (const Connection &obj) {
 	if (this != &obj) {
 		this->_connectionFd = obj._connectionFd;
-		this->_socketFd = obj._socketFd;
 		this->_connectionFd = obj._connectionFd;
 		this->_fdMax = obj._fdMax;
 		this->_serverAddr = obj._serverAddr;
@@ -63,13 +62,14 @@ Connection& Connection::operator== (const Connection &obj) {
 }
 
 void Connection::setUpConnection() {
+	int socketFd;
 	int opt = 1;
-	ft_memset(&_serverAddr, 0, sizeof(_serverAddr));
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
-		if (!(_socketFd = socket(AF_INET, SOCK_STREAM, 0)))
+		ft_memset(&_serverAddr, 0, sizeof(_serverAddr));
+		if (!(socketFd = socket(AF_INET, SOCK_STREAM, 0)))
 			throw std::runtime_error(strerror(errno));
 
-		if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+		if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
 			throw std::runtime_error(strerror(errno));
 		}
 
@@ -84,15 +84,15 @@ void Connection::setUpConnection() {
 		_serverAddr.sin_port = htons(it->getport()); // set port (htons translates host bit order to network order)
 
 		// Associate the socket with a port and ip
-		if (bind(_socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
+		if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
 			std::cout << "Cannot bind: " << errno << std::endl;
 			throw std::runtime_error(strerror(errno));
 		}
 
 		// Start listening for connections on port set in sFd, max BACKLOG waiting connections
-		if (listen(_socketFd, BACKLOG))
+		if (listen(socketFd, BACKLOG))
 			throw std::runtime_error(strerror(errno));
-		it->setSocketFd(_socketFd);
+		it->setSocketFd(socketFd);
 	}
 }
 
@@ -118,7 +118,7 @@ void Connection::startListening() {
 		for (int i = 0; i <= _fdMax; i++) {
 			if (FD_ISSET(i, &_readFds)) { // Returns true if fd is active
 				if ((serverMapIt = _serverMap.find(i)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
-					serverConnections.insert(std::make_pair(addConnection(), serverMapIt->second));
+					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
 				}
 				else { // Handle request & return response
 					receiveRequest();
@@ -134,13 +134,13 @@ void Connection::startListening() {
 	}
 }
 
-int Connection::addConnection() {
+int Connection::addConnection(const int &socketFd) {
 	struct sockaddr_storage their_addr = {}; // Will contain info about connecting client
 	socklen_t addr_size;
 
 	// Accept one connection from backlog
 	addr_size = sizeof their_addr;
-	if ((_connectionFd = accept(_socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0)
+	if ((_connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0)
 		throw std::runtime_error(strerror(errno));
 	FD_SET(_connectionFd, &_master); // Add new connection to the set
 	if (_connectionFd > _fdMax)

@@ -21,7 +21,7 @@
 #define BUFLEN 8192
 
 class Connection {
-	int _socketFd, _connectionFd, _fdMax;
+	int _connectionFd, _fdMax;
 	struct sockaddr_in _serverAddr; // Will contain info about port and ip
 	fd_set _master;    // master file descriptor list
 	fd_set _readFds;  // temp file descriptor list for select()
@@ -29,7 +29,7 @@ class Connection {
 	request_s _parsedRequest;
 	std::vector<Server> _servers;
 	std::map<int, Server> _serverMap; // key: socketFd; value: Corresponding server object
-	int addConnection();
+	int addConnection(const int &socketFd);
 	void receiveRequest();
 	void sendReply(const std::string &msg) const;
 	void closeConnection(int fd);

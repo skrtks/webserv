@@ -54,7 +54,7 @@ RequestHandler& RequestHandler::operator== (const RequestHandler &obj) {
 
 std::string RequestHandler::handleRequest(request_s request) {
 	// todo: set method, set path to requested file, check http version
-	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this
+	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this for production
 	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 		(this->*(_functionMap.at(it->first)))(it->second);
 	}
