@@ -65,7 +65,7 @@ void Connection::setUpConnection() {
 	int socketFd;
 	int opt = 1;
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
-		ft_memset(&_serverAddr, 0, sizeof(_serverAddr));
+		ft_memset(&_serverAddr, 0, sizeof(_serverAddr)); // Clear struct from prev setup
 		if (!(socketFd = socket(AF_INET, SOCK_STREAM, 0)))
 			throw std::runtime_error(strerror(errno));
 
@@ -155,16 +155,15 @@ void Connection::receiveRequest() {
 	int bytesReceived;
 	// Loop to receive complete request, even if buffer is smaller
 	request.clear();
-	memset(buf, 0, BUFLEN); // TODO: make this ft_memset
+	ft_memset(buf, 0, BUFLEN);
 	do {
 		bytesReceived = recv(_connectionFd, buf, BUFLEN - 1, 0);
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
 		request += buf;
-		memset(buf, 0, BUFLEN); // TODO: make this ft_memset
+		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
-//	std::cout << "REQUEST: \n" << request;
 }
 
 void Connection::sendReply(const std::string &msg) const {
