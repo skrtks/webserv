@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/09 15:13:09 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/13 17:06:21 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ void	get_key_value(std::string &str, std::string &key, std::string& value) {
 
 Servermanager	parse(char *av) {
 	Servermanager	skrtks;
+	std::string		str;
 	struct stat statstruct;
 	int fd;
 	if (av && stat(av, &statstruct) != -1)
@@ -42,7 +43,6 @@ Servermanager	parse(char *av) {
 		fd = open("configfiles/nginx.conf", O_RDONLY);
 	if (fd < 0)
 		return skrtks;
-	std::string	str;
 	
 	while (ft::get_next_line(fd, str) > 0) {
 		if (is_first_char(str) || str == "")
@@ -57,7 +57,6 @@ Servermanager	parse(char *av) {
 		catch (std::exception& e) {
 			std::cerr << "threw an exception in parse try block: " << e.what() << std::endl;
 			close(fd);
-			skrtks.clear();
 			exit(1);
 		}
 	}
