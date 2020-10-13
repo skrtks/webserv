@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   ExecuteHeaders.cpp                                 :+:    :+:            */
+/*   RequestHandler.cpp                                 :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/08 16:15:11 by skorteka      ########   odam.nl         */
+/*   Updated: 2020/10/13 17:02:51 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,17 +57,19 @@ std::string RequestHandler::handleRequest(request_s request) {
 //	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 //		(this->*(_functionMap.at(it->first)))(it->second);
 //	}
-	generateResponse();
+	std::string filepath = request.server.getlocations()[0].getroot() + '/' + request.server.getlocations()[0].getindexes()[0];
+		// okay this is legit fucked, but still better than hardcoding the filepath
+	generateResponse(filepath);
 	return _response;
 	// todo: generate respons and return
 }
 
-void RequestHandler::generateResponse() {
+void RequestHandler::generateResponse(const std::string& filepath) {
 	_response = "HTTP/1.1 200 OK\n"
 			   "Server: Webserv/0.1\n"
 			   "Content-Type: text/html\n"
 			   "Content-Length: 678\n\n";
-	int fd = open("/Users/skorteka/Desktop/webserv/htmlfiles/index.html", O_RDONLY);
+	int fd = open(filepath.c_str(), O_RDONLY);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno));
 	int ret;
@@ -78,7 +80,8 @@ void RequestHandler::generateResponse() {
 		memset(buf, 0, 1024);
 	} while (ret > 0);
 	_response  += "\n";
-	std::cout << "Response: \n" << _response << std::endl;
+	close(fd);
+	// std::cout << "Response: \n" << _response << std::endl;
 }
 
 void RequestHandler::handleACCEPT_CHARSET(const std::string &value) {
