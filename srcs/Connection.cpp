@@ -167,8 +167,6 @@ void Connection::receiveRequest() {
 }
 
 void Connection::sendReply(const std::string &msg) const {
-	// TODO: send proper reply
-
 	if ((send(_connectionFd, msg.c_str(), msg.length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
 }

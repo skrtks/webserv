@@ -12,6 +12,7 @@
 
 
 #include "RequestParser.hpp"
+#include "libftGnl.hpp"
 
 RequestParser::RequestParser() {
 	_methodMap["GET"] = GET;
@@ -121,8 +122,8 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 	if (pos2 > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
 	ret = _rawRequest.substr(pos, pos2 - pos);
-	mainVersion = std::atoi(ret.c_str()); // TODO: use ft_atoi
-	subVersion = std::atoi(ret.c_str() + 2); // TODO: use ft_atoi
+	mainVersion = ft_atoi(ret.c_str());
+	subVersion = ft_atoi(ret.c_str() + 2);
 	_version = std::make_pair(mainVersion, subVersion);
 }
 
