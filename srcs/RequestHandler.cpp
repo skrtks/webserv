@@ -67,8 +67,8 @@ void RequestHandler::generateResponse() {
 	_response = "HTTP/1.1 200 OK\n"
 			   "Server: Webserv/0.1\n"
 			   "Content-Type: text/html\n"
-			   "Content-Length: 5336\n";
-	int fd = open("/Users/sam/Desktop/webserv/htmlfiles/index.html", O_RDONLY);
+			   "Content-Length: 678\n";
+	int fd = open("/Users/skorteka/Desktop/webserv/htmlfiles/index.html", O_RDONLY);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno));
 	int ret;
