@@ -6,7 +6,7 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/09 15:18:50 by pde-bakk      ########   odam.nl          #
+#    Updated: 2020/10/13 16:21:22 by pde-bakk      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,10 +16,8 @@ SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
 
-CFLAGS = -Wall -Werror -Wextra -pedantic -Ofast
 CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
 ifdef DEBUG
- CFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
  CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 endif
 
@@ -51,8 +49,6 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
 	@$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
-.PHONY: clean fclean re all
-
 clean:
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
 	@rm -f $(OBJS)
@@ -69,4 +65,6 @@ fclean: clean
 re: fclean all
 
 run: clean all
-	./webserv
+	./$(NAME)
+
+.PHONY: clean fclean re all
