@@ -6,15 +6,26 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/02 15:16:50 by sam           ########   odam.nl          #
+#    Updated: 2020/10/13 16:21:22 by pde-bakk      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-SRCS = main.cpp Connection.cpp ParseRequest.cpp
-CC = clang++
-CFLAGS = -Wall -Werror -Wextra -pedantic -std=c++98
+FILES = main parser split Server Servermanager Location Connection RequestParser RequestHandler
+SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
+INCLUDE = -Iincludes
+
+CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
+ifdef DEBUG
+ CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
+endif
+
+GNL = getnextline.a
+LIBFT = libft.a
+ifeq ($(shell uname), Linux)
+ ECHO = -e
+endif
 
 # Colours
 DARK_GREEN	= \033[0;32m
@@ -25,28 +36,35 @@ PREFIX		= $(DARK_GREEN)$(NAME) $(END)\xc2\xbb
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	@echo "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
-	@$(CC) $(CFLAGS) $(OBJS) -o $@
+$(NAME): $(OBJS) $(LIBFT) $(GNL)
+	@echo $(ECHO) "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
+	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
 
-asan: $(SRCS)
-	@echo "$(PREFIX)$(GREEN) Bundling executable with address sanitizer support... $(END)$(NAME)"
-	@$(CC) $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer -O1 $(SRCS) -o $(NAME)
-
+%.a: %
+	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
+	@make -s -C $<
+	@cp $</$@ .
 
 %.o: %.cpp
-	@echo "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
-	@clang++ -Wall -Werror -Wextra -pedantic -std=c++98 -c $< -o $@
-
-.PHONY: clean fclean re all
+	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
-	@echo "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
+	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
 	@rm -f $(OBJS)
+	@make clean -s -C getnextline
+	@make clean -s -C libft
 
 fclean: clean
-	@echo "$(PREFIX)$(GREEN) Removing executable $(END)$(OUT_DIR)"
-	@rm -f webserv
-	@rm -rf webserv.dSYM
+	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing executable $(END)$(OUT_DIR)"
+	@rm -rf webservwebserv.dSYM *.a
+	@make fclean -s -C getnextline
+	@make fclean -s -C libft
+	@rm -rf $(NAME)
 
 re: fclean all
+
+run: clean all
+	./$(NAME)
+
+.PHONY: clean fclean re all

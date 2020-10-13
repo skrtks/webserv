@@ -1,4 +1,5 @@
 project(test)
 
 set(CMAKE_CXX_STANDARD 11)
-add_executable(test test.cpp ../ParseRequest.cpp ../ParseRequest.hpp Catch2.h)
+include_directories(../includes ../srcs)
+add_executable(test testParseRequest.cpp ../srcs/RequestParser.cpp ../includes/RequestParser.hpp Catch2.h)
