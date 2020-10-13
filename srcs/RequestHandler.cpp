@@ -53,6 +53,7 @@ RequestHandler& RequestHandler::operator== (const RequestHandler &obj) {
 
 std::string RequestHandler::handleRequest(request_s request) {
 	// todo: set method, set path to requested file, check http version
+	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this
 	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 		(this->*(_functionMap.at(it->first)))(it->second);
 	}
@@ -66,7 +67,7 @@ void RequestHandler::generateResponse() {
 			   "Server: Webserv/0.1\n"
 			   "Content-Type: text/html\n"
 			   "Content-Length: 5336\n";
-	int fd = open("/Users/skorteka/Desktop/vrijdag.html", O_RDONLY);
+	int fd = open("/Users/sam/Desktop/webserv/htmlfiles/index.html", O_RDONLY);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno));
 	int ret;

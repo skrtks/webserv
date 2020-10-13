@@ -15,7 +15,7 @@
 #include <zconf.h>
 #include "RequestHandler.hpp"
 
-Connection::Connection() : _server(), _master(), _readFds() {
+Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
 	_socketFd = 0;
@@ -51,17 +51,17 @@ void Connection::setUpConnection() {
 		}
 
 		// Fill struct with info about port and ip
-		_server.sin_family = AF_INET; // ipv4
+		_serverAddr.sin_family = AF_INET; // ipv4
 		if (it->gethost() == "localhost") {
-			_server.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
+			_serverAddr.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
 		}
 		else {
-			_server.sin_addr.s_addr = inet_addr(it->gethost().c_str());
+			_serverAddr.sin_addr.s_addr = inet_addr(it->gethost().c_str());
 		}
-		_server.sin_port = htons(it->getport()); // set port (htons translates host bit order to network order)
+		_serverAddr.sin_port = htons(it->getport()); // set port (htons translates host bit order to network order)
 
 		// Associate the socket with a port and ip
-		if (bind(_socketFd, (struct sockaddr*) &_server, sizeof(_server)) < 0) {
+		if (bind(_socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
 			throw std::runtime_error(strerror(errno));
 		}
 
@@ -76,15 +76,14 @@ void Connection::startListening() {
 	RequestParser requestParser;
 	RequestHandler requestHandler;
 	std::string response;
-	std::vector<int> sockets;
-	std::map<int, int> whichServer; // key: connection Fd value: server Fd
-	int foundFd;
+	std::map<int, Server>::iterator serverMapIt;
+	std::map<int, Server> serverConnections;
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		// Add the listening socket to the master list
 		FD_SET(it->getSocketFd(), &_master);
 		// Keep track of the biggest fd on the list
 		_fdMax = it->getSocketFd();
-		sockets.push_back(it->getSocketFd());
+		_serverMap.insert(std::make_pair(it->getSocketFd(), *it)); // Keep track of which socket is for which server obj
 	}
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
@@ -94,16 +93,17 @@ void Connection::startListening() {
 		// Go through existing connections looking for data to read
 		for (int i = 0; i <= _fdMax; i++) {
 			if (FD_ISSET(i, &_readFds)) { // Returns true if fd is active
-				if ((foundFd = find(sockets.begin(), sockets.end(), i) != sockets.end())) { // This means there is a new connection waiting to be accepted
-					whichServer.insert(std::make_pair(addConnection(), foundFd));
+				if ((serverMapIt = _serverMap.find(i)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
+					serverConnections.insert(std::make_pair(addConnection(), serverMapIt->second));
 				}
 				else { // Handle request & return response
 					receiveRequest();
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
-//					_parsedRequest.
+					_parsedRequest.server = serverConnections[i];
 					response = requestHandler.handleRequest(_parsedRequest);
 					sendReply(response);
 					closeConnection(i);
+					serverConnections.erase(i);
 				}
 			}
 		}

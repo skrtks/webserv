@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <string>
 #include <string.h>
+#include "Server.hpp"
 
 enum headerType {
 	ACCEPT_CHARSET,
@@ -51,7 +52,7 @@ struct request_s {
 	std::string uri;
 	std::pair<int, int> version;
 	std::map<headerType, std::string> headers;
-//	Server server;
+	Server server;
 };
 
 class RequestParser {

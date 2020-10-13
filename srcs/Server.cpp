@@ -38,6 +38,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_client_body_size = x._client_body_size;
 		this->_error_page = x._error_page;
 		this->_locations = x._locations;
+		this->_socketFd = x._socketFd;
 	}
 	return *this;
 }
