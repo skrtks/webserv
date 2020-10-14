@@ -122,7 +122,7 @@ void Connection::startListening() {
 				}
 				else { // Handle request & return response
 					receiveRequest();
-					_parsedRequest = requestParser.parseRequest(_rawRequest);
+//					_parsedRequest = requestParser.parseRequest(_rawRequest); //
 					_parsedRequest.server = serverConnections[i];
 					response = requestHandler.handleRequest(_parsedRequest);
 					sendReply(response);
