@@ -6,14 +6,16 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/13 17:02:51 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/15 21:33:24 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestHandler.hpp"
+#include "libftGnl.hpp"
 #include <iostream>
 #include <fcntl.h>
 #include <zconf.h>
+#include "Colours.hpp"
 
 RequestHandler::RequestHandler() {
 	_functionMap[ACCEPT_CHARSET] = &RequestHandler::handleACCEPT_CHARSET;
@@ -57,29 +59,80 @@ std::string RequestHandler::handleRequest(request_s request) {
 //	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 //		(this->*(_functionMap.at(it->first)))(it->second);
 //	}
+
 	std::string filepath = request.server.getlocations()[0].getroot() + '/' + request.server.getlocations()[0].getindexes()[0];
 		// okay this is legit fucked, but still better than hardcoding the filepath
-	generateResponse(filepath);
+	generateResponse(filepath, request);
 	return _response;
 	// todo: generate respons and return
 }
 
-void RequestHandler::generateResponse(const std::string& filepath) {
-	_response = "HTTP/1.1 200 OK\n"
+char	**maptoenv(std::map<std::string, std::string> baseenv) {
+	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
+	int i = 0;
+
+	if (!env)
+		exit(1);
+	for (std::map<std::string, std::string>::const_iterator it = baseenv.begin(); it != baseenv.end(); it++) {
+		std::string tmp = it->first + "=" + it->second;
+		env[i] = ft_strdup(tmp.c_str());
+		if (!env[i])
+			exit(1);
+		++i;
+	}
+	return env;
+}
+
+int	RequestHandler::run_cgi(request_s& request) {
+	std::map<std::string, std::string> mappie = request.server.getbaseenv();
+	pid_t	pid;
+	char	**env = maptoenv(mappie);
+	int pipefd[2];
+	
+	if (pipe(pipefd) == -1) {
+		strerror(errno);
+		exit(1);
+	}
+	if ((pid = fork()) == -1) {
+		strerror(errno);
+		exit(1);
+	}
+	else if (pid == 0) {
+		dup2(pipefd[1], 1);
+		close(pipefd[0]);
+		int ret = execve("cgi-bin/printenv2.pl", NULL, env);
+		if (ret == -1)
+			std::cerr << "execve: " << strerror(errno) << std::endl;
+		exit(1);
+	}
+	close(pipefd[1]);
+	for (int i = 0; env[i]; i++) 
+		free(env[i]);
+	free(env);
+	return pipefd[0];
+}
+
+void RequestHandler::generateResponse(const std::string& filepath, request_s& request) {
+	int fd;
+	this->_response = "HTTP/1.1 200 OK\n"
 			   "Server: Webserv/0.1\n"
 			   "Content-Type: text/html\n"
 			   "Content-Length: 678\n\n";
-	int fd = open(filepath.c_str(), O_RDONLY);
+	std::cout << "uri: " << request.uri << std::endl;
+	if (CGI)
+		fd = this->run_cgi(request);
+	else
+		fd = open(filepath.c_str(), O_RDONLY);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno));
 	int ret;
 	char buf[1024];
 	do {
 		ret = read(fd, buf, 1024);
-		_response += buf;
+		this->_response += buf;
 		memset(buf, 0, 1024);
 	} while (ret > 0);
-	_response  += "\n";
+	this->_response  += "\n";
 	close(fd);
 	// std::cout << "Response: \n" << _response << std::endl;
 }

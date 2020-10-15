@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/09 15:02:48 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/15 20:11:06 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,16 @@
 
 Server::Server(void) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html") {
+	// this->_base_env();
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html") {
 	this->_fd = fd;
+	// this->_base_env();
 }
 
 Server::~Server(void) {
-
 }
 
 Server::Server(const Server& x) {
@@ -39,6 +40,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_error_page = x._error_page;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
+		this->_base_env = x._base_env;
 	}
 	return *this;
 }
@@ -86,6 +88,10 @@ void	Server::seterrorpage(const std::string& errorpage) {
 	this->_error_page = errorpage;
 }
 
+std::map<std::string, std::string> Server::getbaseenv() const {
+	return this->_base_env;
+}
+
 void	Server::configurelocation(const std::string& in) {
 	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f\0");
 	Location	loc(v[0]);
@@ -96,6 +102,26 @@ void	Server::configurelocation(const std::string& in) {
 
 std::vector<Location>	Server::getlocations() const {
 	return this->_locations;
+}
+
+void	Server::create_base_env(void) {
+	this->_base_env["AUTH_TYPE"] = "";
+	this->_base_env["CONTENT_LENGTH"] = "";
+	this->_base_env["CONTENT_TYPE"] = "";
+	this->_base_env["GATEWAY_INTERFACE"] = "CGI/1.1";
+	this->_base_env["PATH_INFO"] = "";
+	this->_base_env["PATH_TRANSLATED"] = "";
+	this->_base_env["QUERY_STRING"] = "";
+	this->_base_env["REMOTE_ADDR"] = "";
+	this->_base_env["REMOTE_IDENT"] = "";
+	this->_base_env["REMOTE_USER"] = "";
+	this->_base_env["REQUEST_METHOD"] = "";
+	this->_base_env["REQUEST_URI"] = "";
+	this->_base_env["SCRIPT_NAME"] = "";
+	this->_base_env["SERVER_NAME"] = this->getservername();
+	this->_base_env["SERVER_PORT"] = std::string(ft::inttostring(this->getport()));
+	this->_base_env["SERVER_PROTOCOL"] = "HTTP/1.1";
+	this->_base_env["SERVER_SOFTWARE"] = "HTTP 1.1";
 }
 
 void	Server::setup(int fd) {
@@ -119,7 +145,7 @@ void	Server::setup(int fd) {
 		// std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 	}
-
+	this->create_base_env();
 	if (_port <= 0 || _host == "" || _client_body_size <= 0 || _error_page == "" || _server_name == "")
 		throw std::runtime_error("invalid setting in server block");
 }

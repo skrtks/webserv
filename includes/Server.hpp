@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/13 16:28:59 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/15 19:42:06 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,26 @@
 # define SERVER_HPP
 
 #include "Location.hpp"
+
+// enum MetaVariables {
+// 	AUTH_TYPE,
+// 	CONTENT_LENGTH,
+// 	CONTENT_TYPE,
+// 	GATEWAY_INTERFACE,
+// 	PATH_INFO,
+// 	PATH_TRANSLATED,
+// 	QUERY_STRING,
+// 	REMOTE_ADDR,
+// 	REMOTE_IDENT,
+// 	REMOTE_USER,
+// 	REQUEST_METHOD,
+// 	REQUEST_URI,
+// 	SCRIPT_NAME,
+// 	SERVER_NAME,
+// 	SERVER_PORT,
+// 	SERVER_PROTOCOL,
+// 	SERVER_SOFTWARE
+// };
 
 class Server {
 	public:
@@ -40,7 +60,9 @@ class Server {
 		std::string				geterrorpage() const;
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
+		std::map<std::string, std::string> getbaseenv() const;
 	
+		void		create_base_env();
 		void		configurelocation(const std::string& in);
 		void		setup(int fd);
 private:
@@ -51,6 +73,7 @@ private:
 					_error_page;
 		int			_fd, _socketFd;
 		std::vector<Location> _locations;
+		std::map<std::string, std::string>	_base_env;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Server& x);

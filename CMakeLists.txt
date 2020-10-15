@@ -58,4 +58,4 @@ add_executable(webserv getnextline/get_next_line.cpp
         srcs/Servermanager.cpp
         srcs/split.cpp
         includes/RequestHandler.hpp
-        srcs/RequestHandler.cpp)
+        srcs/RequestHandler.cpp srcs/cgi.cpp)

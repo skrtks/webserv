@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 14:26:27 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/13 16:29:08 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/15 18:26:22 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@
 # include <string>
 # include <map>
 # include <vector>
-
 
 class Location {
 	public:
