@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/15 21:33:24 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/16 00:50:42 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fcntl.h>
 #include <zconf.h>
+#include <sys/stat.h>
 #include "Colours.hpp"
 
 RequestHandler::RequestHandler() {
@@ -59,10 +60,7 @@ std::string RequestHandler::handleRequest(request_s request) {
 //	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 //		(this->*(_functionMap.at(it->first)))(it->second);
 //	}
-
-	std::string filepath = request.server.getlocations()[0].getroot() + '/' + request.server.getlocations()[0].getindexes()[0];
-		// okay this is legit fucked, but still better than hardcoding the filepath
-	generateResponse(filepath, request);
+	generateResponse(request);
 	return _response;
 	// todo: generate respons and return
 }
@@ -84,8 +82,14 @@ char	**maptoenv(std::map<std::string, std::string> baseenv) {
 }
 
 int	RequestHandler::run_cgi(request_s& request) {
-	std::map<std::string, std::string> mappie = request.server.getbaseenv();
-	pid_t	pid;
+	std::map<std::string, std::string>	mappie = request.server.getbaseenv();
+	std::string		scriptpath = request.uri.substr(1, request.uri.length() - 1);
+	pid_t			pid;
+	struct stat		statstruct;
+	char			*args[2] = {&scriptpath[0], NULL};
+
+	if (stat(scriptpath.c_str(), &statstruct) == -1)
+		return (-1);
 	char	**env = maptoenv(mappie);
 	int pipefd[2];
 	
@@ -100,7 +104,7 @@ int	RequestHandler::run_cgi(request_s& request) {
 	else if (pid == 0) {
 		dup2(pipefd[1], 1);
 		close(pipefd[0]);
-		int ret = execve("cgi-bin/printenv2.pl", NULL, env);
+		int ret = execve(scriptpath.c_str(), args, env);
 		if (ret == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(1);
@@ -112,19 +116,32 @@ int	RequestHandler::run_cgi(request_s& request) {
 	return pipefd[0];
 }
 
-void RequestHandler::generateResponse(const std::string& filepath, request_s& request) {
-	int fd;
+void RequestHandler::generateResponse(request_s& request) {
+	int			fd = -1;
+	struct stat	statstruct;
+	std::string filepath = request.server.getroot() + request.uri;
+
 	this->_response = "HTTP/1.1 200 OK\n"
 			   "Server: Webserv/0.1\n"
 			   "Content-Type: text/html\n"
 			   "Content-Length: 678\n\n";
-	std::cout << "uri: " << request.uri << std::endl;
-	if (CGI)
+
+	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
 		fd = this->run_cgi(request);
-	else
+	else if (stat(filepath.c_str(), &statstruct) != -1) {
+		if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
+			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
+			fd = open(filepath.c_str(), O_RDONLY);
+		}
+		else
+			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
+	}
+	if (fd == -1) {
+		filepath = request.server.getroot() + '/' + request.server.geterrorpage();	// Serving the default error page
 		fd = open(filepath.c_str(), O_RDONLY);
+	}
 	if (fd == -1)
-		throw std::runtime_error(strerror(errno));
+		throw std::runtime_error(strerror(errno)); // cant even pull up the error page
 	int ret;
 	char buf[1024];
 	do {
@@ -134,7 +151,6 @@ void RequestHandler::generateResponse(const std::string& filepath, request_s& re
 	} while (ret > 0);
 	this->_response  += "\n";
 	close(fd);
-	// std::cout << "Response: \n" << _response << std::endl;
 }
 
 void RequestHandler::handleACCEPT_CHARSET(const std::string &value) {

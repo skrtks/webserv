@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:14 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/15 21:31:28 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/16 00:21:33 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,6 @@
 #define REQUESTHANDLER_HPP
 
 #include "RequestParser.hpp"
-#ifndef CGI
-# define CGI 0
-#endif
 
 class RequestHandler {
 	std::map<headerType, void (RequestHandler::*)(const std::string &value)> _functionMap;
@@ -29,7 +26,7 @@ public:
 
 	int			run_cgi(request_s& request);
 	std::string handleRequest(request_s request);
-	void 		generateResponse(const std::string& filepath, request_s& request);
+	void 		generateResponse(request_s& request);
 
 	void handleACCEPT_CHARSET(const std::string &value);
 	void handleACCEPT_LANGUAGE(const std::string &value);

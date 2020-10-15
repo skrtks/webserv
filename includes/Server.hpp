@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/15 19:42:06 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/16 00:01:42 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,26 +14,6 @@
 # define SERVER_HPP
 
 #include "Location.hpp"
-
-// enum MetaVariables {
-// 	AUTH_TYPE,
-// 	CONTENT_LENGTH,
-// 	CONTENT_TYPE,
-// 	GATEWAY_INTERFACE,
-// 	PATH_INFO,
-// 	PATH_TRANSLATED,
-// 	QUERY_STRING,
-// 	REMOTE_ADDR,
-// 	REMOTE_IDENT,
-// 	REMOTE_USER,
-// 	REQUEST_METHOD,
-// 	REQUEST_URI,
-// 	SCRIPT_NAME,
-// 	SERVER_NAME,
-// 	SERVER_PORT,
-// 	SERVER_PROTOCOL,
-// 	SERVER_SOFTWARE
-// };
 
 class Server {
 	public:
@@ -47,6 +27,8 @@ class Server {
 		//setters
 		void		setport(const std::string& port);
 		void		sethost(const std::string& host);
+		void		setindex(const std::string& index);
+		void		setroot(const std::string& root);
 		void		setservername(const std::string& servername);
 		void		setclientbodysize(const std::string& clientbodysize);
 		void		seterrorpage(const std::string& errorpage);
@@ -55,6 +37,8 @@ class Server {
 		//getters
 		size_t					getport() const;
 		std::string				gethost() const;
+		std::string				getindex() const;
+		std::string				getroot() const;
 		std::string				getservername() const;
 		size_t					getclientbodysize() const;
 		std::string				geterrorpage() const;
@@ -70,7 +54,9 @@ private:
 					_client_body_size;
 		std::string _host,
 					_server_name,
-					_error_page;
+					_error_page,
+					_index,
+					_root;
 		int			_fd, _socketFd;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_base_env;

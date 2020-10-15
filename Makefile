@@ -6,7 +6,7 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/15 21:00:44 by pde-bakk      ########   odam.nl          #
+#    Updated: 2020/10/16 00:21:38 by peerdb        ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,10 +19,6 @@ INCLUDE = -Iincludes
 CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
 ifdef DEBUG
  CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
-endif
-
-ifdef CGI
- CXXFLAGS += -D CGI=1
 endif
 
 GNL = getnextline.a

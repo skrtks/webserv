@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/15 20:11:06 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/16 00:05:17 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,12 @@
 #include "libftGnl.hpp"
 
 Server::Server(void) : _port(80), _client_body_size(1000000),
-		_host("0.0.0.0"), _error_page("error.html") {
-	// this->_base_env();
+		_host("0.0.0.0"), _error_page("error.html"), _index("index.html"), _root("htmlfiles") {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
-		_host("0.0.0.0"), _error_page("error.html") {
+		_host("0.0.0.0"), _error_page("error.html"), _index("index.html"), _root("htmlfiles") {
 	this->_fd = fd;
-	// this->_base_env();
 }
 
 Server::~Server(void) {
@@ -38,6 +36,8 @@ Server&	Server::operator=(const Server& x) {
 		this->_server_name = x._server_name;
 		this->_client_body_size = x._client_body_size;
 		this->_error_page = x._error_page;
+		this->_index = x._index;
+		this->_root = x._root;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
 		this->_base_env = x._base_env;
@@ -59,6 +59,22 @@ std::string	Server::gethost() const {
 
 void	Server::sethost(const std::string& host) {
 	this->_host = host;
+}
+
+std::string	Server::getindex() const {
+	return this->_index;
+}
+
+void	Server::setindex(const std::string& index) {
+	this->_index = index;
+}
+
+std::string	Server::getroot() const {
+	return this->_root;
+}
+
+void	Server::setroot(const std::string& root) {
+	this->_root = root;
 }
 
 std::string	Server::getservername() const {
@@ -129,6 +145,8 @@ void	Server::setup(int fd) {
 	std::map<std::string, void (Server::*)(const std::string&)> m;
 	m["port"] = &Server::setport;
 	m["host"] = &Server::sethost;
+	m["index"] = &Server::setindex;
+	m["root"] = &Server::setroot;
 	m["server_name"] = &Server::setservername;
 	m["LIMIT_CLIENT_BODY_SIZE"] = &Server::setclientbodysize;
 	m["DEFAULT_ERROR_PAGE"] = &Server::seterrorpage;
@@ -160,8 +178,10 @@ void Server::setSocketFd(int socketFd) {
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
-	o << "error page = " << x.geterrorpage() << std::endl;
-	o << "client body limit = " << x.getclientbodysize() << std::endl << std::endl;
+	o << "Default root folder: " << x.getroot() << std::endl;
+	o << "Default index page: " << x.getindex() << std::endl;
+	o << "error page: " << x.geterrorpage() << std::endl;
+	o << "client body limit: " << x.getclientbodysize() << std::endl << std::endl;
 	std::vector<Location> v = x.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
 		o << v[i];
