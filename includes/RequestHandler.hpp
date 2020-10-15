@@ -22,7 +22,7 @@ public:
 	RequestHandler();
 	virtual ~RequestHandler();
 	RequestHandler(const RequestHandler &obj);
-	RequestHandler& operator== (const RequestHandler &obj);
+	RequestHandler& operator= (const RequestHandler &obj);
 
 	std::string handleRequest(request_s request);
 

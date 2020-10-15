@@ -44,8 +44,8 @@ RequestHandler::RequestHandler(const RequestHandler &obj) {
 	this->_response = obj._response;
 }
 
-RequestHandler& RequestHandler::operator== (const RequestHandler &obj) {
-	if (this == &obj) {
+RequestHandler& RequestHandler::operator= (const RequestHandler &obj) {
+	if (this != &obj) {
 		this->_functionMap = obj._functionMap;
 		this->_response = obj._response;
 	}

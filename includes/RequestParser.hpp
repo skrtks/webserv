@@ -67,7 +67,7 @@ public:
 	RequestParser();
 	virtual ~RequestParser();
 	RequestParser(const RequestParser &obj);
-	RequestParser& operator== (const RequestParser &obj);
+	RequestParser& operator= (const RequestParser &obj);
 
 	request_s parseRequest(const std::string &req);
 	void parseRequestLine();

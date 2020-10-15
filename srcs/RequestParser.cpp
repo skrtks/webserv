@@ -52,7 +52,7 @@ RequestParser::RequestParser(const RequestParser &obj) {
 	this->_rawRequest = obj._rawRequest;
 }
 
-RequestParser& RequestParser::operator== (const RequestParser &obj) {
+RequestParser& RequestParser::operator= (const RequestParser &obj) {
 	if (this != &obj) {
 		this->_method = obj._method;
 		this->_uri = obj._uri;
