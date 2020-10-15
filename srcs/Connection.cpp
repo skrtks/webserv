@@ -45,7 +45,7 @@ Connection::Connection(const Connection &obj) {
 	}
 }
 
-Connection& Connection::operator== (const Connection &obj) {
+Connection& Connection::operator= (const Connection &obj) {
 	if (this != &obj) {
 		this->_connectionFd = obj._connectionFd;
 		this->_connectionFd = obj._connectionFd;
