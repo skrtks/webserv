@@ -43,13 +43,7 @@ RequestParser::~RequestParser() {
 }
 
 RequestParser::RequestParser(const RequestParser &obj) {
-	this->_method = obj._method;
-	this->_uri = obj._uri;
-	this->_version = obj._version;
-	this->_headers = obj._headers;
-	this->_methodMap = obj._methodMap;
-	this->_headerMap = obj._headerMap;
-	this->_rawRequest = obj._rawRequest;
+	*this = obj;
 }
 
 RequestParser& RequestParser::operator= (const RequestParser &obj) {

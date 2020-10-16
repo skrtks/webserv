@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:14 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/13 17:04:43 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/16 00:21:33 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,9 @@ public:
 	RequestHandler(const RequestHandler &obj);
 	RequestHandler& operator= (const RequestHandler &obj);
 
+	int			run_cgi(const request_s& request);
 	std::string handleRequest(request_s request);
+	void 		generateResponse(request_s& request);
 
 	void handleACCEPT_CHARSET(const std::string &value);
 	void handleACCEPT_LANGUAGE(const std::string &value);
@@ -44,7 +46,6 @@ public:
 	void handleTRANSFER_ENCODING(const std::string &value);
 	void handleUSER_AGENT(const std::string &value);
 	void handleWWW_AUTHENTICAT(const std::string &value);
-	void generateResponse(const std::string& filepath);
 };
 
 

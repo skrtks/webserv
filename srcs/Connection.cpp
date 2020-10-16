@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/03 15:26:44 by sam           ########   odam.nl         */
+/*   Updated: 2020/10/15 23:23:18 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,18 +31,7 @@ Connection::~Connection() {
 }
 
 Connection::Connection(const Connection &obj) {
-	if (this != &obj) {
-		this->_connectionFd = obj._connectionFd;
-		this->_connectionFd = obj._connectionFd;
-		this->_fdMax = obj._fdMax;
-		this->_serverAddr = obj._serverAddr;
-		this->_master = obj._master;
-		this->_readFds = obj._readFds;
-		this->_rawRequest = obj._rawRequest;
-		this->_parsedRequest = obj._parsedRequest;
-		this->_servers = obj._servers;
-		this->_serverMap = obj._serverMap;
-	}
+	*this = obj;
 }
 
 Connection& Connection::operator= (const Connection &obj) {
@@ -122,7 +111,7 @@ void Connection::startListening() {
 				}
 				else { // Handle request & return response
 					receiveRequest();
-//					_parsedRequest = requestParser.parseRequest(_rawRequest); //
+					_parsedRequest = requestParser.parseRequest(_rawRequest); //
 					_parsedRequest.server = serverConnections[i];
 					response = requestHandler.handleRequest(_parsedRequest);
 					sendReply(response);

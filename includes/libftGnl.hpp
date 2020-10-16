@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   webserv.hpp                                        :+:    :+:            */
+/*   libftGnl.hpp                                       :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 15:37:16 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/09 15:19:45 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/15 20:09:33 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,8 @@ void						get_key_value(std::string &str, std::string &key, std::string& value);
 Servermanager				parse(char *av);
 
 namespace ft {
-	std::vector<std::string>	split(const std::string& s, const std::string& delim);	
+	std::vector<std::string>	split(const std::string& s, const std::string& delim);
+	std::string inttostring(int a);
 }
 
 

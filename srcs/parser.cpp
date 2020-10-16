@@ -35,7 +35,7 @@ void	get_key_value(std::string &str, std::string &key, std::string& value) {
 Servermanager	parse(char *av) {
 	Servermanager	skrtks;
 	std::string		str;
-	struct stat statstruct;
+	struct stat statstruct = {};
 	int fd;
 	if (av && stat(av, &statstruct) != -1)
 		fd = open(av, O_RDONLY);
@@ -45,11 +45,11 @@ Servermanager	parse(char *av) {
 		return skrtks;
 	
 	while (ft::get_next_line(fd, str) > 0) {
-		if (is_first_char(str) || str == "")
+		if (is_first_char(str) || str.empty())
 			continue ;
 		try {
 			Server	tmp;
-			if (str != "" && str.compare(str.find_first_not_of(" \t\n"), ft_strlen("server {"), "server {") == 0) {
+			if (!str.empty() && str.compare(str.find_first_not_of(" \t\n"), ft_strlen("server {"), "server {") == 0) {
 				tmp.setup(fd);
 				skrtks += tmp;
 			}
