@@ -35,7 +35,7 @@ Servermanager& Servermanager::operator+=(const Server& add) {
 	return *this;
 }
 
-Server	Servermanager::operator[](const size_t n) const {
+Server	Servermanager::operator[](const size_t& n) const {
 	return this->_servers[n];
 }
 

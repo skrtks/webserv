@@ -24,7 +24,7 @@ class Servermanager {
 		Servermanager(const Servermanager& x);
 		Servermanager&	operator=(const Servermanager& x);
 		Servermanager&	operator +=(const Server& x);
-		Server		operator[](size_t n) const;
+		Server		operator[](const size_t &n) const;
 		size_t		size() const;
 		void		clear();
 	const std::vector<Server>& getServers() const;
