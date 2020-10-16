@@ -43,8 +43,7 @@ RequestHandler::~RequestHandler() {
 }
 
 RequestHandler::RequestHandler(const RequestHandler &obj) {
-	this->_functionMap = obj._functionMap;
-	this->_response = obj._response;
+	*this = obj;
 }
 
 RequestHandler& RequestHandler::operator= (const RequestHandler &obj) {
