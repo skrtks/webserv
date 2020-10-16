@@ -12,7 +12,6 @@
 
 #include "RequestHandler.hpp"
 #include "libftGnl.hpp"
-#include <iostream>
 #include <fcntl.h>
 #include <zconf.h>
 #include <sys/stat.h>
@@ -46,7 +45,7 @@ RequestHandler::RequestHandler(const RequestHandler &obj) {
 	*this = obj;
 }
 
-RequestHandler& RequestHandler::operator= (const RequestHandler &obj) {
+RequestHandler& RequestHandler::operator=(const RequestHandler &obj) {
 	if (this != &obj) {
 		this->_functionMap = obj._functionMap;
 		this->_response = obj._response;
@@ -80,16 +79,15 @@ char	**maptoenv(std::map<std::string, std::string> baseenv) {
 	return env;
 }
 
-int	RequestHandler::run_cgi(request_s& request) {
-	std::map<std::string, std::string>	mappie = request.server.getbaseenv();
+int	RequestHandler::run_cgi(const request_s& request) {
 	std::string		scriptpath = request.uri.substr(1, request.uri.length() - 1);
 	pid_t			pid;
-	struct stat		statstruct;
+	struct stat		statstruct = {};
 	char			*args[2] = {&scriptpath[0], NULL};
 
 	if (stat(scriptpath.c_str(), &statstruct) == -1)
 		return (-1);
-	char	**env = maptoenv(mappie);
+	char	**env = maptoenv(request.server.getbaseenv());
 	int pipefd[2];
 	
 	if (pipe(pipefd) == -1) {
@@ -117,7 +115,7 @@ int	RequestHandler::run_cgi(request_s& request) {
 
 void RequestHandler::generateResponse(request_s& request) {
 	int			fd = -1;
-	struct stat	statstruct;
+	struct stat	statstruct = {};
 	std::string filepath = request.server.getroot() + request.uri;
 
 	this->_response = "HTTP/1.1 200 OK\n"

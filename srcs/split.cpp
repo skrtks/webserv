@@ -12,7 +12,6 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace ft {
 	
@@ -32,7 +31,7 @@ namespace ft {
 	}
 
 	std::string	inttostring(int n) {
-		std::string ss = "";
+		std::string ss;
 
 		while (n) {
 			char i = '0' + (n % 10);

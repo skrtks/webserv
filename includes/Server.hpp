@@ -19,7 +19,7 @@ class Server {
 	public:
 		//coplien form
 		Server();
-		Server(int fd);
+		explicit Server(int fd);
 		~Server();
 		Server(const Server& x);
 		Server& 	operator=(const Server& x);

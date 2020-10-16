@@ -21,7 +21,7 @@ class Location {
 	public:
 		//coplien form
 		Location();
-		Location(std::string& location_match);
+		explicit Location(std::string& location_match);
 		~Location();
 		Location(const Location& x);
 		Location&	operator=(const Location& x);

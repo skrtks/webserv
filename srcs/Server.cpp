@@ -13,7 +13,7 @@
 #include "Server.hpp"
 #include "libftGnl.hpp"
 
-Server::Server(void) : _port(80), _client_body_size(1000000),
+Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _index("index.html"), _root("htmlfiles") {
 }
 
@@ -22,7 +22,7 @@ Server::Server(int fd) : _port(80), _client_body_size(1000000),
 	this->_fd = fd;
 }
 
-Server::~Server(void) {
+Server::~Server() {
 }
 
 Server::Server(const Server& x) {
@@ -120,7 +120,7 @@ std::vector<Location>	Server::getlocations() const {
 	return this->_locations;
 }
 
-void	Server::create_base_env(void) {
+void	Server::create_base_env() {
 	this->_base_env["AUTH_TYPE"] = "";
 	this->_base_env["CONTENT_LENGTH"] = "";
 	this->_base_env["CONTENT_TYPE"] = "";
@@ -155,7 +155,7 @@ void	Server::setup(int fd) {
 
 	while (ft::get_next_line(fd, str) > 0) {
 		std::string key, value;
-		if (is_first_char(str) || str == "") //checks for comment char #
+		if (is_first_char(str) || str.empty()) //checks for comment char #
 			continue ;
 		if (is_first_char(str, '}')) // End of server block
 			break ;
@@ -164,7 +164,7 @@ void	Server::setup(int fd) {
 		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 	}
 	this->create_base_env();
-	if (_port <= 0 || _host == "" || _client_body_size <= 0 || _error_page == "" || _server_name == "")
+	if (_port <= 0 || _host.empty() || _client_body_size <= 0 || _error_page.empty() || _server_name.empty())
 		throw std::runtime_error("invalid setting in server block");
 }
 

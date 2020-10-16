@@ -24,7 +24,7 @@ public:
 	RequestHandler(const RequestHandler &obj);
 	RequestHandler& operator= (const RequestHandler &obj);
 
-	int			run_cgi(request_s& request);
+	int			run_cgi(const request_s& request);
 	std::string handleRequest(request_s request);
 	void 		generateResponse(request_s& request);
 

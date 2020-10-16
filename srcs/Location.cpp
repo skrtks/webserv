@@ -45,7 +45,7 @@ Location&	Location::operator=(const Location& x) {
 
 //setters
 void	Location::setroot(const std::string& in) {
-	struct stat statstruct;
+	struct stat statstruct = {};
 	this->_root = in;
 	if (stat(_root.c_str(), &statstruct) == -1)
 		throw std::runtime_error("location root folder does not exist.");
@@ -94,7 +94,7 @@ void	Location::setup(int fd) {
 	
 	while (ft::get_next_line(fd, str) > 0) {
 		std::string key, value;
-		if (is_first_char(str) || str == "") // checks for comments or empty lines
+		if (is_first_char(str) || str.empty()) // checks for comments or empty lines
 			continue ;
 		if (is_first_char(str, '}')) // End of location block
 			break ;
@@ -102,7 +102,7 @@ void	Location::setup(int fd) {
 		// std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value);
 	}
-	if (this->_indexes.size() == 0)
+	if (this->_indexes.empty())
 		this->_indexes.push_back("index.html");
 }
 
