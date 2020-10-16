@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:11:55 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/15 20:11:20 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2020/10/16 11:51:29 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,17 +31,15 @@ namespace ft {
 		return vec;
 	}
 
-std::string inttostring(int a) {
-    std::string ss="";   //create empty string
-    while(a)
-    {
-        int x=a%10;
-        a/=10;
-        char i='0';
-        i=i+x;
-        ss=i+ss;      //append new character at the front of the string!
-    }
-    return ss;
-}
+	std::string	inttostring(int n) {
+		std::string ss = "";
+
+		while (n) {
+			char i = '0' + (n % 10);
+			n /= 10;
+			ss = i + ss;
+		}
+		return ss;
+	}
 
 }
