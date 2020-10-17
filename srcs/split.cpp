@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:11:55 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/16 11:51:29 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 16:32:30 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ namespace ft {
 			if (end != std::string::npos)
 				vec.push_back(s.substr(start, end - start));
 			else if (start != std::string::npos)
-				vec.push_back(s.substr(start, s.back() - start));
+				vec.push_back(s.substr(start, end - start));
 		}
 		return vec;
 	}
