@@ -6,7 +6,7 @@
 /*   By: pde-bakk <marvin@codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2019/11/04 11:26:01 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/17 16:18:38 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 16:27:43 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,15 +21,6 @@ typedef struct		s_list
 	void			*content;
 	struct s_list	*next;
 }					t_list;
-
-typedef struct			s_info
-{
-	int					any;
-	int					neg;
-	int					base;
-	unsigned long long	cutlim;
-	unsigned long long	cutoff;
-}						t_info;
 
 void				*ft_memset(void *b, int c, size_t len);
 void				ft_bzero(void *s, size_t n);
