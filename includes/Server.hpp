@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/17 11:17:52 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 16:36:30 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define SERVER_HPP
 
 #include "Location.hpp"
+#include <cerrno>
 
 class Server {
 	public:

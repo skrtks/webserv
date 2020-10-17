@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/17 11:19:07 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 16:20:50 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,9 +90,8 @@ long int	Server::getclientbodysize() const {
 }
 
 void	Server::setclientbodysize(const std::string& clientbodysize) {
-	this->_client_body_size = ft_atoi(clientbodysize.c_str()); //maybe write an ft_atol() for this one
-	size_t i = clientbodysize.find_first_not_of("1234567890");
-	if (clientbodysize[i] == 'M')
+	this->_client_body_size = ft_atol(clientbodysize.c_str());
+	if (clientbodysize[clientbodysize.find_first_not_of("1234567890")] == 'M')
 		this->_client_body_size *= 1000000;
 }
 
