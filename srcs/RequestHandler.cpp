@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/16 00:50:42 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 11:21:52 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,7 +126,9 @@ void RequestHandler::generateResponse(request_s& request) {
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
 		fd = this->run_cgi(request);
 	else if (stat(filepath.c_str(), &statstruct) != -1) {
-		if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
+		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
+			std::cerr << "filesize is " << statstruct.st_size << std::endl;
+		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
 			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
 			fd = open(filepath.c_str(), O_RDONLY);
 		}
