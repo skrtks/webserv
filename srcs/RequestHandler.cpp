@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/17 11:21:52 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 16:25:51 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,7 +127,7 @@ void RequestHandler::generateResponse(request_s& request) {
 		fd = this->run_cgi(request);
 	else if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
-			std::cerr << "filesize is " << statstruct.st_size << std::endl;
+			std::cerr << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl;
 		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
 			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
 			fd = open(filepath.c_str(), O_RDONLY);
