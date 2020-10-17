@@ -6,7 +6,7 @@
 /*   By: pde-bakk <marvin@codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2019/11/04 11:26:01 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/02 23:00:14 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 16:18:38 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,6 @@ void				ft_lstclear(t_list **lst, void (*del)(void*));
 void				ft_lstiter(t_list *lst, void (*f)(void *));
 t_list				*ft_lstmap(t_list *lst, void *(*f)(void *),
 					void (*del)(void *));
-long long			ft_atoll(const char *str, int base);
+long				ft_atol(const char *str);
 
 #endif
