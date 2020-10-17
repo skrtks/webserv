@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/16 00:01:42 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/17 11:17:52 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ class Server {
 		std::string				getindex() const;
 		std::string				getroot() const;
 		std::string				getservername() const;
-		size_t					getclientbodysize() const;
+		long int				getclientbodysize() const;
 		std::string				geterrorpage() const;
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
@@ -50,8 +50,8 @@ class Server {
 		void		configurelocation(const std::string& in);
 		void		setup(int fd);
 private:
-		size_t		_port,
-					_client_body_size;
+		size_t		_port;
+		long int	_client_body_size;
 		std::string _host,
 					_server_name,
 					_error_page,
