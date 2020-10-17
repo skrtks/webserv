@@ -90,7 +90,7 @@ long int	Server::getclientbodysize() const {
 }
 
 void	Server::setclientbodysize(const std::string& clientbodysize) {
-	this->_client_body_size = ft_atoi(clientbodysize.c_str()); //maybe write an ft_atol() for this one
+	this->_client_body_size = static_cast<long int>(ft_atoll(clientbodysize.c_str(), 10));
 	size_t i = clientbodysize.find_first_not_of("1234567890");
 	if (clientbodysize[i] == 'M')
 		this->_client_body_size *= 1000000;

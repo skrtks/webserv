@@ -22,6 +22,15 @@ typedef struct		s_list
 	struct s_list	*next;
 }					t_list;
 
+typedef struct			s_info
+{
+	int					any;
+	int					neg;
+	int					base;
+	unsigned long long	cutlim;
+	unsigned long long	cutoff;
+}						t_info;
+
 void				*ft_memset(void *b, int c, size_t len);
 void				ft_bzero(void *s, size_t n);
 void				*ft_memcpy(void *dst, const void *src, size_t n);
@@ -68,5 +77,6 @@ void				ft_lstclear(t_list **lst, void (*del)(void*));
 void				ft_lstiter(t_list *lst, void (*f)(void *));
 t_list				*ft_lstmap(t_list *lst, void *(*f)(void *),
 					void (*del)(void *));
+long long			ft_atoll(const char *str, int base);
 
 #endif
