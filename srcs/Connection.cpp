@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/20 00:15:36 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/20 00:33:28 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +113,7 @@ void Connection::startListening() {
 				}
 				else { // Handle request & return response
 					receiveRequest();
-					// _parsedRequest = requestParser.parseRequest(_rawRequest);
+					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[i];
 					response = requestHandler.handleRequest(_parsedRequest);
 					//std::cout << "\n\n" << response << std::endl;

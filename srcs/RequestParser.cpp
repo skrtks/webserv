@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/20 00:29:48 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/20 00:34:15 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,7 +125,6 @@ void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
 	std::string ret;
 
 	pos2 = _rawRequest.find(' ', pos);
-	std::cerr << _BOLD << _BLUE << "pos2: " << pos2 << std::endl << _END << std::endl;
 	if (pos2 > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
 	ret = _rawRequest.substr(pos, pos2 - pos);

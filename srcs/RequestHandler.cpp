@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/20 00:20:36 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/20 00:45:57 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,26 +120,24 @@ void RequestHandler::generateResponse(request_s& request) {
 	int			fd = -1;
 	struct stat	statstruct = {};
 	std::string filepath = request.server.getroot() + request.uri;
-	std::cerr << _BLUE << _BOLD << "filepath: " << filepath << std::endl << _END;
-
-	// this->_response = "HTTP/1.1 200 OK\n"
-	// 		   "Server: Webserv/0.1\n"
-	// 		   "Content-Type: text/html\n"
-	// 		   "Content-Length: 678\n\n";
 
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
 		fd = this->run_cgi(request);
 	else if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
-			std::cerr << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl;
+			std::cerr << _RED << _BOLD << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl << _END;
 		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
+			std::cerr << _BLUE << _BOLD << filepath << " is a directory" << std::endl << _END;
 			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
 			fd = open(filepath.c_str(), O_RDONLY);
 		}
-		else
+		else {
 			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
+			std::cerr << _GREEN << _BOLD << filepath << " is a valid file, lets serve it at fd " << fd << std::endl << std::endl << _END;
+		}
 	}
 	if (fd == -1) {
+		std::cerr << _RED << _BOLD << "Serving the default error page" << std::endl << _END;
 		filepath = request.server.getroot() + '/' + request.server.geterrorpage();	// Serving the default error page
 		fd = open(filepath.c_str(), O_RDONLY);
 	}
@@ -157,7 +155,7 @@ void RequestHandler::generateResponse(request_s& request) {
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	} while (ret > 0);
-	// std::cout << "BODY = " << _body << std::endl;
+	std::cout << _BOLD << _CYAN << "BODY = " << _body << std::endl << _END;
 	handleACCEPT_CHARSET();
 	handleACCEPT_LANGUAGE();
 	handleALLOW();
