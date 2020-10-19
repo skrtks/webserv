@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   ProcessRequest.hpp                                 :+:    :+:            */
+/*   RequestParser.hpp                                  :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:32 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/06 12:01:32 by sam           ########   odam.nl         */
+/*   Updated: 2020/10/16 15:57:24 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,9 @@
 #include <stdexcept>
 #include <string>
 #include <string.h>
+#include <sys/time.h>
+#include <ctime>
+#include <sstream>
 #include "Server.hpp"
 
 enum headerType {

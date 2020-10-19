@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   ProcessRequest.cpp                                 :+:    :+:            */
+/*   RequestParser.cpp                                  :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/06 12:01:35 by sam           ########   odam.nl         */
+/*   Updated: 2020/10/17 12:04:39 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,9 +69,9 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;
+	std::cout << req << std::endl;
 	parseRequestLine();
 	parseHeaders();
-
 	request.headers = _headers;
 	request.method = _method;
 	request.version = _version;
