@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/18 17:13:50 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/10/20 00:15:36 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,18 +31,7 @@ Connection::~Connection() {
 }
 
 Connection::Connection(const Connection &obj) {
-	if (this != &obj) {
-		this->_connectionFd = obj._connectionFd;
-		this->_connectionFd = obj._connectionFd;
-		this->_fdMax = obj._fdMax;
-		this->_serverAddr = obj._serverAddr;
-		this->_master = obj._master;
-		this->_readFds = obj._readFds;
-		this->_rawRequest = obj._rawRequest;
-		this->_parsedRequest = obj._parsedRequest;
-		this->_servers = obj._servers;
-		this->_serverMap = obj._serverMap;
-	}
+	*this = obj;
 }
 
 Connection& Connection::operator= (const Connection &obj) {
@@ -168,7 +157,7 @@ void Connection::receiveRequest() {
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
-	std::cout << "REQUEST = " << _rawRequest << std::endl;
+	std::cout << "REQUEST---->" << _rawRequest << "<----ENDREQUEST" << std::endl;
 }
 
 void Connection::sendReply(const std::string &msg) const {

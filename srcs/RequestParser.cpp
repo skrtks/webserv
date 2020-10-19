@@ -6,11 +6,11 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/17 12:04:39 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/10/20 00:29:48 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-
+#include "Colours.hpp"
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"
 
@@ -43,13 +43,7 @@ RequestParser::~RequestParser() {
 }
 
 RequestParser::RequestParser(const RequestParser &obj) {
-	this->_method = obj._method;
-	this->_uri = obj._uri;
-	this->_version = obj._version;
-	this->_headers = obj._headers;
-	this->_methodMap = obj._methodMap;
-	this->_headerMap = obj._headerMap;
-	this->_rawRequest = obj._rawRequest;
+	*this = obj;
 }
 
 RequestParser& RequestParser::operator= (const RequestParser &obj) {
@@ -131,6 +125,7 @@ void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
 	std::string ret;
 
 	pos2 = _rawRequest.find(' ', pos);
+	std::cerr << _BOLD << _BLUE << "pos2: " << pos2 << std::endl << _END << std::endl;
 	if (pos2 > eoRequestLine)
 		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
 	ret = _rawRequest.substr(pos, pos2 - pos);

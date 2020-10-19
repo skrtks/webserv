@@ -6,14 +6,16 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/18 17:16:00 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/10/20 00:20:36 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestHandler.hpp"
-#include <iostream>
+#include "libftGnl.hpp"
 #include <fcntl.h>
 #include <zconf.h>
+#include <sys/stat.h>
+#include "Colours.hpp"
 
 RequestHandler::RequestHandler() {
 	_functionMap[ACCEPT_CHARSET] = &RequestHandler::handleACCEPT_CHARSET;
@@ -59,21 +61,92 @@ std::string RequestHandler::handleRequest(request_s request) {
 //	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
 //		(this->*(_functionMap.at(it->first)))(it->second);
 //	}
-	std::string filepath = request.server.getlocations()[0].getroot() + '/' + request.server.getlocations()[0].getindexes()[0];
-		// okay this is legit fucked, but still better than hardcoding the filepath
-	generateResponse(filepath);
+	generateResponse(request);
 	return _response;
 	// todo: generate respons and return
 }
 
-void RequestHandler::generateResponse(const std::string& filepath) {
-	int 	fd = 0;
-	int		ret = 0;
-	char	buf[1024];
-	if (fd == -1)
-		throw std::runtime_error(strerror(errno));
+char	**maptoenv(std::map<std::string, std::string> baseenv) {
+	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
+	int i = 0;
 
-	fd = open(filepath.c_str(), O_RDONLY);
+	if (!env)
+		exit(1);
+	for (std::map<std::string, std::string>::const_iterator it = baseenv.begin(); it != baseenv.end(); it++) {
+		std::string tmp = it->first + "=" + it->second;
+		env[i] = ft_strdup(tmp.c_str());
+		if (!env[i])
+			exit(1);
+		++i;
+	}
+	return env;
+}
+
+int	RequestHandler::run_cgi(const request_s& request) {
+	std::string		scriptpath = request.uri.substr(1, request.uri.length() - 1);
+	pid_t			pid;
+	struct stat		statstruct = {};
+	char			*args[2] = {&scriptpath[0], NULL};
+
+	if (stat(scriptpath.c_str(), &statstruct) == -1)
+		return (-1);
+	char	**env = maptoenv(request.server.getbaseenv());
+	int pipefd[2];
+	
+	if (pipe(pipefd) == -1) {
+		strerror(errno);
+		exit(1);
+	}
+	if ((pid = fork()) == -1) {
+		strerror(errno);
+		exit(1);
+	}
+	else if (pid == 0) {
+		dup2(pipefd[1], 1);
+		close(pipefd[0]);
+		int ret = execve(scriptpath.c_str(), args, env);
+		if (ret == -1)
+			std::cerr << "execve: " << strerror(errno) << std::endl;
+		exit(1);
+	}
+	close(pipefd[1]);
+	for (int i = 0; env[i]; i++) 
+		free(env[i]);
+	free(env);
+	return pipefd[0];
+}
+
+void RequestHandler::generateResponse(request_s& request) {
+	int			fd = -1;
+	struct stat	statstruct = {};
+	std::string filepath = request.server.getroot() + request.uri;
+	std::cerr << _BLUE << _BOLD << "filepath: " << filepath << std::endl << _END;
+
+	// this->_response = "HTTP/1.1 200 OK\n"
+	// 		   "Server: Webserv/0.1\n"
+	// 		   "Content-Type: text/html\n"
+	// 		   "Content-Length: 678\n\n";
+
+	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
+		fd = this->run_cgi(request);
+	else if (stat(filepath.c_str(), &statstruct) != -1) {
+		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
+			std::cerr << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl;
+		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
+			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
+			fd = open(filepath.c_str(), O_RDONLY);
+		}
+		else
+			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
+	}
+	if (fd == -1) {
+		filepath = request.server.getroot() + '/' + request.server.geterrorpage();	// Serving the default error page
+		fd = open(filepath.c_str(), O_RDONLY);
+	}
+	if (fd == -1)
+		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
+	int ret;
+	char buf[1024];
 	_body_length = 0;
 	_body = "";
 	do {
@@ -84,7 +157,7 @@ void RequestHandler::generateResponse(const std::string& filepath) {
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	} while (ret > 0);
-	std::cout << "BODY = " << _body << std::endl;
+	// std::cout << "BODY = " << _body << std::endl;
 	handleACCEPT_CHARSET();
 	handleACCEPT_LANGUAGE();
 	handleALLOW();
@@ -99,7 +172,6 @@ void RequestHandler::generateResponse(const std::string& filepath) {
 	_response += _body;
 	_response += "\r\n";
 	close(fd);
-	// std::cout << "Response: \n" << _response << std::endl;
 }
 
 void RequestHandler::handleACCEPT_CHARSET( void ) {
@@ -174,7 +246,7 @@ void RequestHandler::handleDATE( void ) {
 	//gettimeofday(&time, NULL);
 	std::time(&time);
 	curr_time = std::localtime(&time);
-	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time);
+	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time); // ISO C++98 does not support the ‘%T’ gnu_strftime format [-Werror=format=]
 	_header_vals[DATE] = datetime;
 
 	//std::cout << "DATE Value is: " << _header_vals[DATE] << std::endl;

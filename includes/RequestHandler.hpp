@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:14 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/18 16:57:52 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/10/20 00:08:28 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,8 @@ public:
 	void		handleTRANSFER_ENCODING( void );
 	void		handleUSER_AGENT( void );
 	void		handleWWW_AUTHENTICATE( void );
-	void		generateResponse(const std::string& filepath);
+	int			run_cgi(const request_s& request);
+	void		generateResponse(request_s& request);
 };
 
 

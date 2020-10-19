@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:41 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/18 13:59:58 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/10/20 00:05:09 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #define CONNECTION_HPP
 
 #include <arpa/inet.h>
+#include <cerrno>
 #include "RequestParser.hpp"
 #include "Server.hpp"
 
