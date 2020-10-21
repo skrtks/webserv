@@ -104,19 +104,19 @@ void Connection::startListening() {
 		if (select(_fdMax + 1, &_readFds, NULL, NULL, NULL) == -1)
 			throw std::runtime_error(strerror(errno));
 		// Go through existing connections looking for data to read
-		for (int i = 0; i <= _fdMax; i++) {
-			if (FD_ISSET(i, &_readFds)) { // Returns true if fd is active
-				if ((serverMapIt = _serverMap.find(i)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
+		for (int fd = 0; fd <= _fdMax; fd++) {
+			if (FD_ISSET(fd, &_readFds)) { // Returns true if fd is active
+				if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
 				}
 				else { // Handle request & return response
-					receiveRequest();
-					_parsedRequest = requestParser.parseRequest(_rawRequest); //
-					_parsedRequest.server = serverConnections[i];
+					receiveRequest(fd);
+					_parsedRequest = requestParser.parseRequest(_rawRequest);
+					_parsedRequest.server = serverConnections[fd];
 					response = requestHandler.handleRequest(_parsedRequest);
-					sendReply(response);
-					closeConnection(i);
-					serverConnections.erase(i);
+					sendReply(response, fd);
+					closeConnection(fd);
+					serverConnections.erase(fd);
 				}
 			}
 		}
@@ -138,7 +138,7 @@ int Connection::addConnection(const int &socketFd) {
 	return _connectionFd;
 }
 
-void Connection::receiveRequest() {
+void Connection::receiveRequest(int fd) {
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
@@ -146,7 +146,7 @@ void Connection::receiveRequest() {
 	request.clear();
 	ft_memset(buf, 0, BUFLEN);
 	do {
-		bytesReceived = recv(_connectionFd, buf, BUFLEN - 1, 0);
+		bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
 		request += buf;
@@ -155,8 +155,8 @@ void Connection::receiveRequest() {
 	_rawRequest = request;
 }
 
-void Connection::sendReply(const std::string &msg) const {
-	if ((send(_connectionFd, msg.c_str(), msg.length(), 0) == -1))
+void Connection::sendReply(const std::string& msg, int fd) const {
+	if ((send(fd, msg.c_str(), msg.length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
 }
 
