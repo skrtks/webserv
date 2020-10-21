@@ -138,7 +138,7 @@ int Connection::addConnection(const int &socketFd) {
 	return _connectionFd;
 }
 
-void Connection::receiveRequest(int fd) {
+void Connection::receiveRequest(const int& fd) {
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
@@ -155,12 +155,12 @@ void Connection::receiveRequest(int fd) {
 	_rawRequest = request;
 }
 
-void Connection::sendReply(const std::string& msg, int fd) const {
+void Connection::sendReply(const std::string& msg, const int& fd) const {
 	if ((send(fd, msg.c_str(), msg.length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
 }
 
-void Connection::closeConnection(int fd) {
+void Connection::closeConnection(const int& fd) {
 	// Closing connection after response has been send
 	close(fd);
 	FD_CLR(fd, &_master);

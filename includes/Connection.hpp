@@ -31,9 +31,9 @@ class Connection {
 	std::vector<Server> _servers;
 	std::map<int, Server> _serverMap; // key: socketFd; value: Corresponding server object
 	int addConnection(const int &socketFd);
-	void receiveRequest(int fd);
-	void sendReply(const std::string& msg, int fd) const;
-	void closeConnection(int fd);
+	void receiveRequest(const int& fd);
+	void sendReply(const std::string& msg, const int& fd) const;
+	void closeConnection(const int& fd);
 public:
 	Connection();
 	Connection(const Connection &obj);
