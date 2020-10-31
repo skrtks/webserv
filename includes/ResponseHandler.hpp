@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   RequestHandler.hpp                                 :+:    :+:            */
+/*   ResponseHandler.hpp                                 :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef REQUESTHANDLER_HPP
-#define REQUESTHANDLER_HPP
+#ifndef RESPONSEHANDLER_HPP
+#define RESPONSEHANDLER_HPP
 
 #include "RequestParser.hpp"
 
@@ -19,41 +19,42 @@
 #define SEC_PER_HOUR  3600
 #define SEC_PER_MIN   60
 
-class RequestHandler {
-	std::map<headerType, void (RequestHandler::*)( void )>	_functionMap;
+class ResponseHandler {
 	std::map<headerType, std::string>						_header_vals;
 	std::string												_response;
 	std::string												_body;
 	int														_body_length;
 public:
-	RequestHandler();
-	virtual ~RequestHandler();
-	RequestHandler(const RequestHandler &src);
-	RequestHandler& operator= (const RequestHandler &rhs);
+	ResponseHandler();
+	virtual ~ResponseHandler();
+	ResponseHandler(const ResponseHandler &src);
+	ResponseHandler& operator= (const ResponseHandler &rhs);
 
 	std::string	handleRequest(request_s request);
-
+	char*		getCurrentDatetime( void );
 	void		handleACCEPT_CHARSET( void );
 	void		handleACCEPT_LANGUAGE( void );
 	void		handleALLOW( void );
 	void		handleAUTHORIZATION( void );
 	void		handleCONTENT_LANGUAGE( void );
 	void		handleCONTENT_LENGTH( void );
-	void		handleCONTENT_LOCATION( void );
+	void		handleCONTENT_LOCATION( request_s& request );
 	void		handleCONTENT_TYPE( void );
 	void		handleDATE( void );
-	void		handleHOST( void );
+	void		handleHOST( request_s& request );
 	void		handleLAST_MODIFIED( void );
 	void		handleLOCATION( void );
 	void		handleREFERER( void );
 	void		handleRETRY_AFTER( void );
 	void		handleSERVER( void );
-	void		handleTRANSFER_ENCODING( void );
-	void		handleUSER_AGENT( void );
+	void		handleTRANSFER_ENCODING( request_s& request );
+	void		handleUSER_AGENT( request_s& request );
 	void		handleWWW_AUTHENTICATE( void );
+
 	int			run_cgi(const request_s& request);
 	void		generateResponse(request_s& request);
+	int			generatePage(request_s& request);
 };
 
 
-#endif //REQUESTHANDLER_HPP
+#endif //RESPONSEHANDLER_HPP

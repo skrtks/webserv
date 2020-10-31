@@ -1,66 +1,43 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   RequestHandler.cpp                                 :+:    :+:            */
+/*   ResponseHandler.cpp                                 :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/20 00:45:57 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/29 11:08:24 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "RequestHandler.hpp"
+#include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
 #include <fcntl.h>
 #include <zconf.h>
 #include <sys/stat.h>
 #include "Colours.hpp"
 
-RequestHandler::RequestHandler() {
-	_functionMap[ACCEPT_CHARSET] = &RequestHandler::handleACCEPT_CHARSET;
-	_functionMap[ACCEPT_LANGUAGE] = &RequestHandler::handleACCEPT_LANGUAGE;
-	_functionMap[ALLOW] = &RequestHandler::handleALLOW;
-	_functionMap[AUTHORIZATION] = &RequestHandler::handleAUTHORIZATION;
-	_functionMap[CONTENT_LANGUAGE] = &RequestHandler::handleCONTENT_LANGUAGE;
-	_functionMap[CONTENT_LENGTH] = &RequestHandler::handleCONTENT_LENGTH;
-	_functionMap[CONTENT_LOCATION] = &RequestHandler::handleCONTENT_LOCATION;
-	_functionMap[CONTENT_TYPE] = &RequestHandler::handleCONTENT_TYPE;
-	_functionMap[DATE] = &RequestHandler::handleDATE;
-	_functionMap[HOST] = &RequestHandler::handleHOST;
-	_functionMap[LAST_MODIFIED] = &RequestHandler::handleLAST_MODIFIED;
-	_functionMap[LOCATION] = &RequestHandler::handleLOCATION;
-	_functionMap[REFERER] = &RequestHandler::handleREFERER;
-	_functionMap[RETRY_AFTER] = &RequestHandler::handleRETRY_AFTER;
-	_functionMap[SERVER] = &RequestHandler::handleSERVER;
-	_functionMap[TRANSFER_ENCODING] = &RequestHandler::handleTRANSFER_ENCODING;
-	_functionMap[USER_AGENT] = &RequestHandler::handleUSER_AGENT;
-	_functionMap[WWW_AUTHENTICATE] = &RequestHandler::handleWWW_AUTHENTICATE;
+ResponseHandler::ResponseHandler() : _body_length(-1) {
 }
 
-RequestHandler::~RequestHandler() {
+ResponseHandler::~ResponseHandler() {
 }
 
-RequestHandler::RequestHandler(const RequestHandler &src) {
-	this->_functionMap	= src._functionMap;
-	this->_header_vals	= src._header_vals;
-	this->_response		= src._response;
+ResponseHandler::ResponseHandler(const ResponseHandler &src) {
+	this->_header_vals = src._header_vals;
+	this->_response	= src._response;
 }
 
-RequestHandler& RequestHandler::operator= (const RequestHandler &rhs) {
+ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 	if (this != &rhs) {
-		this->_functionMap	= rhs._functionMap;
-		this->_header_vals		= rhs._header_vals;
-		this->_response		= rhs._response;
+		this->_header_vals = rhs._header_vals;
+		this->_response	= rhs._response;
 	}
 	return *this;
 }
 
-std::string RequestHandler::handleRequest(request_s request) {
+std::string ResponseHandler::handleRequest(request_s request) {
 	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this for production
-//	for (std::map<headerType, std::string>::iterator it=request.headers.begin(); it!=request.headers.end(); it++) {
-//		(this->*(_functionMap.at(it->first)))(it->second);
-//	}
 	generateResponse(request);
 	return _response;
 	// todo: generate respons and return
@@ -82,7 +59,7 @@ char	**maptoenv(std::map<std::string, std::string> baseenv) {
 	return env;
 }
 
-int	RequestHandler::run_cgi(const request_s& request) {
+int	ResponseHandler::run_cgi(const request_s& request) {
 	std::string		scriptpath = request.uri.substr(1, request.uri.length() - 1);
 	pid_t			pid;
 	struct stat		statstruct = {};
@@ -116,7 +93,7 @@ int	RequestHandler::run_cgi(const request_s& request) {
 	return pipefd[0];
 }
 
-void RequestHandler::generateResponse(request_s& request) {
+int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat	statstruct = {};
 	std::string filepath = request.server.getroot() + request.uri;
@@ -143,10 +120,18 @@ void RequestHandler::generateResponse(request_s& request) {
 	}
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
-	int ret;
-	char buf[1024];
+	return (fd);
+}
+
+void ResponseHandler::generateResponse(request_s& request) {
+	int		ret = 0;
+	char	buf[1024];
+	int		fd = 0;
+
 	_body_length = 0;
 	_body = "";
+
+	fd = generatePage(request);
 	do {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
@@ -155,7 +140,6 @@ void RequestHandler::generateResponse(request_s& request) {
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	} while (ret > 0);
-	std::cout << _BOLD << _CYAN << "BODY = " << _body << std::endl << _END;
 	handleACCEPT_CHARSET();
 	handleACCEPT_LANGUAGE();
 	handleALLOW();
@@ -163,6 +147,9 @@ void RequestHandler::generateResponse(request_s& request) {
 	handleCONTENT_TYPE();
 	handleDATE();
 	handleCONTENT_LENGTH();
+	handleUSER_AGENT(request);
+	handleHOST(request);
+	handleCONTENT_LOCATION(request);
 	_response = "HTTP/1.1 200 OK\n"
 			   "Server: Webserv/0.1\n"
 			   "Content-Type: text/html\n"
@@ -172,26 +159,39 @@ void RequestHandler::generateResponse(request_s& request) {
 	close(fd);
 }
 
-void RequestHandler::handleACCEPT_CHARSET( void ) {
-	_header_vals[ACCEPT_CHARSET] = "utf-8; q=0.9"; // this should take ACCEPT_CHARSET value of request unless we dont support that charset if so error
+char*	ResponseHandler::getCurrentDatetime( void ) {
+	time_t	time;
+	char*	datetime = new char[100];
+	tm*		curr_time;
+	
+	// gettimeofday(&time, NULL);
+	std::time(&time);
+	curr_time = std::localtime(&time);
+	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time);
+	return (datetime);
+}
+
+void ResponseHandler::handleACCEPT_CHARSET( void ) {
+	_header_vals[ACCEPT_CHARSET] = "utf-8; q=0.9";
 	//std::cout << "ACCEPT_CHARSET Value is: " << _header_vals[ACCEPT_CHARSET] << std::endl;
 }
 
-void RequestHandler::handleACCEPT_LANGUAGE( void ) {
+void ResponseHandler::handleACCEPT_LANGUAGE( void ) {
 	_header_vals[ACCEPT_LANGUAGE] = "en-US,en;q=0.9";
 	//std::cout << "ACCEPT_LANGUAGE Value is: " << _header_vals[ACCEPT_LANGUAGE] << std::endl;
 }
 
-void RequestHandler::handleALLOW( void ) {
-	_header_vals[ALLOW] = "GET, HEAD"; // TODO find out how to do this dynamically
+void ResponseHandler::handleALLOW( void ) {
+	_header_vals[ALLOW] = "GET, HEAD";
 	//std::cout << "ALLOW Value is: " << _header_vals[ALLOW] << std::endl;
 }
 
-void RequestHandler::handleAUTHORIZATION( void ) {
+void ResponseHandler::handleAUTHORIZATION( void ) {
+	_header_vals[AUTHORIZATION] = "";
 	std::cout << "Value is: " << "NULL" << std::endl;
 }
 
-void RequestHandler::handleCONTENT_LANGUAGE( void ) {
+void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
 	int		idx = 0;
 	char	*lang = new char[100];
 	size_t	found = 0;
@@ -199,7 +199,7 @@ void RequestHandler::handleCONTENT_LANGUAGE( void ) {
 	
 	found = _body.find("<html");
 	lang_idx = _body.find("lang", found + 1);
-	if (lang_idx)
+	if (lang_idx != std::string::npos)
 	{
 		for (size_t i = lang_idx + 6; _body[i] != '\"'; i++)
 			lang[idx++] = _body[i];
@@ -209,81 +209,78 @@ void RequestHandler::handleCONTENT_LANGUAGE( void ) {
 	{
 		_header_vals[CONTENT_LANGUAGE] = "en-US";
 	}
-	//std::cout << "CONTENT_LANGUAGE Value is: " << _header_vals[CONTENT_LANGUAGE] << std::endl;
 	delete []lang;
 }
 
-void RequestHandler::handleCONTENT_LENGTH( void ) {
+void ResponseHandler::handleCONTENT_LENGTH( void ) {
 	std::stringstream	ss;
 	std::string			str;
 
 	ss << _body_length;
 	str = ss.str();
 	_header_vals[CONTENT_LENGTH] = str;
-
-	//std::cout << "CONTENT_LENGTH Value is: " << _header_vals[CONTENT_LENGTH] << std::endl;
 }
 
-void RequestHandler::handleCONTENT_LOCATION( void ) {
-	std::cout << "Value is: " << "NULL" << std::endl;
+void ResponseHandler::handleCONTENT_LOCATION(request_s& request) {
+	// TODO
+	std::cout << request.uri << std::endl;
 }
 
-void RequestHandler::handleCONTENT_TYPE( void ) {
+void ResponseHandler::handleCONTENT_TYPE( void ) {
 	// for now hardcoded too text/html but will need to be non-static if we serve other datatypes
 	_header_vals[CONTENT_TYPE] = "text/html";
 
 	//std::cout << "CONTENT_TYPE Value is: " << _header_vals[CONTENT_TYPE] << std::endl;
 }
 
-void RequestHandler::handleDATE( void ) {
-	//struct timeval	time;
-	time_t			time;
-	char			datetime[100];
-	tm*				curr_time;
-	
-	//gettimeofday(&time, NULL);
-	std::time(&time);
-	curr_time = std::localtime(&time);
-	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time); // ISO C++98 does not support the ‘%T’ gnu_strftime format [-Werror=format=]
-	_header_vals[DATE] = datetime;
-
-	//std::cout << "DATE Value is: " << _header_vals[DATE] << std::endl;
+void ResponseHandler::handleDATE( void ) {
+	// TODO: free the datetime values when done
+	_header_vals[DATE] = getCurrentDatetime();
 }
 
-void RequestHandler::handleHOST( void ) {
+void ResponseHandler::handleHOST( request_s& request ) {
+	std::stringstream ss;
+	ss << request.server.gethost() << ":" << request.server.getport();
+	_header_vals[HOST] = ss.str();
+	std::cout << "HOST: " << _header_vals[HOST] << std::endl;
+}
+
+void ResponseHandler::handleLAST_MODIFIED( void ) {
 	std::cout << "Value is: " << "NULL" << std::endl;
 }
 
-void RequestHandler::handleLAST_MODIFIED( void ) {
+void ResponseHandler::handleLOCATION( void ) {
 	std::cout << "Value is: " << "NULL" << std::endl;
 }
 
-void RequestHandler::handleLOCATION( void ) {
+// dont need this for server side responses
+// void ResponseHandler::handleREFERER( void ) {
+// 	std::cout << "Value is: " << "NULL" << std::endl;
+// }
+
+void ResponseHandler::handleRETRY_AFTER( void ) {
 	std::cout << "Value is: " << "NULL" << std::endl;
 }
 
-void RequestHandler::handleREFERER( void ) {
-	std::cout << "Value is: " << "NULL" << std::endl;
-}
-
-void RequestHandler::handleRETRY_AFTER( void ) {
-	std::cout << "Value is: " << "NULL" << std::endl;
-}
-
-void RequestHandler::handleSERVER( void ) {
+void ResponseHandler::handleSERVER( void ) {
 	_header_vals[SERVER] = "Webserv/1.0";
-	//std::cout << "SERVER Value is: " << _header_vals[SERVER] << std::endl;
 }
 
-void RequestHandler::handleTRANSFER_ENCODING( void ) {
+void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
 	_header_vals[TRANSFER_ENCODING] = "identity";
+	if (_body_length > request.server.getclientbodysize() || _body_length < 0) // arbitrary number, docs state that chunked transfer encoding is usually used for mb/gb onwards datatransfers
+	{
+		
+	}
 	//std::cout << "TRANSFER_ENCODING Value is: " << _header_vals[TRANSFER_ENCODING] << std::endl;
 }
 
-void RequestHandler::handleUSER_AGENT( void ) {
-	std::cout << "Value is: " << "NULL" << std::endl;
+void ResponseHandler::handleUSER_AGENT( request_s& request ) {
+	_header_vals[USER_AGENT] = request.headers[USER_AGENT];
+	std::cout << "USER_AGENT: " << _header_vals[USER_AGENT] << std::endl;
 }
 
-void RequestHandler::handleWWW_AUTHENTICATE( void ) {
+void ResponseHandler::handleWWW_AUTHENTICATE( void ) {
+	_header_vals[WWW_AUTHENTICATE] = "";
 	std::cout << "Value is: " << "NULL" << std::endl;
 }
