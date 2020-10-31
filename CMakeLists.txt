@@ -23,7 +23,7 @@ add_executable(webserv getnextline/get_next_line.cpp
         srcs/Server.cpp
         srcs/Servermanager.cpp
         srcs/split.cpp
-        includes/RequestHandler.hpp
-        srcs/RequestHandler.cpp)
+        includes/ResponseHandler.hpp
+        srcs/ResponseHandler.cpp)
 
 target_link_libraries(webserv PUBLIC libft)

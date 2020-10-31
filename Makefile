@@ -6,12 +6,12 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/20 00:08:58 by peerdb        ########   odam.nl          #
+#    Updated: 2020/10/29 11:18:09 by tuperera      ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-FILES = main parser split Server Servermanager Location Connection RequestParser RequestHandler
+FILES = main parser split Server Servermanager Location Connection RequestParser ResponseHandler
 SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes

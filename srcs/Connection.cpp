@@ -6,14 +6,14 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/20 00:33:28 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/10/30 11:54:07 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
 #include <iostream>
 #include <zconf.h>
-#include "RequestHandler.hpp"
+#include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
 
 Connection::Connection() : _serverAddr(), _master(), _readFds() {
@@ -87,7 +87,7 @@ void Connection::setUpConnection() {
 
 void Connection::startListening() {
 	RequestParser					requestParser;
-	RequestHandler					requestHandler;
+	ResponseHandler					responseHandler;
 	std::string						response;
 	std::map<int, Server>::iterator	serverMapIt;
 	std::map<int, Server> 			serverConnections;
@@ -116,7 +116,7 @@ void Connection::startListening() {
 					receiveRequest();
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[i];
-					response = requestHandler.handleRequest(_parsedRequest);
+					response = responseHandler.handleRequest(_parsedRequest);
 					//std::cout << "\n\n" << response << std::endl;
 					sendReply(response);
 					closeConnection(i);
@@ -174,7 +174,7 @@ void Connection::receiveRequest(const int& fd) {
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
-	std::cout << "REQUEST---->" << _rawRequest << "<----ENDREQUEST" << std::endl;
+	std::cout << "BEGINREQUEST-------\n" << _rawRequest << "\n---------ENDREQUEST" << std::endl;
 }
 
 void Connection::sendReply(const std::string& msg, const int& fd) const {
