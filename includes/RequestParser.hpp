@@ -16,7 +16,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include "Server.hpp"
 
 enum headerType {
