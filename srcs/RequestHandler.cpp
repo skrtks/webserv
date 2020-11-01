@@ -116,9 +116,7 @@ int	RequestHandler::run_cgi(const request_s& request) {
 
 int RequestHandler::authenticate(request_s& request) {
 	std::string username, passwd, str;
-	std::cerr << "beginning of authenticate.\n";
 	try {
-		std::cerr << "beginning of try block.\n";
 		std::string auth = request.headers.at(AUTHORIZATION);
 		std::string type, credentials;
 		get_key_value(auth, type, credentials);
@@ -128,34 +126,26 @@ int RequestHandler::authenticate(request_s& request) {
 	catch (std::exception& e) {
 		std::cerr << "turns out its not giving us login information." << std::endl;
 	}
-	std::cerr << "after catch block\n";
 	int htpasswd_fd = open(request.server.gethtpasswdpath().c_str(), O_RDONLY);
-	std::cerr << "fd = " << htpasswd_fd << std::endl;
 	if (htpasswd_fd < 0 ) {
-		std::cerr << "invalid file\n";
+		std::cerr << "htpasswd_path is invalid\n";
 		return 1;
 	}
-	std::cerr << "after opening file\n";
 	while (int ret = ft::get_next_line(htpasswd_fd, str) > 0) {
-		std::cerr << "ret = " << ret << ", after reading line str: " << str << std::endl;
 		std::string u, p;
 		get_key_value(str, u, p, ":");
-		std::cerr << "after getting key value\n";
 		p = base64_decode(p);
-		std::cerr << "decoded reference username/pass = " << u << "&" << p << std::endl;
 		if (username == u && passwd == p) {
 			close(htpasswd_fd);
 			return 0;
 		}
 	}
-	std::cerr << "bitchboy\n";
 	this->_response =	"HTTP/1.1 401 Unauthorized\n"
 				   		"Server: Webserv/0.1\n"
 					  	"Content-Type: text/html\n"
 	   					"WWW-Authenticate: Basic realm= ";
 	this->_response += request.server.getauthbasicrealm();
 	_response += "\n\n";
-	std::cerr << "_response: " << _response;
 	close(htpasswd_fd);
 	return 1;
 }
