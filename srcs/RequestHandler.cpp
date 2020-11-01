@@ -131,7 +131,7 @@ int RequestHandler::authenticate(request_s& request) {
 		std::cerr << "htpasswd_path is invalid\n";
 		return 1;
 	}
-	while (int ret = ft::get_next_line(htpasswd_fd, str) > 0) {
+	while (ft::get_next_line(htpasswd_fd, str) > 0) {
 		std::string u, p;
 		get_key_value(str, u, p, ":");
 		p = base64_decode(p);
