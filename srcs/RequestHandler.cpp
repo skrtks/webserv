@@ -135,6 +135,8 @@ int RequestHandler::authenticate(request_s& request) {
 		std::string u, p;
 		get_key_value(str, u, p, ":");
 		p = base64_decode(p);
+		std::cerr << _CYAN "file: " << u << ":" << p << std::endl << _END;
+		std::cerr << _GREEN "login: " << username << ":" << passwd << std::endl << _END;
 		if (username == u && passwd == p) {
 			close(htpasswd_fd);
 			return 0;
