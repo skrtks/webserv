@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/17 16:25:51 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/03 13:56:08 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,13 +115,18 @@ int	RequestHandler::run_cgi(const request_s& request) {
 }
 
 int RequestHandler::authenticate(request_s& request) {
+	bool creds = false;
 	std::string username, passwd, str;
 	try {
 		std::string auth = request.headers.at(AUTHORIZATION);
+		std::cerr << _YELLOW << "auth gives: " << auth	 << std::endl << _END;
 		std::string type, credentials;
 		get_key_value(auth, type, credentials);
 		credentials = base64_decode(credentials);
 		get_key_value(credentials, username, passwd, ":");
+		std::cerr << "creds = true, username = " << username << ", pass = " << passwd << std::endl;
+		creds = true;
+		// request.headers.at(AUTHORIZATION) = "Basic -";
 	}
 	catch (std::exception& e) {
 		std::cerr << "turns out its not giving us login information." << std::endl;
@@ -131,23 +136,25 @@ int RequestHandler::authenticate(request_s& request) {
 		std::cerr << "htpasswd_path is invalid\n";
 		return 1;
 	}
-	while (ft::get_next_line(htpasswd_fd, str) > 0) {
+	while (creds && ft::get_next_line(htpasswd_fd, str) > 0) {
 		std::string u, p;
 		get_key_value(str, u, p, ":");
 		p = base64_decode(p);
+		std::cerr << _GREEN "user tries to log in with: " << username << ":" << passwd << std::endl << _END;
 		std::cerr << _CYAN "file: " << u << ":" << p << std::endl << _END;
-		std::cerr << _GREEN "login: " << username << ":" << passwd << std::endl << _END;
 		if (username == u && passwd == p) {
 			close(htpasswd_fd);
 			return 0;
 		}
 	}
-	this->_response =	"HTTP/1.1 401 Unauthorized\n"
-				   		"Server: Webserv/0.1\n"
+	this->_response =	"HTTP/1.1 ";
+	creds ? _response += "403 Forbidden\n" : _response += "401 Unauthorized\n";
+	this->_response +=	"Server: Webserv/0.1\n"
 					  	"Content-Type: text/html\n"
-	   					"WWW-Authenticate: Basic realm= ";
+	   					"WWW-Authenticate: Basic realm=";
 	this->_response += request.server.getauthbasicrealm();
-	_response += "\n\n";
+	this->_response += "\n, charset=\"UTF-8\"\n\n";
+	// std::cerr << "response: " << _response << std::endl;
 	close(htpasswd_fd);
 	return 1;
 }
