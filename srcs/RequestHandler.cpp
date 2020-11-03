@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:11 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/17 16:25:51 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/03 13:56:08 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <zconf.h>
 #include <sys/stat.h>
+#include "Base64.hpp"
 #include "Colours.hpp"
 
 RequestHandler::RequestHandler() {
@@ -113,15 +114,62 @@ int	RequestHandler::run_cgi(const request_s& request) {
 	return pipefd[0];
 }
 
+int RequestHandler::authenticate(request_s& request) {
+	bool creds = false;
+	std::string username, passwd, str;
+	try {
+		std::string auth = request.headers.at(AUTHORIZATION);
+		std::cerr << _YELLOW << "auth gives: " << auth	 << std::endl << _END;
+		std::string type, credentials;
+		get_key_value(auth, type, credentials);
+		credentials = base64_decode(credentials);
+		get_key_value(credentials, username, passwd, ":");
+		std::cerr << "creds = true, username = " << username << ", pass = " << passwd << std::endl;
+		creds = true;
+		// request.headers.at(AUTHORIZATION) = "Basic -";
+	}
+	catch (std::exception& e) {
+		std::cerr << "turns out its not giving us login information." << std::endl;
+	}
+	int htpasswd_fd = open(request.server.gethtpasswdpath().c_str(), O_RDONLY);
+	if (htpasswd_fd < 0 ) {
+		std::cerr << "htpasswd_path is invalid\n";
+		return 1;
+	}
+	while (creds && ft::get_next_line(htpasswd_fd, str) > 0) {
+		std::string u, p;
+		get_key_value(str, u, p, ":");
+		p = base64_decode(p);
+		std::cerr << _GREEN "user tries to log in with: " << username << ":" << passwd << std::endl << _END;
+		std::cerr << _CYAN "file: " << u << ":" << p << std::endl << _END;
+		if (username == u && passwd == p) {
+			close(htpasswd_fd);
+			return 0;
+		}
+	}
+	this->_response =	"HTTP/1.1 ";
+	creds ? _response += "403 Forbidden\n" : _response += "401 Unauthorized\n";
+	this->_response +=	"Server: Webserv/0.1\n"
+					  	"Content-Type: text/html\n"
+	   					"WWW-Authenticate: Basic realm=";
+	this->_response += request.server.getauthbasicrealm();
+	this->_response += "\n, charset=\"UTF-8\"\n\n";
+	// std::cerr << "response: " << _response << std::endl;
+	close(htpasswd_fd);
+	return 1;
+}
+
 void RequestHandler::generateResponse(request_s& request) {
 	int			fd = -1;
 	struct stat	statstruct = {};
 	std::string filepath = request.server.getroot() + request.uri;
 
-	this->_response = "HTTP/1.1 200 OK\n"
-			   "Server: Webserv/0.1\n"
-			   "Content-Type: text/html\n"
-			   "Content-Length: 678\n\n";
+	if (this->authenticate(request) )
+		return ;
+	this->_response =	"HTTP/1.1 200 OK\n"
+				   		"Server: Webserv/0.1\n"
+		 				"Content-Type: text/html\n"
+	   					"Content-Length: 678\n\n";
 
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
 		fd = this->run_cgi(request);
@@ -153,73 +201,73 @@ void RequestHandler::generateResponse(request_s& request) {
 }
 
 void RequestHandler::handleACCEPT_CHARSET(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "ACCEPT_CHARSET: " << value << std::endl;
 }
 
 void RequestHandler::handleACCEPT_LANGUAGE(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "ACCEPT_LANGUAGE: " << value << std::endl;
 }
 
 void RequestHandler::handleALLOW(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "ALLOW: " << value << std::endl;
 }
 
 void RequestHandler::handleAUTHORIZATION(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "AUTHORIZATION: " << value << std::endl;
 }
 
 void RequestHandler::handleCONTENT_LANGUAGE(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "CONTENT_LANGUAGE: " << value << std::endl;
 }
 
 void RequestHandler::handleCONTENT_LENGTH(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "CONTENT_LENGTH: " << value << std::endl;
 }
 
 void RequestHandler::handleCONTENT_LOCATION(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "CONTENT_LOCATION: " << value << std::endl;
 }
 
 void RequestHandler::handleCONTENT_TYPE(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "CONTENT_TYPE: " << value << std::endl;
 }
 
 void RequestHandler::handleDATE(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "DATE: " << value << std::endl;
 }
 
 void RequestHandler::handleHOST(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "HOST: " << value << std::endl;
 }
 
 void RequestHandler::handleLAST_MODIFIED(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "LAST_MODIFIED: " << value << std::endl;
 }
 
 void RequestHandler::handleLOCATION(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "LOCATION: " << value << std::endl;
 }
 
 void RequestHandler::handleREFERER(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "REFERER: " << value << std::endl;
 }
 
 void RequestHandler::handleRETRY_AFTER(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "RETRY_AFTER: " << value << std::endl;
 }
 
 void RequestHandler::handleSERVER(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "SERVER: " << value << std::endl;
 }
 
 void RequestHandler::handleTRANSFER_ENCODING(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "TRANSFER_ENCODING: " << value << std::endl;
 }
 
 void RequestHandler::handleUSER_AGENT(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "USER_AGENT: " << value << std::endl;
 }
 
 void RequestHandler::handleWWW_AUTHENTICAT(const std::string &value) {
-	std::cout << "Value is: " << value << std::endl;
+	std::cout << "WWW_AUTHENTICAT: " << value << std::endl;
 }

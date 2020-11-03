@@ -26,6 +26,7 @@ public:
 
 	int			run_cgi(const request_s& request);
 	std::string handleRequest(request_s request);
+	int			authenticate(request_s& request);
 	void 		generateResponse(request_s& request);
 
 	void handleACCEPT_CHARSET(const std::string &value);

@@ -33,8 +33,10 @@ class Server {
 		void		setservername(const std::string& servername);
 		void		setclientbodysize(const std::string& clientbodysize);
 		void		seterrorpage(const std::string& errorpage);
+		void		setauth_basic_realm(const std::string& realm);
+		void		sethtpasswdpath(const std::string& path);
 		void		setSocketFd(int socketFd);
-	
+
 		//getters
 		size_t					getport() const;
 		std::string				gethost() const;
@@ -43,6 +45,8 @@ class Server {
 		std::string				getservername() const;
 		long int				getclientbodysize() const;
 		std::string				geterrorpage() const;
+		std::string 			getauthbasicrealm() const;
+		std::string				gethtpasswdpath() const;
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
 		std::map<std::string, std::string> getbaseenv() const;
@@ -57,7 +61,9 @@ private:
 					_server_name,
 					_error_page,
 					_index,
-					_root;
+					_root,
+					_auth_basic_realm,
+					_htpasswd_path;
 		int			_fd, _socketFd;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_base_env;
