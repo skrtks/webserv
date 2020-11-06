@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:41 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/20 00:05:09 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/05 12:26:57 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,11 @@ class Connection {
 	std::vector<Server> 	_servers;
 	std::map<int, Server>	_serverMap; // key: socketFd; value: Corresponding server object
 
-	int addConnection(const int &socketFd);
-	void receiveRequest();
-	void sendReply(const std::string &msg) const;
-	void closeConnection(int fd);
+	int		addConnection(const int &socketFd);
+	void	receiveRequest();
+	void	sendReply(const std::string &msg) const;
+	void	closeConnection(int fd);
+
 public:
 	Connection();
 	Connection(const Connection &obj);
@@ -46,6 +47,5 @@ public:
 	void startListening();
 	void setServers(const std::vector<Server>& servers);
 };
-
 
 #endif //CONNECTION_HPP

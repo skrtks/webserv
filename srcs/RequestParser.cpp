@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/20 00:34:15 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/06 11:25:37 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "libftGnl.hpp"
 
 RequestParser::RequestParser() {
+	_status_code = 0;
 	_methodMap["GET"] = GET;
 	_methodMap["HEAD"] = HEAD;
 	_methodMap["POST"] = POST;
@@ -63,13 +64,20 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;
-	std::cout << req << std::endl;
+	
 	parseRequestLine();
-	parseHeaders();
-	request.headers = _headers;
-	request.method = _method;
-	request.version = _version;
-	request.uri = _uri;
+	if (_status_code == 0)
+		parseHeaders();
+	if (_status_code == 0) {
+		request.headers = _headers;
+		request.method = _method;
+		request.version = _version;
+		request.uri = _uri;
+	}
+	if (_status_code)
+		request.status_code = _status_code;
+	else
+		request.status_code = 0;
 	return (request);
 }
 
@@ -80,10 +88,14 @@ void RequestParser::parseRequestLine() {
 
 	// Check if first char is space
 	if (_rawRequest[0] == ' ') {
-		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
+		std::cout << "BAD REQ 1" << std::endl;
+		_status_code = 400;
+		return ;
 	}
 	if (_rawRequest.find("\r\n", 0) == std::string::npos) {
-		throw std::runtime_error("No CRLF found in request"); // TODO: replace with correct http error
+		std::cout << "BAD REQ 2" << std::endl;
+		_status_code = 400;
+		return ;
 	}
 	// Check if there is 2 spaces in pline
 	int numSpaces = 0;
@@ -92,7 +104,9 @@ void RequestParser::parseRequestLine() {
 			numSpaces++;
 	}
 	if (numSpaces != 2) {
-		throw std::runtime_error("Forbidden WS"); // TODO: replace with correct http error
+		std::cout << "BAD REQ 3" << std::endl;
+		_status_code = 400;
+		return ;
 	}
 	extractMethod(eoRequestLine, pos);
 	pos++;
@@ -109,12 +123,18 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 	std::string ret;
 
 	pos = _rawRequest.find("HTTP/", pos);
-	if (pos > eoRequestLine)
-		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	if (pos > eoRequestLine) {
+		std::cout << "BAD REQ 3" << std::endl;
+		_status_code = 400;
+		return ;
+	}
 	pos += 5;
 	pos2 = _rawRequest.find("\r\n", pos);
-	if (pos2 > eoRequestLine)
-		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	if (pos2 > eoRequestLine) {
+		std::cout << "BAD REQ 4" << std::endl;
+		_status_code = 400;
+		return ;
+	}
 	ret = _rawRequest.substr(pos, pos2 - pos);
 	mainVersion = ft_atoi(ret.c_str());
 	subVersion = ft_atoi(ret.c_str() + 2);
@@ -125,8 +145,11 @@ void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
 	std::string ret;
 
 	pos2 = _rawRequest.find(' ', pos);
-	if (pos2 > eoRequestLine)
-		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	if (pos2 > eoRequestLine) {
+		std::cout << "BAD REQ 5" << std::endl;
+		_status_code = 400;
+		return ;
+	}
 	ret = _rawRequest.substr(pos, pos2 - pos);
 	_uri = ret;
 }
@@ -135,14 +158,21 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 	std::string ret;
 
 	pos = _rawRequest.find(' ', 0);
-	if (pos > eoRequestLine)
-		throw std::runtime_error("Error parsing version"); // TODO: replace with correct http error
+	if (pos > eoRequestLine) {
+		std::cout << "BAD REQ 6" << std::endl;
+		_status_code = 400;
+		return ;
+	}
 	ret = _rawRequest.substr(0, pos);
 	std::map<std::string, e_method>::iterator it = _methodMap.find(ret);
 	if (it != _methodMap.end()) {
 		_method = it->second;
 	}
-	else throw std::runtime_error("Incorrect value for method"); // TODO: replace with correct http error
+	else {
+		std::cout << "BAD REQ 7" << std::endl;
+		_status_code = 400;
+		return ;
+	}
 }
 
 // Parse headers and store them in _headers (map)
@@ -153,15 +183,24 @@ void RequestParser::parseHeaders() {
 		upperHeader.clear();
 		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
 		if (eoRequestLine != 0) {
-			if (_rawRequest[0] == ' ')
-				throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+			if (_rawRequest[0] == ' ') {
+				std::cout << "BAD REQ 8" << std::endl;
+				_status_code = 400;
+				return ;
+			}
 			size_t pos = _rawRequest.find(':', 0);
-			if (pos > eoRequestLine)
-				throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+			if (pos > eoRequestLine) {
+				std::cout << "BAD REQ 9" << std::endl;
+				_status_code = 400;
+				return ;
+			}
 			std::string header = _rawRequest.substr(0, pos);
 			for (int i = 0; header[i]; i++) {
-				if (header[i] == ' ')
-					throw std::runtime_error("Invalid syntax"); // TODO: replace with correct http error
+				if (header[i] == ' ') {
+					std::cout << "BAD REQ 10" << std::endl;
+					_status_code = 400;
+					return ;
+				}
 			}
 			pos++;
 			// 'Skip' over OWS at beginning of value string
@@ -175,7 +214,9 @@ void RequestParser::parseHeaders() {
 			// Extract value string and check if not empty or beginning with newline
 			std::string value = _rawRequest.substr(pos, eoRequestLine - pos - owsOffset);
 			if (value.empty() || _rawRequest[pos] == '\r') {
-				throw std::runtime_error("Empty value"); // TODO: replace with correct http error
+				std::cout << "BAD REQ 11" << std::endl;
+				_status_code = 400;
+				return ;
 			}
 			for (int i = 0; header[i]; i++) {
 				upperHeader += std::toupper(header[i]);

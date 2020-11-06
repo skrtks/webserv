@@ -20,10 +20,11 @@
 #define SEC_PER_MIN   60
 
 class ResponseHandler {
-	std::map<headerType, std::string>						_header_vals;
-	std::string												_response;
-	std::string												_body;
-	int														_body_length;
+	std::map<headerType, std::string>	_header_vals;
+	std::string							_response;
+	std::string							_body;
+	int									_body_length;
+	int									_status_code;
 public:
 	ResponseHandler();
 	virtual ~ResponseHandler();
@@ -31,9 +32,9 @@ public:
 	ResponseHandler& operator= (const ResponseHandler &rhs);
 
 	std::string	handleRequest(request_s request);
+	void		handleBody(request_s& request);
+	void		handleStatusCode( void );
 	char*		getCurrentDatetime( void );
-	void		handleACCEPT_CHARSET( void );
-	void		handleACCEPT_LANGUAGE( void );
 	void		handleALLOW( void );
 	void		handleAUTHORIZATION( void );
 	void		handleCONTENT_LANGUAGE( void );
@@ -44,11 +45,9 @@ public:
 	void		handleHOST( request_s& request );
 	void		handleLAST_MODIFIED( void );
 	void		handleLOCATION( void );
-	void		handleREFERER( void );
 	void		handleRETRY_AFTER( void );
 	void		handleSERVER( void );
 	void		handleTRANSFER_ENCODING( request_s& request );
-	void		handleUSER_AGENT( request_s& request );
 	void		handleWWW_AUTHENTICATE( void );
 
 	int			run_cgi(const request_s& request);

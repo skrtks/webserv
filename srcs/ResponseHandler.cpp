@@ -17,7 +17,25 @@
 #include <sys/stat.h>
 #include "Colours.hpp"
 
-ResponseHandler::ResponseHandler() : _body_length(-1) {
+ResponseHandler::ResponseHandler() {
+	this->_body_length = -1;
+	this->_status_code = 200;
+	_header_vals[ACCEPT_CHARSET].clear();
+	_header_vals[ACCEPT_LANGUAGE].clear();
+	_header_vals[ALLOW].clear();
+	_header_vals[AUTHORIZATION].clear();
+	_header_vals[CONTENT_LANGUAGE].clear();
+	_header_vals[CONTENT_LENGTH].clear();
+	_header_vals[CONTENT_LOCATION].clear();
+	_header_vals[CONTENT_TYPE].clear();
+	_header_vals[DATE].clear();
+	_header_vals[HOST].clear();
+	_header_vals[LAST_MODIFIED].clear();
+	_header_vals[LOCATION].clear();
+	_header_vals[RETRY_AFTER].clear();
+	_header_vals[SERVER] = "Webserv/1.0";
+	_header_vals[TRANSFER_ENCODING].clear();
+	_header_vals[WWW_AUTHENTICATE].clear();
 }
 
 ResponseHandler::~ResponseHandler() {
@@ -40,7 +58,6 @@ std::string ResponseHandler::handleRequest(request_s request) {
 	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this for production
 	generateResponse(request);
 	return _response;
-	// todo: generate respons and return
 }
 
 char	**maptoenv(std::map<std::string, std::string> baseenv) {
@@ -123,15 +140,17 @@ int ResponseHandler::generatePage(request_s& request) {
 	return (fd);
 }
 
-void ResponseHandler::generateResponse(request_s& request) {
+void ResponseHandler::handleBody(request_s& request) {
 	int		ret = 0;
 	char	buf[1024];
 	int		fd = 0;
 
 	_body_length = 0;
 	_body = "";
-
-	fd = generatePage(request);
+	if (request.status_code == 400)
+		fd = open("./htmlfiles/error.html", O_RDONLY);
+	else
+		fd = generatePage(request);
 	do {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
@@ -140,23 +159,128 @@ void ResponseHandler::generateResponse(request_s& request) {
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	} while (ret > 0);
-	handleACCEPT_CHARSET();
-	handleACCEPT_LANGUAGE();
+	close(fd);
+}
+
+void ResponseHandler::generateResponse(request_s& request) {
+	_response = "HTTP/1.1 ";
+	if (request.status_code)
+		this->_status_code = request.status_code;
+	handleBody(request);
+	handleStatusCode();
 	handleALLOW();
-	handleCONTENT_LANGUAGE();
-	handleCONTENT_TYPE();
 	handleDATE();
+	handleCONTENT_LANGUAGE();
 	handleCONTENT_LENGTH();
-	handleUSER_AGENT(request);
+	handleCONTENT_TYPE();
+	handleSERVER();
 	handleHOST(request);
 	handleCONTENT_LOCATION(request);
-	_response = "HTTP/1.1 200 OK\n"
-			   "Server: Webserv/0.1\n"
-			   "Content-Type: text/html\n"
-			   "Content-Length: 678\n\n";
+	// _response = "HTTP/1.1 200 OK\n"
+	// 		   "Server: Webserv/0.1\n"
+	// 		   "Content-Type: text/html\n"
+	// 		   "Content-Length: 678\n\n";
+	_response += "\n";
 	_response += _body;
 	_response += "\r\n";
-	close(fd);
+	std::cout << _response << std::endl;
+}
+
+void	ResponseHandler::handleStatusCode( void ) {
+	switch (this->_status_code) {
+		case 100:
+			_response += "100 Continue\n"; // Only a part of the request has been received by the server, but as long as it has not been rejected, the client should continue with the request.
+			break ;
+		case 200:
+			_response += "200 OK\n";
+			break ;
+		case 201:
+			_response += "201 Created\n";
+			break ;
+		case 202:
+			_response += "202 Accepted\n"; // The request is accepted for processing, but the processing is not complete.
+			break ;
+		case 203:
+			_response += "203 Non-Authoritative Information\n"; // The information in the entity header is from a local or third-party copy, not from the original server.
+			break ;
+		case 204:
+			_response += "204 No Content\n";
+			break ;
+		case 300:
+			_response += "300 Multiple Choices\n"; // A link list. The user can select a link and go to that location. Maximum five addresses  .
+			break ;
+		case 301:
+			_response += "301 Moved Permanently\n";
+			break ;
+		case 302:
+			_response += "302 Found\n"; // The requested page has moved temporarily to a new url .
+			break ;
+		case 307:
+			_response += "307 Temporary Redirect\n"; // The requested page has moved temporarily to a new url.
+			break ;
+		case 400:
+			_response += "400 Bad Request\n"; // The server did not understand the request.
+			break ;
+		case 401:
+			_response += "401 Unauthorized\n";
+			break ;
+		case 403:
+			_response += "403 Forbidden\n"; // Access is forbidden to the requested page.
+			break ;
+		case 404:
+			_response += "404 Not Found\n";
+			break ;
+		case 405:
+			_response += "405 Method Not Allowed\n";
+			break ;
+		case 406:
+			_response += "406 Not Acceptable\n";
+			break ;
+		case 407:
+			_response += "407 Proxy Authentication Required\n";
+			break ;
+		case 408:
+			_response += "408 Request Timeout\n";
+			break ;
+		case 409:
+			_response += "409 Conflict\n"; // The request could not be completed because of a conflict.
+			break ;
+		case 410:
+			_response += "410 Gone\n"; // The requested page is no longer available .
+			break ;
+		case 411:
+			_response += "411 Length Required\n"; // The "Content-Length" is not defined. The server will not accept the request without it .
+			break ;
+		case 413:
+			_response += "413 Request Entity Too Large\n";
+			break ;
+		case 414:
+			_response += "414 Request-url Too Long\n";
+			break ;
+		case 415:
+			_response += "415 Unsupported Media Type\n";
+			break ;
+		case 500:
+			_response += "500 Internal Server Error\n"; // The request was not completed. The server met an unexpected condition.
+			break ;
+		case 501:
+			_response += "501 Not Implemented\n"; // The request was not completed. The server did not support the functionality required.
+			break ;
+		case 502:
+			_response += "502 Bad Gateway\n"; // The request was not completed. The server received an invalid response from the upstream server.
+			break ;
+		case 503:
+			_response += "503 Service Unavailable\n"; // The request was not completed. The server is temporarily overloading or down.
+			break ;
+		case 504:
+			_response += "504 Gateway Timeout\n";
+			break ;
+		case 505:
+			_response += "505 HTTP Version Not Supported\n";
+			break ;
+		default:
+			throw std::runtime_error("Invalid status code.");
+	}
 }
 
 char*	ResponseHandler::getCurrentDatetime( void ) {
@@ -171,24 +295,12 @@ char*	ResponseHandler::getCurrentDatetime( void ) {
 	return (datetime);
 }
 
-void ResponseHandler::handleACCEPT_CHARSET( void ) {
-	_header_vals[ACCEPT_CHARSET] = "utf-8; q=0.9";
-	//std::cout << "ACCEPT_CHARSET Value is: " << _header_vals[ACCEPT_CHARSET] << std::endl;
-}
-
-void ResponseHandler::handleACCEPT_LANGUAGE( void ) {
-	_header_vals[ACCEPT_LANGUAGE] = "en-US,en;q=0.9";
-	//std::cout << "ACCEPT_LANGUAGE Value is: " << _header_vals[ACCEPT_LANGUAGE] << std::endl;
-}
-
 void ResponseHandler::handleALLOW( void ) {
 	_header_vals[ALLOW] = "GET, HEAD";
+	_response += "Allow: ";
+	_response += _header_vals[ALLOW];
+	_response += "\n";
 	//std::cout << "ALLOW Value is: " << _header_vals[ALLOW] << std::endl;
-}
-
-void ResponseHandler::handleAUTHORIZATION( void ) {
-	_header_vals[AUTHORIZATION] = "";
-	std::cout << "Value is: " << "NULL" << std::endl;
 }
 
 void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
@@ -210,6 +322,9 @@ void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
 		_header_vals[CONTENT_LANGUAGE] = "en-US";
 	}
 	delete []lang;
+	_response += "Content-Language: ";
+	_response += _header_vals[CONTENT_LANGUAGE];
+	_response += "\n";
 }
 
 void ResponseHandler::handleCONTENT_LENGTH( void ) {
@@ -219,30 +334,39 @@ void ResponseHandler::handleCONTENT_LENGTH( void ) {
 	ss << _body_length;
 	str = ss.str();
 	_header_vals[CONTENT_LENGTH] = str;
+	_response += "Content-Length: ";
+	_response += _header_vals[CONTENT_LENGTH];
+	_response += "\n";
 }
 
 void ResponseHandler::handleCONTENT_LOCATION(request_s& request) {
 	// TODO
-	std::cout << request.uri << std::endl;
+	(void)request;
+	//std::cout << request.uri << std::endl;
 }
 
 void ResponseHandler::handleCONTENT_TYPE( void ) {
 	// for now hardcoded too text/html but will need to be non-static if we serve other datatypes
 	_header_vals[CONTENT_TYPE] = "text/html";
-
+	_response += "Content-Type: ";
+	_response += _header_vals[CONTENT_TYPE];
+	_response += "\n";
 	//std::cout << "CONTENT_TYPE Value is: " << _header_vals[CONTENT_TYPE] << std::endl;
 }
 
 void ResponseHandler::handleDATE( void ) {
 	// TODO: free the datetime values when done
 	_header_vals[DATE] = getCurrentDatetime();
+	_response += "Date: ";
+	_response += _header_vals[DATE];
+	_response += "\n";
 }
 
 void ResponseHandler::handleHOST( request_s& request ) {
 	std::stringstream ss;
 	ss << request.server.gethost() << ":" << request.server.getport();
 	_header_vals[HOST] = ss.str();
-	std::cout << "HOST: " << _header_vals[HOST] << std::endl;
+	//std::cout << "HOST: " << _header_vals[HOST] << std::endl;
 }
 
 void ResponseHandler::handleLAST_MODIFIED( void ) {
@@ -253,31 +377,22 @@ void ResponseHandler::handleLOCATION( void ) {
 	std::cout << "Value is: " << "NULL" << std::endl;
 }
 
-// dont need this for server side responses
-// void ResponseHandler::handleREFERER( void ) {
-// 	std::cout << "Value is: " << "NULL" << std::endl;
-// }
-
 void ResponseHandler::handleRETRY_AFTER( void ) {
 	std::cout << "Value is: " << "NULL" << std::endl;
 }
 
 void ResponseHandler::handleSERVER( void ) {
-	_header_vals[SERVER] = "Webserv/1.0";
+	_response += "Server: Webserv/1.0\n";
 }
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
+	
 	_header_vals[TRANSFER_ENCODING] = "identity";
 	if (_body_length > request.server.getclientbodysize() || _body_length < 0) // arbitrary number, docs state that chunked transfer encoding is usually used for mb/gb onwards datatransfers
 	{
 		
 	}
 	//std::cout << "TRANSFER_ENCODING Value is: " << _header_vals[TRANSFER_ENCODING] << std::endl;
-}
-
-void ResponseHandler::handleUSER_AGENT( request_s& request ) {
-	_header_vals[USER_AGENT] = request.headers[USER_AGENT];
-	std::cout << "USER_AGENT: " << _header_vals[USER_AGENT] << std::endl;
 }
 
 void ResponseHandler::handleWWW_AUTHENTICATE( void ) {
