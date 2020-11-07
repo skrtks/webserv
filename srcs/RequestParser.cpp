@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/06 12:27:39 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/07 17:43:53 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,11 +99,14 @@ void RequestParser::parseRequestLine() {
 	}
 	// Check if there is 2 spaces in pline
 	int numSpaces = 0;
+	int doubleSpace = 0;
 	for (int i = 0; _rawRequest[i] != '\r'; i++) {
 		if (_rawRequest[i] == ' ')
 			numSpaces++;
+		if (_rawRequest[i] == ' ' && _rawRequest[i + 1] == ' ')
+			doubleSpace = 1;
 	}
-	if (numSpaces != 2) {
+	if (numSpaces != 2 || doubleSpace == 1) {
 		std::cout << "BAD REQ 3" << std::endl;
 		_status_code = 400;
 		return ;

@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/07 16:23:15 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/07 16:25:01 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,10 +115,6 @@ void Connection::startListening() {
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
-					receiveRequest(fd);
-					_parsedRequest = requestParser.parseRequest(_rawRequest);
-					_parsedRequest.server = serverConnections[fd];
-					response = requestHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd);
 					closeConnection(fd);
 					serverConnections.erase(fd);

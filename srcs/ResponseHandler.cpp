@@ -241,9 +241,8 @@ void ResponseHandler::handleBody(request_s& request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response = "HTTP/1.1 ";
-	std::cout << "STATUS = " << _status_code << std::endl;
-	if (this->authenticate(request))
-		std::cout << "Auth" << std::endl;
+	// if (this->authenticate(request))
+	// 	std::cout << "Auth" << std::endl;
 	if (request.status_code)
 		this->_status_code = request.status_code;
 	handleBody(request);
@@ -264,7 +263,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 }
 
 void	ResponseHandler::handleStatusCode(request_s& request) {
-	if (request.version.first != 1)
+	if (request.version.first != 1 && _status_code == 200)
 		_status_code = 505;
 	_response += _status_codes[_status_code];
 }
