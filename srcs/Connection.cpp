@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/30 11:54:07 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/07 16:23:15 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,6 @@ void Connection::startListening() {
 		_fdMax = it->getSocketFd();
 		_serverMap.insert(std::make_pair(it->getSocketFd(), *it)); // Keep track of which socket is for which server obj
 	}
-	
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
 		_readFds = _master;
@@ -112,16 +111,10 @@ void Connection::startListening() {
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
 				}
 				else { // Handle request & return response
-<<<<<<< HEAD
-					receiveRequest();
+					receiveRequest(fd);
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
-					_parsedRequest.server = serverConnections[i];
+					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
-					//std::cout << "\n\n" << response << std::endl;
-					sendReply(response);
-					closeConnection(i);
-					serverConnections.erase(i);
-=======
 					receiveRequest(fd);
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[fd];
@@ -129,7 +122,6 @@ void Connection::startListening() {
 					sendReply(response, fd);
 					closeConnection(fd);
 					serverConnections.erase(fd);
->>>>>>> master
 				}
 			}
 		}
@@ -151,20 +143,12 @@ int Connection::addConnection(const int &socketFd) {
 	return _connectionFd;
 }
 
-<<<<<<< HEAD
-void Connection::receiveRequest() {
-	int			bytesReceived;
-	char		buf[BUFLEN];
-	std::string	request;
-=======
 void Connection::receiveRequest(const int& fd) {
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
->>>>>>> master
 	// Loop to receive complete request, even if buffer is smaller
-	//request.clear();
-
+	request.clear();
 	ft_memset(buf, 0, BUFLEN);
 	do {
 		bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
@@ -174,7 +158,6 @@ void Connection::receiveRequest(const int& fd) {
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
-	std::cout << "BEGINREQUEST-------\n" << _rawRequest << "\n---------ENDREQUEST" << std::endl;
 }
 
 void Connection::sendReply(const std::string& msg, const int& fd) const {

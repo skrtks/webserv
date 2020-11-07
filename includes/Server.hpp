@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/10/17 16:36:30 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/07 11:18:20 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ class Server {
 		void		setservername(const std::string& servername);
 		void		setclientbodysize(const std::string& clientbodysize);
 		void		seterrorpage(const std::string& errorpage);
+		void		set404page(const std::string& page);
 		void		setSocketFd(int socketFd);
 	
 		//getters
@@ -43,8 +44,11 @@ class Server {
 		std::string				getservername() const;
 		long int				getclientbodysize() const;
 		std::string				geterrorpage() const;
+		std::string				get404page() const;
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
+		std::string 			getauthbasicrealm() const;
+		std::string				gethtpasswdpath() const;
 		std::map<std::string, std::string> getbaseenv() const;
 	
 		void		create_base_env();
@@ -56,8 +60,11 @@ private:
 		std::string _host,
 					_server_name,
 					_error_page,
+					_404_page,
 					_index,
-					_root;
+					_root,
+					_auth_basic_realm,
+					_htpasswd_path;
 		int			_fd, _socketFd;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_base_env;
