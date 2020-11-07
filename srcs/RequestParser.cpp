@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/06 11:25:37 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/06 12:27:39 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,7 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 
 	pos = _rawRequest.find("HTTP/", pos);
 	if (pos > eoRequestLine) {
-		std::cout << "BAD REQ 3" << std::endl;
+		std::cout << "BAD REQ 3.1" << std::endl;
 		_status_code = 400;
 		return ;
 	}

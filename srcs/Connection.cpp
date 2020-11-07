@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/30 11:54:07 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/07 11:06:29 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,27 +99,25 @@ void Connection::startListening() {
 		_fdMax = it->getSocketFd();
 		_serverMap.insert(std::make_pair(it->getSocketFd(), *it)); // Keep track of which socket is for which server obj
 	}
-	
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
 		_readFds = _master;
 		if (select(_fdMax + 1, &_readFds, NULL, NULL, NULL) == -1)
 			throw std::runtime_error(strerror(errno));
 		// Go through existing connections looking for data to read
-		for (int i = 0; i <= _fdMax; i++) {
-			if (FD_ISSET(i, &_readFds)) { // Returns true if fd is active
-				if ((serverMapIt = _serverMap.find(i)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
+		for (int fd = 0; fd <= _fdMax; fd++) {
+			if (FD_ISSET(fd, &_readFds)) { // Returns true if fd is active
+				if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
 				}
 				else { // Handle request & return response
-					receiveRequest();
+					receiveRequest(fd);
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
-					_parsedRequest.server = serverConnections[i];
+					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
-					//std::cout << "\n\n" << response << std::endl;
-					sendReply(response);
-					closeConnection(i);
-					serverConnections.erase(i);
+					sendReply(response, fd);
+					closeConnection(fd);
+					serverConnections.erase(fd);
 				}
 			}
 		}
@@ -141,31 +139,29 @@ int Connection::addConnection(const int &socketFd) {
 	return _connectionFd;
 }
 
-void Connection::receiveRequest() {
-	int			bytesReceived;
-	char		buf[BUFLEN];
-	std::string	request;
+void Connection::receiveRequest(const int& fd) {
+	char buf[BUFLEN];
+	std::string request;
+	int bytesReceived;
 	// Loop to receive complete request, even if buffer is smaller
-	//request.clear();
-
+	request.clear();
 	ft_memset(buf, 0, BUFLEN);
 	do {
-		bytesReceived = recv(_connectionFd, buf, BUFLEN - 1, 0);
+		bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
 		request += buf;
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
-	std::cout << "BEGINREQUEST-------\n" << _rawRequest << "\n---------ENDREQUEST" << std::endl;
 }
 
-void Connection::sendReply(const std::string &msg) const {
-	if ((send(_connectionFd, msg.c_str(), msg.length(), 0) == -1))
+void Connection::sendReply(const std::string& msg, const int& fd) const {
+	if ((send(fd, msg.c_str(), msg.length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
 }
 
-void Connection::closeConnection(int fd) {
+void Connection::closeConnection(const int& fd) {
 	// Closing connection after response has been send
 	close(fd);
 	FD_CLR(fd, &_master);

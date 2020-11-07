@@ -21,6 +21,7 @@
 
 class ResponseHandler {
 	std::map<headerType, std::string>	_header_vals;
+	std::map<int, std::string>			_status_codes;
 	std::string							_response;
 	std::string							_body;
 	int									_body_length;
@@ -33,13 +34,13 @@ public:
 
 	std::string	handleRequest(request_s request);
 	void		handleBody(request_s& request);
-	void		handleStatusCode( void );
+	void		handleStatusCode(request_s& request);
 	char*		getCurrentDatetime( void );
 	void		handleALLOW( void );
 	void		handleAUTHORIZATION( void );
 	void		handleCONTENT_LANGUAGE( void );
 	void		handleCONTENT_LENGTH( void );
-	void		handleCONTENT_LOCATION( request_s& request );
+	void		handleCONTENT_LOCATION( void );
 	void		handleCONTENT_TYPE( void );
 	void		handleDATE( void );
 	void		handleHOST( request_s& request );
@@ -50,8 +51,9 @@ public:
 	void		handleTRANSFER_ENCODING( request_s& request );
 	void		handleWWW_AUTHENTICATE( void );
 
+	int			authenticate(request_s& request);
+	void 		generateResponse(request_s& request);
 	int			run_cgi(const request_s& request);
-	void		generateResponse(request_s& request);
 	int			generatePage(request_s& request);
 };
 

@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/17 16:20:50 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/07 11:28:35 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,11 @@
 #include "libftGnl.hpp"
 
 Server::Server() : _port(80), _client_body_size(1000000),
-		_host("0.0.0.0"), _error_page("error.html"), _index("index.html"), _root("htmlfiles") {
+		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), _index("index.html"), _root("htmlfiles"), _auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd") {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
-		_host("0.0.0.0"), _error_page("error.html"), _index("index.html"), _root("htmlfiles") {
+		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), _index("index.html"), _root("htmlfiles"), _auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd") {
 	this->_fd = fd;
 }
 
@@ -36,11 +36,14 @@ Server&	Server::operator=(const Server& x) {
 		this->_server_name = x._server_name;
 		this->_client_body_size = x._client_body_size;
 		this->_error_page = x._error_page;
+		this->_404_page = x._404_page;
 		this->_index = x._index;
 		this->_root = x._root;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
 		this->_base_env = x._base_env;
+		this->_auth_basic_realm = x._auth_basic_realm;
+		this->_htpasswd_path = x._htpasswd_path;
 	}
 	return *this;
 }
@@ -81,6 +84,14 @@ std::string	Server::getservername() const {
 	return this->_server_name;
 }
 
+std::string	Server::getauthbasicrealm() const {
+	return this->_auth_basic_realm;
+}
+
+std::string	Server::gethtpasswdpath() const {
+	return this->_htpasswd_path;
+}
+
 void	Server::setservername(const std::string& servername) {
 	this->_server_name = servername;
 }
@@ -101,6 +112,14 @@ std::string	Server::geterrorpage() const {
 
 void	Server::seterrorpage(const std::string& errorpage) {
 	this->_error_page = errorpage;
+}
+
+std::string	Server::get404page() const {
+	return this->_404_page;
+}
+
+void	Server::set404page(const std::string& page) {
+	this->_404_page = page;
 }
 
 std::map<std::string, std::string> Server::getbaseenv() const {

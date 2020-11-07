@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <zconf.h>
 #include <sys/stat.h>
+#include "Base64.hpp"
 #include "Colours.hpp"
 
 ResponseHandler::ResponseHandler() {
@@ -36,6 +37,35 @@ ResponseHandler::ResponseHandler() {
 	_header_vals[SERVER] = "Webserv/1.0";
 	_header_vals[TRANSFER_ENCODING].clear();
 	_header_vals[WWW_AUTHENTICATE].clear();
+
+	_status_codes[100] = "100 Continue\n"; // Only a part of the request has been received by the server, but as long as it has not been rejected, the client should continue with the request.
+	_status_codes[200] = "200 OK\n";
+	_status_codes[201] = "201 Created\n";
+	_status_codes[202] = "202 Accepted\n"; // The request is accepted for processing, but the processing is not complete.
+	_status_codes[203] = "203 Non-Authoritative Information\n"; // The information in the entity header is from a local or third-party copy, not from the original server.
+	_status_codes[204] = "204 No Content\n";
+	_status_codes[300] = "300 Multiple Choices\n"; // A link list. The user can select a link and go to that location. Maximum five addresses  .
+	_status_codes[301] = "301 Moved Permanently\n";
+	_status_codes[302] = "302 Found\n"; // The requested page has moved temporarily to a new url .
+	_status_codes[307] = "307 Temporary Redirect\n"; // The requested page has moved temporarily to a new url.
+	_status_codes[400] = "400 Bad Request\n"; // The server did not understand the request.
+	_status_codes[404] = "404 Not Found\n";
+	_status_codes[405] = "405 Method Not Allowed\n";
+	_status_codes[406] = "406 Not Acceptable\n";
+	_status_codes[407] = "407 Proxy Authentication Required\n";
+	_status_codes[408] = "408 Request Timeout\n";
+	_status_codes[409] = "409 Conflict\n"; // The request could not be completed because of a conflict.
+	_status_codes[410] = "410 Gone\n"; // The requested page is no longer available .
+	_status_codes[411] = "411 Length Required\n"; // The "Content-Length" is not defined. The server will not accept the request without it .
+	_status_codes[413] = "413 Request Entity Too Large\n";
+	_status_codes[414] = "414 Request-url Too Long\n";
+	_status_codes[415] = "415 Unsupported Media Type\n";
+	_status_codes[500] = "500 Internal Server Error\n"; // The request was not completed. The server met an unexpected condition.
+	_status_codes[501] = "501 Not Implemented\n"; // The request was not completed. The server did not support the functionality required.
+	_status_codes[502] = "502 Bad Gateway\n"; // The request was not completed. The server received an invalid response from the upstream server.
+	_status_codes[503] = "503 Service Unavailable\n"; // The request was not completed. The server is temporarily overloading or down.
+	_status_codes[504] = "504 Gateway Timeout\n";
+	_status_codes[505] = "505 HTTP Version Not Supported\n";
 }
 
 ResponseHandler::~ResponseHandler() {
@@ -53,7 +83,6 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 	}
 	return *this;
 }
-
 std::string ResponseHandler::handleRequest(request_s request) {
 	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this for production
 	generateResponse(request);
@@ -110,6 +139,50 @@ int	ResponseHandler::run_cgi(const request_s& request) {
 	return pipefd[0];
 }
 
+int ResponseHandler::authenticate(request_s& request) {
+	bool creds = false;
+	std::string username, passwd, str;
+	try {
+		std::string auth = request.headers.at(AUTHORIZATION);
+		std::cerr << _YELLOW << "auth gives: " << auth	 << std::endl << _END;
+		std::string type, credentials;
+		get_key_value(auth, type, credentials);
+		credentials = base64_decode(credentials);
+		get_key_value(credentials, username, passwd, ":");
+		std::cerr << "creds = true, username = " << username << ", pass = " << passwd << std::endl;
+		creds = true;
+		// request.headers.at(AUTHORIZATION) = "Basic -";
+	}
+	catch (std::exception& e) {
+		std::cerr << "turns out its not giving us login information." << std::endl;
+	}
+	int htpasswd_fd = open(request.server.gethtpasswdpath().c_str(), O_RDONLY);
+	if (htpasswd_fd < 0 ) {
+		std::cerr << "htpasswd_path is invalid\n";
+		return 1;
+	}
+	while (creds && ft::get_next_line(htpasswd_fd, str) > 0) {
+		std::string u, p;
+		get_key_value(str, u, p, ":");
+		p = base64_decode(p);
+		std::cerr << _GREEN "user tries to log in with: " << username << ":" << passwd << std::endl << _END;
+		std::cerr << _CYAN "file: " << u << ":" << p << std::endl << _END;
+		if (username == u && passwd == p) {
+			close(htpasswd_fd);
+			return 0;
+		}
+	}
+	creds ? _response += "403 Forbidden\n" : _response += "401 Unauthorized\n";
+	this->_response +=	"Server: Webserv/0.1\n"
+					  	"Content-Type: text/html\n"
+	   					"WWW-Authenticate: Basic realm=";
+	this->_response += request.server.getauthbasicrealm();
+	this->_response += ", charset=\"UTF-8\"\n\n";
+	// std::cerr << "response: " << _response << std::endl;
+	close(htpasswd_fd);
+	return 1;
+}
+
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat	statstruct = {};
@@ -119,20 +192,23 @@ int ResponseHandler::generatePage(request_s& request) {
 		fd = this->run_cgi(request);
 	else if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
-			std::cerr << _RED << _BOLD << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl << _END;
+			std::cerr << _RED << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl << _END;
 		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
-			std::cerr << _BLUE << _BOLD << filepath << " is a directory" << std::endl << _END;
+			std::cerr << _BLUE << filepath << " is a directory" << std::endl << _END;
 			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
+			_header_vals[CONTENT_LOCATION] = filepath;
 			fd = open(filepath.c_str(), O_RDONLY);
 		}
 		else {
 			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
-			std::cerr << _GREEN << _BOLD << filepath << " is a valid file, lets serve it at fd " << fd << std::endl << std::endl << _END;
+			std::cerr << _GREEN << filepath << " is a valid file, lets serve it at fd " << fd << std::endl << std::endl << _END;
 		}
 	}
 	if (fd == -1) {
-		std::cerr << _RED << _BOLD << "Serving the default error page" << std::endl << _END;
-		filepath = request.server.getroot() + '/' + request.server.geterrorpage();	// Serving the default error page
+		std::cerr << _RED << "Serving the 404 error page" << std::endl << _END;
+		_status_code = 404;
+		filepath = request.server.getroot() + '/' + request.server.get404page();	// Serving the default error page
+		_header_vals[CONTENT_LOCATION] = filepath;
 		fd = open(filepath.c_str(), O_RDONLY);
 	}
 	if (fd == -1)
@@ -163,125 +239,36 @@ void ResponseHandler::handleBody(request_s& request) {
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
+	this->_status_code = 200;
 	_response = "HTTP/1.1 ";
+	std::cout << "STATUS = " << _status_code << std::endl;
+	if (this->authenticate(request))
+		std::cout << "Auth" << std::endl;
 	if (request.status_code)
 		this->_status_code = request.status_code;
 	handleBody(request);
-	handleStatusCode();
+	std::cout << "STATUS = " << _status_code << std::endl;
+	handleStatusCode(request);
 	handleALLOW();
 	handleDATE();
 	handleCONTENT_LANGUAGE();
 	handleCONTENT_LENGTH();
+	handleCONTENT_LOCATION();
 	handleCONTENT_TYPE();
 	handleSERVER();
 	handleHOST(request);
-	handleCONTENT_LOCATION(request);
-	// _response = "HTTP/1.1 200 OK\n"
-	// 		   "Server: Webserv/0.1\n"
-	// 		   "Content-Type: text/html\n"
-	// 		   "Content-Length: 678\n\n";
 	_response += "\n";
 	_response += _body;
 	_response += "\r\n";
 	std::cout << _response << std::endl;
 }
 
-void	ResponseHandler::handleStatusCode( void ) {
-	switch (this->_status_code) {
-		case 100:
-			_response += "100 Continue\n"; // Only a part of the request has been received by the server, but as long as it has not been rejected, the client should continue with the request.
-			break ;
-		case 200:
-			_response += "200 OK\n";
-			break ;
-		case 201:
-			_response += "201 Created\n";
-			break ;
-		case 202:
-			_response += "202 Accepted\n"; // The request is accepted for processing, but the processing is not complete.
-			break ;
-		case 203:
-			_response += "203 Non-Authoritative Information\n"; // The information in the entity header is from a local or third-party copy, not from the original server.
-			break ;
-		case 204:
-			_response += "204 No Content\n";
-			break ;
-		case 300:
-			_response += "300 Multiple Choices\n"; // A link list. The user can select a link and go to that location. Maximum five addresses  .
-			break ;
-		case 301:
-			_response += "301 Moved Permanently\n";
-			break ;
-		case 302:
-			_response += "302 Found\n"; // The requested page has moved temporarily to a new url .
-			break ;
-		case 307:
-			_response += "307 Temporary Redirect\n"; // The requested page has moved temporarily to a new url.
-			break ;
-		case 400:
-			_response += "400 Bad Request\n"; // The server did not understand the request.
-			break ;
-		case 401:
-			_response += "401 Unauthorized\n";
-			break ;
-		case 403:
-			_response += "403 Forbidden\n"; // Access is forbidden to the requested page.
-			break ;
-		case 404:
-			_response += "404 Not Found\n";
-			break ;
-		case 405:
-			_response += "405 Method Not Allowed\n";
-			break ;
-		case 406:
-			_response += "406 Not Acceptable\n";
-			break ;
-		case 407:
-			_response += "407 Proxy Authentication Required\n";
-			break ;
-		case 408:
-			_response += "408 Request Timeout\n";
-			break ;
-		case 409:
-			_response += "409 Conflict\n"; // The request could not be completed because of a conflict.
-			break ;
-		case 410:
-			_response += "410 Gone\n"; // The requested page is no longer available .
-			break ;
-		case 411:
-			_response += "411 Length Required\n"; // The "Content-Length" is not defined. The server will not accept the request without it .
-			break ;
-		case 413:
-			_response += "413 Request Entity Too Large\n";
-			break ;
-		case 414:
-			_response += "414 Request-url Too Long\n";
-			break ;
-		case 415:
-			_response += "415 Unsupported Media Type\n";
-			break ;
-		case 500:
-			_response += "500 Internal Server Error\n"; // The request was not completed. The server met an unexpected condition.
-			break ;
-		case 501:
-			_response += "501 Not Implemented\n"; // The request was not completed. The server did not support the functionality required.
-			break ;
-		case 502:
-			_response += "502 Bad Gateway\n"; // The request was not completed. The server received an invalid response from the upstream server.
-			break ;
-		case 503:
-			_response += "503 Service Unavailable\n"; // The request was not completed. The server is temporarily overloading or down.
-			break ;
-		case 504:
-			_response += "504 Gateway Timeout\n";
-			break ;
-		case 505:
-			_response += "505 HTTP Version Not Supported\n";
-			break ;
-		default:
-			throw std::runtime_error("Invalid status code.");
-	}
+void	ResponseHandler::handleStatusCode(request_s& request) {
+	if (request.version.first != 1)
+		_status_code = 505;
+	_response += _status_codes[_status_code];
 }
+
 
 char*	ResponseHandler::getCurrentDatetime( void ) {
 	time_t	time;
@@ -339,19 +326,20 @@ void ResponseHandler::handleCONTENT_LENGTH( void ) {
 	_response += "\n";
 }
 
-void ResponseHandler::handleCONTENT_LOCATION(request_s& request) {
-	// TODO
-	(void)request;
-	//std::cout << request.uri << std::endl;
+void ResponseHandler::handleCONTENT_LOCATION( void ) {
+	if (_header_vals[CONTENT_LOCATION].empty() != true) {
+		_response += "Content-Location: ";
+		_response += _header_vals[CONTENT_LOCATION];
+		_response += "\n";
+	}
 }
 
 void ResponseHandler::handleCONTENT_TYPE( void ) {
-	// for now hardcoded too text/html but will need to be non-static if we serve other datatypes
+	// for now hardcoded to text/html but will need to be non-static if we serve other datatypes
 	_header_vals[CONTENT_TYPE] = "text/html";
 	_response += "Content-Type: ";
 	_response += _header_vals[CONTENT_TYPE];
 	_response += "\n";
-	//std::cout << "CONTENT_TYPE Value is: " << _header_vals[CONTENT_TYPE] << std::endl;
 }
 
 void ResponseHandler::handleDATE( void ) {
@@ -393,9 +381,4 @@ void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
 		
 	}
 	//std::cout << "TRANSFER_ENCODING Value is: " << _header_vals[TRANSFER_ENCODING] << std::endl;
-}
-
-void ResponseHandler::handleWWW_AUTHENTICATE( void ) {
-	_header_vals[WWW_AUTHENTICATE] = "";
-	std::cout << "Value is: " << "NULL" << std::endl;
 }
