@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/07 16:25:01 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/08 15:36:30 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,6 +154,7 @@ void Connection::receiveRequest(const int& fd) {
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
+	std::cout << "REQUEST == \n" << _rawRequest << std::endl;
 }
 
 void Connection::sendReply(const std::string& msg, const int& fd) const {

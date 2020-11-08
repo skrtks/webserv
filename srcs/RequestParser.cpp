@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/07 17:43:53 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/08 18:04:22 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,8 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;
+	_headers.clear();
+	_status_code = 0;
 	
 	parseRequestLine();
 	if (_status_code == 0)
@@ -73,6 +75,13 @@ request_s RequestParser::parseRequest(const std::string &req) {
 		request.method = _method;
 		request.version = _version;
 		request.uri = _uri;
+	}
+	std::map<headerType, std::string>::iterator it;
+
+	if (_headers[CONTENT_LENGTH].empty() == false) {
+		int length = ft_atoi(_headers[CONTENT_LENGTH].c_str());
+		if (_headers[CONTENT_LENGTH].find_first_not_of("0123456789") != std::string::npos || length < 0)
+			_status_code = 400;
 	}
 	if (_status_code)
 		request.status_code = _status_code;
@@ -115,6 +124,11 @@ void RequestParser::parseRequestLine() {
 	pos++;
 	extractUri(eoRequestLine, pos, pos2);
 	pos++;
+	if (_uri.length() > 10000000) {
+		std::cout << "BAD REQ 3.1" << std::endl;
+		_status_code = 414;
+		return ;
+	}
 	extractVersion(eoRequestLine, pos, pos2);
 	// Remove Request Line from _rawRequest
 	_rawRequest.erase(0, pos + 5);
@@ -127,7 +141,7 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 
 	pos = _rawRequest.find("HTTP/", pos);
 	if (pos > eoRequestLine) {
-		std::cout << "BAD REQ 3.1" << std::endl;
+		std::cout << "BAD REQ 3.2" << std::endl;
 		_status_code = 400;
 		return ;
 	}
@@ -155,6 +169,11 @@ void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
 	}
 	ret = _rawRequest.substr(pos, pos2 - pos);
 	_uri = ret;
+	if (_uri[0] == ':') {
+		std::cout << "BAD REQ5.1" << std::endl;
+		_status_code = 400;
+		return ;
+	}
 }
 
 void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
@@ -198,6 +217,11 @@ void RequestParser::parseHeaders() {
 				return ;
 			}
 			std::string header = _rawRequest.substr(0, pos);
+			if (header.empty() == true || header.length() == 0) {
+				std::cout << "BAD REQ 10.1" << std::endl;
+				_status_code = 400;
+				return ;
+			}
 			for (int i = 0; header[i]; i++) {
 				if (header[i] == ' ') {
 					std::cout << "BAD REQ 10" << std::endl;
@@ -227,6 +251,11 @@ void RequestParser::parseHeaders() {
 			// Match found header to correct headerType using map
 			std::map<std::string, headerType>::iterator it = _headerMap.find(upperHeader);
 			if (it != _headerMap.end()) {
+				if (_headers.find(it->second) != _headers.end()) {
+					std::cout << "BAD REQ 12" << std::endl;
+					_status_code = 400;
+					return ;
+				}
 				_headers.insert(std::make_pair(it->second, value));
 			}
 		}
