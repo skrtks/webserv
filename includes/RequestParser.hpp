@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:32 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/05 16:37:54 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/10 12:05:14 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <sys/time.h>
 #include <ctime>
 #include <sstream>

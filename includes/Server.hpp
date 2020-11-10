@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/11/07 11:18:20 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/10 12:10:49 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,10 @@ class Server {
 		void		setclientbodysize(const std::string& clientbodysize);
 		void		seterrorpage(const std::string& errorpage);
 		void		set404page(const std::string& page);
+		void		setauth_basic_realm(const std::string& realm);
+		void		sethtpasswdpath(const std::string& path);
 		void		setSocketFd(int socketFd);
-	
+
 		//getters
 		size_t					getport() const;
 		std::string				gethost() const;
@@ -45,10 +47,10 @@ class Server {
 		long int				getclientbodysize() const;
 		std::string				geterrorpage() const;
 		std::string				get404page() const;
-		std::vector<Location> 	getlocations() const;
-		int						getSocketFd() const;
 		std::string 			getauthbasicrealm() const;
 		std::string				gethtpasswdpath() const;
+		std::vector<Location> 	getlocations() const;
+		int						getSocketFd() const;
 		std::map<std::string, std::string> getbaseenv() const;
 	
 		void		create_base_env();

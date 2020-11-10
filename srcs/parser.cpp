@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/11/06 12:17:57 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/10 12:09:25 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ int		is_first_char(std::string str, char find) {
 	return (0);
 }
 
+//	delim and end are defaulted to use " \t\n" as delim and "\n\r#;" as end
 void	get_key_value(std::string &str, std::string &key, std::string& value, const char* delim, const char* end) {
 	size_t kbegin = str.find_first_not_of(delim);
 	size_t kend = str.find_first_of(delim, kbegin);

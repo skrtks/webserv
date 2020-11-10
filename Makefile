@@ -6,7 +6,7 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/11/06 12:21:04 by tuperera      ########   odam.nl          #
+#    Updated: 2020/11/10 12:12:43 by peerdb        ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,7 @@ SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
 
-CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++98 -Ofast
+CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
 ifdef DEBUG
  CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 endif
