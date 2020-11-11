@@ -6,14 +6,14 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/15 23:23:18 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/08 15:36:30 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Connection.hpp"
 #include <iostream>
 #include <zconf.h>
-#include "RequestHandler.hpp"
+#include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
 
 Connection::Connection() : _serverAddr(), _master(), _readFds() {
@@ -86,11 +86,12 @@ void Connection::setUpConnection() {
 }
 
 void Connection::startListening() {
-	RequestParser requestParser;
-	RequestHandler requestHandler;
-	std::string response;
-	std::map<int, Server>::iterator serverMapIt;
-	std::map<int, Server> serverConnections;
+	RequestParser					requestParser;
+	ResponseHandler					responseHandler;
+	std::string						response;
+	std::map<int, Server>::iterator	serverMapIt;
+	std::map<int, Server> 			serverConnections;
+
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		// Add the listening socket to the master list
 		FD_SET(it->getSocketFd(), &_master);
@@ -113,7 +114,7 @@ void Connection::startListening() {
 					receiveRequest(fd);
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[fd];
-					response = requestHandler.handleRequest(_parsedRequest);
+					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd);
 					closeConnection(fd);
 					serverConnections.erase(fd);
@@ -153,6 +154,7 @@ void Connection::receiveRequest(const int& fd) {
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
+	std::cout << "REQUEST == \n" << _rawRequest << std::endl;
 }
 
 void Connection::sendReply(const std::string& msg, const int& fd) const {

@@ -6,17 +6,17 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/10/17 16:40:53 by peerdb        ########   odam.nl          #
+#    Updated: 2020/11/10 12:12:43 by peerdb        ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-FILES = main parser split Server Servermanager Location Connection RequestParser RequestHandler Base64
+FILES = main parser split Server Servermanager Location Connection RequestParser ResponseHandler Base64
 SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
 
-CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++98 -Ofast
+CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
 ifdef DEBUG
  CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 endif

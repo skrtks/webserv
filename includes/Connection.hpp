@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:41 by sam           #+#    #+#                 */
-/*   Updated: 2020/10/17 16:35:31 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/07 10:55:00 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,5 @@ public:
 	void startListening();
 	void setServers(const std::vector<Server>& servers);
 };
-
 
 #endif //CONNECTION_HPP

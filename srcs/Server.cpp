@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/17 16:20:50 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/10 12:11:31 by peerdb        ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,17 @@
 #include "libftGnl.hpp"
 
 Server::Server() : _port(80), _client_body_size(1000000),
-		_host("0.0.0.0"), _error_page("error.html"), _index("index.html"),
-		_root("htmlfiles"), _auth_basic_realm("Access to the staging site"),
-		_htpasswd_path("configfiles/.htpasswd"),_fd(), _socketFd() {
+		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
+		_index("index.html"), _root("htmlfiles"), 
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_socketFd() {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
-		_host("0.0.0.0"), _error_page("error.html"), _index("index.html"),
-		_root("htmlfiles"), _auth_basic_realm("Access to the staging site"),
-		_htpasswd_path("configfiles/.htpasswd"), _socketFd() {
+		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
+		_index("index.html"), _root("htmlfiles"),
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_socketFd() {
 	this->_fd = fd;
 }
 
@@ -40,6 +42,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_server_name = x._server_name;
 		this->_client_body_size = x._client_body_size;
 		this->_error_page = x._error_page;
+		this->_404_page = x._404_page;
 		this->_index = x._index;
 		this->_root = x._root;
 		this->_auth_basic_realm = x._auth_basic_realm;
@@ -47,6 +50,8 @@ Server&	Server::operator=(const Server& x) {
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
 		this->_base_env = x._base_env;
+		this->_auth_basic_realm = x._auth_basic_realm;
+		this->_htpasswd_path = x._htpasswd_path;
 	}
 	return *this;
 }
@@ -109,6 +114,13 @@ void	Server::seterrorpage(const std::string& errorpage) {
 	this->_error_page = errorpage;
 }
 
+std::string	Server::get404page() const {
+	return this->_404_page;
+}
+
+void	Server::set404page(const std::string& page) {
+	this->_404_page = page;
+}
 void	Server::setauth_basic_realm(const std::string &realm) {
 	this->_auth_basic_realm = realm;
 }
