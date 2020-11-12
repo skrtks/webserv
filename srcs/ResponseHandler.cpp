@@ -270,16 +270,19 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 }
 
 
-char*	ResponseHandler::getCurrentDatetime( void ) {
+std::string ResponseHandler::getCurrentDatetime(void ) {
 	time_t	time;
 	char*	datetime = new char[100];
+	std::string dtRet;
 	tm*		curr_time;
 	
 	// gettimeofday(&time, NULL);
 	std::time(&time);
 	curr_time = std::localtime(&time);
 	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time);
-	return (datetime);
+	dtRet = datetime;
+	delete[] datetime;
+	return (dtRet);
 }
 
 void ResponseHandler::handleALLOW( void ) {
@@ -342,7 +345,6 @@ void ResponseHandler::handleCONTENT_TYPE( void ) {
 }
 
 void ResponseHandler::handleDATE( void ) {
-	// TODO: free the datetime values when done
 	_header_vals[DATE] = getCurrentDatetime();
 	_response += "Date: ";
 	_response += _header_vals[DATE];
