@@ -199,8 +199,8 @@ void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response = "HTTP/1.1 ";
 	std::cout << "STATUS CODE = " << request.status_code << std::endl;
-	// if (this->authenticate(request))
-	// 	std::cout << "Auth" << std::endl;
+	 if (this->authenticate(request))
+	 	std::cout << "Auth" << std::endl;
 	if (request.status_code)
 		this->_status_code = request.status_code;
 	handleBody(request);
