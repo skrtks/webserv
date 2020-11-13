@@ -41,7 +41,7 @@ public:
 	void		handleCONTENT_LANGUAGE( void );
 	void		handleCONTENT_LENGTH( void );
 	void		handleCONTENT_LOCATION( void );
-	void		handleCONTENT_TYPE( void );
+	void handleCONTENT_TYPE(request_s& request);
 	void		handleDATE( void );
 	void		handleHOST( request_s& request );
 	void		handleLAST_MODIFIED( void );

@@ -210,7 +210,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LANGUAGE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
-	handleCONTENT_TYPE();
+	handleCONTENT_TYPE(request);
 	handleSERVER();
 	handleHOST(request);
 	_response += "\n";
@@ -336,9 +336,14 @@ void ResponseHandler::handleCONTENT_LOCATION( void ) {
 	}
 }
 
-void ResponseHandler::handleCONTENT_TYPE( void ) {
-	// for now hardcoded to text/html but will need to be non-static if we serve other datatypes
-	_header_vals[CONTENT_TYPE] = "text/html";
+void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
+	// Defaults to html if no css is found
+	if (request.uri.find(".css") != std::string::npos) {
+		_header_vals[CONTENT_TYPE] = "text/css";
+	}
+	else {
+		_header_vals[CONTENT_TYPE] = "text/html";
+	}
 	_response += "Content-Type: ";
 	_response += _header_vals[CONTENT_TYPE];
 	_response += "\n";
