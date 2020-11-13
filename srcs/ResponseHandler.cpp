@@ -271,10 +271,10 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 
 
 std::string ResponseHandler::getCurrentDatetime(void ) {
-	time_t	time;
-	char*	datetime = new char[100];
+	time_t		time;
+	char*		datetime = new char[100];
 	std::string dtRet;
-	tm*		curr_time;
+	tm*			curr_time;
 	
 	// gettimeofday(&time, NULL);
 	std::time(&time);
