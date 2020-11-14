@@ -200,7 +200,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	_response = "HTTP/1.1 ";
 	std::cout << "STATUS CODE = " << request.status_code << std::endl;
 	 if (this->authenticate(request))
-	 	std::cout << "Auth" << std::endl;
+	 	return;
 	if (request.status_code)
 		this->_status_code = request.status_code;
 	handleBody(request);
@@ -252,7 +252,9 @@ int ResponseHandler::authenticate(request_s& request) {
 			return 0;
 		}
 	}
-	creds ? _response += "403 Forbidden\n" : _response += "401 Unauthorized\n";
+//	creds ? _response += "403 Forbidden\n" :
+	this->_status_code = 401;
+	_response += "401 Unauthorized\n";
 	this->_response +=	"Server: Webserv/0.1\n"
 					  	"Content-Type: text/html\n"
 	   					"WWW-Authenticate: Basic realm=";
