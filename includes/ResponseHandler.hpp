@@ -35,7 +35,7 @@ public:
 	std::string	handleRequest(request_s request);
 	void		handleBody(request_s& request);
 	void		handleStatusCode(request_s& request);
-	char*		getCurrentDatetime( void );
+	std::string getCurrentDatetime(void );
 	void		handleALLOW( void );
 	void		handleAUTHORIZATION( void );
 	void		handleCONTENT_LANGUAGE( void );

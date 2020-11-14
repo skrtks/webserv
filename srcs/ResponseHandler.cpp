@@ -270,16 +270,19 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 }
 
 
-char*	ResponseHandler::getCurrentDatetime( void ) {
-	time_t	time;
-	char*	datetime = new char[100];
-	tm*		curr_time;
+std::string ResponseHandler::getCurrentDatetime(void ) {
+	time_t		time;
+	char*		datetime = new char[100];
+	std::string dtRet;
+	tm*			curr_time;
 	
 	// gettimeofday(&time, NULL);
 	std::time(&time);
 	curr_time = std::localtime(&time);
 	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time);
-	return (datetime);
+	dtRet = datetime;
+	delete[] datetime;
+	return (dtRet);
 }
 
 void ResponseHandler::handleALLOW( void ) {
@@ -291,8 +294,8 @@ void ResponseHandler::handleALLOW( void ) {
 }
 
 void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
-	int		idx = 0;
-	char	*lang = new char[100];
+//	int		idx = 0;
+	std::string lang;
 	size_t	found = 0;
 	size_t	lang_idx = 0;
 	
@@ -301,14 +304,13 @@ void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
 	if (lang_idx != std::string::npos)
 	{
 		for (size_t i = lang_idx + 6; _body[i] != '\"'; i++)
-			lang[idx++] = _body[i];
+			lang += _body[i];
 		_header_vals[CONTENT_LANGUAGE] = lang;
 	}
 	else
 	{
 		_header_vals[CONTENT_LANGUAGE] = "en-US";
 	}
-	delete []lang;
 	_response += "Content-Language: ";
 	_response += _header_vals[CONTENT_LANGUAGE];
 	_response += "\n";
@@ -343,7 +345,6 @@ void ResponseHandler::handleCONTENT_TYPE( void ) {
 }
 
 void ResponseHandler::handleDATE( void ) {
-	// TODO: free the datetime values when done
 	_header_vals[DATE] = getCurrentDatetime();
 	_response += "Date: ";
 	_response += _header_vals[DATE];
