@@ -37,19 +37,19 @@ public:
 	void		handleStatusCode(request_s& request);
 	std::string getCurrentDatetime(void );
 	void		handleALLOW( void );
-	void		handleAUTHORIZATION( void );
+	void		handleAUTHORIZATION( void );  // Not yet implemented
 	void		handleCONTENT_LANGUAGE( void );
 	void		handleCONTENT_LENGTH( void );
 	void		handleCONTENT_LOCATION( void );
-	void handleCONTENT_TYPE(request_s& request);
+	void		handleCONTENT_TYPE(request_s& request);
 	void		handleDATE( void );
 	void		handleHOST( request_s& request );
 	void		handleLAST_MODIFIED( void );
-	void		handleLOCATION( void );
-	void		handleRETRY_AFTER( void );
+	void		handleLOCATION( void ); // Not yet used
+	void		handleRETRY_AFTER( void ); // Not yet used
 	void		handleSERVER( void );
-	void		handleTRANSFER_ENCODING( request_s& request );
-	void		handleWWW_AUTHENTICATE( void );
+	void		handleTRANSFER_ENCODING( request_s& request ); // Not yet used
+	void		handleWWW_AUTHENTICATE( void ); // Not yet implemented
 
 	int			authenticate(request_s& request);
 	void 		generateResponse(request_s& request);

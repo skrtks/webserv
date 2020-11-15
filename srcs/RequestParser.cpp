@@ -43,7 +43,7 @@ RequestParser::RequestParser() {
 RequestParser::~RequestParser() {
 }
 
-RequestParser::RequestParser(const RequestParser &obj) {
+RequestParser::RequestParser(const RequestParser &obj) : _status_code() {
 	*this = obj;
 }
 
@@ -78,7 +78,7 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	}
 	std::map<headerType, std::string>::iterator it;
 
-	if (_headers[CONTENT_LENGTH].empty() == false) {
+	if (!_headers[CONTENT_LENGTH].empty()) {
 		int length = ft_atoi(_headers[CONTENT_LENGTH].c_str());
 		if (_headers[CONTENT_LENGTH].find_first_not_of("0123456789") != std::string::npos || length < 0)
 			_status_code = 400;
@@ -217,7 +217,7 @@ void RequestParser::parseHeaders() {
 				return ;
 			}
 			std::string header = _rawRequest.substr(0, pos);
-			if (header.empty() == true || header.length() == 0) {
+			if (header.empty() || header.length() == 0) {
 				std::cout << "BAD REQ 10.1" << std::endl;
 				_status_code = 400;
 				return ;

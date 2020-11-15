@@ -216,7 +216,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	_response += "\n";
 	_response += _body;
 	_response += "\r\n";
-	std::cout << "RESPONSE == \n" << _response << std::endl;
+//	std::cout << "RESPONSE == \n" << _response << std::endl;
 }
 
 int ResponseHandler::authenticate(request_s& request) {
@@ -331,7 +331,7 @@ void ResponseHandler::handleCONTENT_LENGTH( void ) {
 }
 
 void ResponseHandler::handleCONTENT_LOCATION( void ) {
-	if (_header_vals[CONTENT_LOCATION].empty() != true) {
+	if (!_header_vals[CONTENT_LOCATION].empty()) {
 		_response += "Content-Location: ";
 		_response += _header_vals[CONTENT_LOCATION];
 		_response += "\n";

@@ -16,7 +16,7 @@
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
 		_index("index.html"), _root("htmlfiles"), 
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"), _fd(),
 		_socketFd() {
 }
 
@@ -31,7 +31,7 @@ Server::Server(int fd) : _port(80), _client_body_size(1000000),
 Server::~Server() {
 }
 
-Server::Server(const Server& x) {
+Server::Server(const Server& x) : _port(), _client_body_size(), _fd(), _socketFd() {
 	*this = x;
 }
 
@@ -142,7 +142,7 @@ std::map<std::string, std::string> Server::getbaseenv() const {
 }
 
 void	Server::configurelocation(const std::string& in) {
-	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f\0");
+	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f");
 	Location	loc(v[0]);
 	loc.setup(this->_fd);
 	// if succesful

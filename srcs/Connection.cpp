@@ -30,7 +30,7 @@ Connection::~Connection() {
 	close(_connectionFd);
 }
 
-Connection::Connection(const Connection &obj) {
+Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds() {
 	*this = obj;
 }
 
