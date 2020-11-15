@@ -84,12 +84,17 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 	return *this;
 }
 
-char	**maptoenv(std::map<std::string, std::string> baseenv) {
-	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
+char	**maptoenv(std::map<std::string, std::string> baseenv, const request_s& req) {
 	int i = 0;
-
+	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
 	if (!env)
 		exit(1);
+	(void)req;
+	baseenv["AUTH_TYPE"] = "Basic"; //hardcoded for now
+//	for (std::map<headerType, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
+//		std::cout << "request.headers contains: " << it->first << " -> " << it->second << std::endl;
+//	}
+
 	for (std::map<std::string, std::string>::const_iterator it = baseenv.begin(); it != baseenv.end(); it++) {
 		std::string tmp = it->first + "=" + it->second;
 		env[i] = ft_strdup(tmp.c_str());
@@ -108,7 +113,8 @@ int	ResponseHandler::run_cgi(const request_s& request) {
 
 	if (stat(scriptpath.c_str(), &statstruct) == -1)
 		return (-1);
-	char	**env = maptoenv(request.server.getbaseenv());
+	std::cout << _BLUE << "scriptpath: " << scriptpath << std::endl << _END;
+	char	**env = maptoenv(request.server.getbaseenv(), request);
 	int pipefd[2];
 	
 	if (pipe(pipefd) == -1) {
@@ -145,7 +151,7 @@ int ResponseHandler::generatePage(request_s& request) {
 		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
 			std::cerr << _RED << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl << _END;
 		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
-			std::cerr << _BLUE << filepath << " is a directory" << std::endl << _END;
+//			std::cerr << _BLUE << filepath << " is a directory" << std::endl << _END;
 			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
 			_header_vals[CONTENT_LOCATION] = filepath;
 			fd = open(filepath.c_str(), O_RDONLY);
