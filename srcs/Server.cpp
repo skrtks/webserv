@@ -12,6 +12,10 @@
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
+#include "Colours.hpp"
+#include <fcntl.h>
+#include <zconf.h>
+#include <sys/stat.h>
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
@@ -209,6 +213,55 @@ int Server::getSocketFd() const {
 
 void Server::setSocketFd(int socketFd) {
 	_socketFd = socketFd;
+}
+
+size_t	str_compare_equal_for(const std::string& a, const std::string& b) {
+	size_t i = 0;
+	while (a[i] == b[i]) {
+		if (!a[i] || !b[i])
+			break ;
+		++i;
+	}
+	return i;
+}
+
+Location Server::matchlocation(const std::string &uri) const {
+	size_t		n = 0;
+	size_t		tmp = 0;
+	(void)uri;
+	Location	out;
+	for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); ++it) {
+		n = str_compare_equal_for(it->getlocationmatch(), uri);
+		if (n > tmp) {
+			tmp = n;
+			out = *it;
+		}
+//		std::cerr << "location match = " << it->getlocationmatch() << std::endl;
+//		std::cerr << uri << " and " << it->getlocationmatch() << " compare equal for " << str_compare_equal_for(it->getlocationmatch(), uri) << " characters" << std::endl;
+	}
+	return out;
+}
+
+int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode) const {
+	struct stat statstruct = {};
+	int fd = -1;
+	Location loca = this->matchlocation(uri);
+
+	std::string filepath = loca.getroot() + uri;
+	if (stat(filepath.c_str(), &statstruct) != -1) {
+		if (S_ISDIR(statstruct.st_mode)) {
+			filepath = loca.getroot() + '/' + loca.getindexes()[0];
+		}
+		fd = open(filepath.c_str(), O_RDONLY);
+		std::cerr << _RED << "filepath = " << filepath << ", fd = " << fd << std::endl << _END;
+	}
+	if (fd == -1) {
+		filepath = loca.getroot() + '/' + get404page();
+		fd = open(filepath.c_str(), O_RDONLY);
+		statuscode = 404;
+	}
+ 	headervals[CONTENT_LOCATION] = filepath;
+	return fd;
 }
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {

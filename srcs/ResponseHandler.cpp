@@ -136,32 +136,12 @@ int	ResponseHandler::run_cgi(const request_s& request) {
 
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
-	struct stat	statstruct = {};
-	std::string filepath = request.server.getroot() + request.uri;
+//	struct stat	statstruct = {};
+//	std::string filepath = request.server.getroot() + request.uri;
 
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
 		fd = this->run_cgi(request);
-	else if (stat(filepath.c_str(), &statstruct) != -1) {
-		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
-			std::cerr << _RED << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl << _END;
-		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
-			std::cerr << _BLUE << filepath << " is a directory" << std::endl << _END;
-			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
-			_header_vals[CONTENT_LOCATION] = filepath;
-			fd = open(filepath.c_str(), O_RDONLY);
-		}
-		else {
-			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
-			std::cerr << _GREEN << filepath << " is a valid file, lets serve it at fd " << fd << std::endl << std::endl << _END;
-		}
-	}
-	if (fd == -1) {
-		std::cerr << _RED << "Serving the 404 error page" << std::endl << _END;
-		_status_code = 404;
-		filepath = request.server.getroot() + '/' + request.server.get404page();	// Serving the default error page
-		_header_vals[CONTENT_LOCATION] = filepath;
-		fd = open(filepath.c_str(), O_RDONLY);
-	}
+	else fd = request.server.getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
 	return (fd);
@@ -216,7 +196,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	_response += "\n";
 	_response += _body;
 	_response += "\r\n";
-	std::cout << "RESPONSE == \n" << _response << std::endl;
+//	std::cout << "RESPONSE == \n" << _response << std::endl;
 }
 
 int ResponseHandler::authenticate(request_s& request) {

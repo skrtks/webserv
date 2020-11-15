@@ -15,6 +15,7 @@
 
 #include "Location.hpp"
 #include <cerrno>
+#include "Enums.hpp"
 
 class Server {
 	public:
@@ -49,6 +50,8 @@ class Server {
 		std::string				get404page() const;
 		std::string 			getauthbasicrealm() const;
 		std::string				gethtpasswdpath() const;
+		Location				matchlocation(const std::string& uri) const;
+		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&) const;
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
 		std::map<std::string, std::string> getbaseenv() const;
