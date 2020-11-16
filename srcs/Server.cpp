@@ -19,15 +19,14 @@
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
-		_index("index.html"), _root("htmlfiles"), 
+		_root("htmlfiles"),
 		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
-		_socketFd() {
+		_fd(), _socketFd() {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
-		_index("index.html"), _root("htmlfiles"),
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_root("htmlfiles"), _auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
 		_socketFd() {
 	this->_fd = fd;
 }
@@ -35,7 +34,7 @@ Server::Server(int fd) : _port(80), _client_body_size(1000000),
 Server::~Server() {
 }
 
-Server::Server(const Server& x) {
+Server::Server(const Server& x) : _port(), _client_body_size(), _fd(), _socketFd() {
 	*this = x;
 }
 
@@ -47,7 +46,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_client_body_size = x._client_body_size;
 		this->_error_page = x._error_page;
 		this->_404_page = x._404_page;
-		this->_index = x._index;
+		this->_indexes = x._indexes;
 		this->_root = x._root;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
@@ -77,11 +76,18 @@ void	Server::sethost(const std::string& host) {
 }
 
 std::string	Server::getindex() const {
-	return this->_index;
+	struct stat statstruct = {};
+	std::string filepath;
+	for (std::vector<std::string>::const_iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
+		filepath = this->_root + *it;
+		if (stat(filepath.c_str(), &statstruct) != -1)
+			return *it;
+	}
+	return this->_error_page;
 }
 
-void	Server::setindex(const std::string& index) {
-	this->_index = index;
+void	Server::setindexes(const std::string& index) {
+	this->_indexes = ft::split(index, " \t\r\n\v\f");
 }
 
 std::string	Server::getroot() const {
@@ -146,10 +152,9 @@ std::map<std::string, std::string> Server::getbaseenv() const {
 }
 
 void	Server::configurelocation(const std::string& in) {
-	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f\0");
+	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f");
 	Location	loc(v[0]);
 	loc.setup(this->_fd);
-	// if succesful
 	this->_locations.push_back(loc);
 }
 
@@ -182,7 +187,8 @@ void	Server::setup(int fd) {
 	std::map<std::string, void (Server::*)(const std::string&)> m;
 	m["port"] = &Server::setport;
 	m["host"] = &Server::sethost;
-	m["index"] = &Server::setindex;
+	m["autoindex"] = &Server::setautoindex;
+	m["index"] = &Server::setindexes;
 	m["root"] = &Server::setroot;
 	m["auth_basic"] = &Server::setauth_basic_realm;
 	m["auth_basic_user_file"] = &Server::sethtpasswdpath;
@@ -215,6 +221,14 @@ void Server::setSocketFd(int socketFd) {
 	_socketFd = socketFd;
 }
 
+void Server::setautoindex(const std::string& ai) {
+	this->_autoindex = ai;
+}
+
+std::string Server::getautoindex() const {
+	return this->_autoindex;
+}
+
 size_t	str_compare_equal_for(const std::string& a, const std::string& b) {
 	size_t i = 0;
 	while (a[i] == b[i]) {
@@ -226,18 +240,19 @@ size_t	str_compare_equal_for(const std::string& a, const std::string& b) {
 }
 
 Location Server::matchlocation(const std::string &uri) const {
-	size_t		n = 0;
-	size_t		tmp = 0;
-	(void)uri;
+	size_t		n, tmp = 0;
+
 	Location	out;
+	out._root = this->_root;
+	out._autoindex = this->_autoindex;
+	out._indexes = this->_indexes;
+	// add CGI and _allow_method?
 	for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); ++it) {
 		n = str_compare_equal_for(it->getlocationmatch(), uri);
 		if (n > tmp) {
 			tmp = n;
 			out = *it;
 		}
-//		std::cerr << "location match = " << it->getlocationmatch() << std::endl;
-//		std::cerr << uri << " and " << it->getlocationmatch() << " compare equal for " << str_compare_equal_for(it->getlocationmatch(), uri) << " characters" << std::endl;
 	}
 	return out;
 }
@@ -246,17 +261,19 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 	struct stat statstruct = {};
 	int fd = -1;
 	Location loca = this->matchlocation(uri);
+	loca.addServerInfo(this->_root, this->_autoindex, this->_indexes);
 
 	std::string filepath = loca.getroot() + uri;
 	if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (S_ISDIR(statstruct.st_mode)) {
-			filepath = loca.getroot() + '/' + loca.getindexes()[0];
+			filepath = loca.getindex();
 		}
-		fd = open(filepath.c_str(), O_RDONLY);
+		if (!filepath.empty())
+			fd = open(filepath.c_str(), O_RDONLY);
 		std::cerr << _RED << "filepath = " << filepath << ", fd = " << fd << std::endl << _END;
 	}
 	if (fd == -1) {
-		filepath = loca.getroot() + '/' + get404page();
+		filepath = _root + '/' + get404page();
 		fd = open(filepath.c_str(), O_RDONLY);
 		statuscode = 404;
 	}

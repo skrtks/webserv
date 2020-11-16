@@ -29,7 +29,7 @@ class Server {
 		//setters
 		void		setport(const std::string& port);
 		void		sethost(const std::string& host);
-		void		setindex(const std::string& index);
+		void		setindexes(const std::string& index);
 		void		setroot(const std::string& root);
 		void		setservername(const std::string& servername);
 		void		setclientbodysize(const std::string& clientbodysize);
@@ -38,6 +38,7 @@ class Server {
 		void		setauth_basic_realm(const std::string& realm);
 		void		sethtpasswdpath(const std::string& path);
 		void		setSocketFd(int socketFd);
+		void		setautoindex(const std::string& ai);
 
 		//getters
 		size_t					getport() const;
@@ -50,13 +51,14 @@ class Server {
 		std::string				get404page() const;
 		std::string 			getauthbasicrealm() const;
 		std::string				gethtpasswdpath() const;
-		Location				matchlocation(const std::string& uri) const;
 		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&) const;
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
+		std::string 			getautoindex() const;
 		std::map<std::string, std::string> getbaseenv() const;
-	
+
 		void		create_base_env();
+		Location	matchlocation(const std::string& uri) const;
 		void		configurelocation(const std::string& in);
 		void		setup(int fd);
 private:
@@ -66,11 +68,12 @@ private:
 					_server_name,
 					_error_page,
 					_404_page,
-					_index,
 					_root,
 					_auth_basic_realm,
-					_htpasswd_path;
+					_htpasswd_path,
+					_autoindex;
 		int			_fd, _socketFd;
+		std::vector<std::string> _indexes;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_base_env;
 };

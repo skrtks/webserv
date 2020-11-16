@@ -76,6 +76,18 @@ std::string					Location::getlocationmatch() const {
 std::vector<std::string>	Location::getallowmethods() const {
 	return this->_allow_method;
 }
+
+std::string	Location::getindex() const {
+	struct stat statstruct = {};
+	std::string filepath;
+	for (std::vector<std::string>::const_iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
+		filepath = this->_root + '/' + *it;
+		if (stat(filepath.c_str(), &statstruct) != -1)
+			return filepath;
+	}
+	return "";
+}
+
 std::vector<std::string>	Location::getindexes() const {
 	return this->_indexes;
 }
@@ -104,6 +116,15 @@ void	Location::setup(int fd) {
 	}
 	if (this->_indexes.empty())
 		this->_indexes.push_back("index.html");
+}
+
+void	Location::addServerInfo(const std::string& root, const std::string& autoindex, const std::vector<std::string>& indexes) {
+	if (this->_root.empty())
+		this->_root = root;
+	if (this->_autoindex.empty())
+		this->_autoindex = autoindex;
+	if (this->_indexes.empty())
+		this->_indexes = indexes;
 }
 
 std::ostream&	operator<<(std::ostream& o, const Location& x) {
