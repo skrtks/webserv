@@ -50,7 +50,7 @@ public:
 
 	void startServer();
 	void loadConfiguration();
-	void handleCLI(std::string input);
+	void handleCLI(const std::string& input);
 	void stopServer();
 };
 

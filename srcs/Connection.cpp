@@ -101,10 +101,10 @@ void Connection::startListening() {
 	std::map<int, Server>::iterator	serverMapIt;
 	std::map<int, Server> 			serverConnections;
 
+	FD_SET(0, &_master); // Add stdin so we always listen to cl commands
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		// Add the listening socket to the master list
 		FD_SET(it->getSocketFd(), &_master);
-		FD_SET(0, &_master); // Add stdin so we always listen to cl commands
 		// Keep track of the biggest fd on the list
 		_fdMax = it->getSocketFd();
 		_serverMap.insert(std::make_pair(it->getSocketFd(), *it)); // Keep track of which socket is for which server obj
@@ -220,9 +220,10 @@ void Connection::loadConfiguration() {
 	setServers(_manager.getServers());
 }
 
-void Connection::handleCLI(std::string input) {
+void Connection::handleCLI(const std::string& input) {
 	if (input == "exit") {
 		std::cout << "Shutting down..." << std::endl;
+		stopServer();
 		exit(0);
 	}
 	else if (input == "restart") {
