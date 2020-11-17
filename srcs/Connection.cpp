@@ -82,9 +82,15 @@ void Connection::setUpConnection() {
 		_serverAddr.sin_port = htons(it->getport()); // set port (htons translates host bit order to network order)
 
 		// Associate the socket with a port and ip
-		if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
-			std::cout << "Cannot bind: " << errno << std::endl;
-			throw std::runtime_error(strerror(errno));
+		for (int i = 0; i < 6; ++i) {
+			if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
+				std::cout << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
+				if (i == 5) throw std::runtime_error(strerror(errno));
+			}
+			else {
+				break;
+			}
+			usleep(TIMEOUT);
 		}
 
 		// Start listening for connections on port set in sFd, max BACKLOG waiting connections

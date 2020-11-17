@@ -21,6 +21,7 @@
 
 #define BACKLOG 5
 #define BUFLEN 8192
+#define TIMEOUT 1000000
 
 class Connection {
 	int _connectionFd, _fdMax;
