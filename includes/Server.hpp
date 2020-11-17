@@ -56,6 +56,7 @@ class Server {
 		void		create_base_env();
 		void		configurelocation(const std::string& in);
 		void		setup(int fd);
+		bool		getmatch(const std::string& username, const std::string& passwd);
 private:
 		size_t		_port;
 		long int	_client_body_size;
@@ -70,6 +71,7 @@ private:
 		int			_fd, _socketFd;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_base_env;
+		std::map<std::string, std::string>	_loginfo;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Server& x);

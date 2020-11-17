@@ -229,7 +229,6 @@ int ResponseHandler::authenticate(request_s& request) {
 	std::cerr << _CYAN << "htpasswdpath = " << request.server.gethtpasswdpath() << _END << std::endl;
 	if (request.server.gethtpasswdpath().empty())
 		return 0;
-	bool creds = false;
 	std::string username, passwd, str;
 	try {
 		std::string auth = request.headers.at(AUTHORIZATION);
@@ -239,30 +238,15 @@ int ResponseHandler::authenticate(request_s& request) {
 		credentials = base64_decode(credentials);
 		get_key_value(credentials, username, passwd, ":");
 		std::cerr << "creds = true, username = " << username << ", pass = " << passwd << std::endl;
-		creds = true;
-		// request.headers.at(AUTHORIZATION) = "Basic -";
 	}
 	catch (std::exception& e) {
 		std::cerr << "turns out its not giving us login information." << std::endl;
 	}
 	std::cerr << _BLUE "gethtpasswdpath = " << request.server.gethtpasswdpath() << _END << std::endl;
-	int htpasswd_fd = open(request.server.gethtpasswdpath().c_str(), O_RDONLY);
-	if (htpasswd_fd < 0 ) {
-		std::cerr << _RED "cant open .htpasswd\n" _END;
+
+	if (request.server.getmatch(username, passwd))
 		return 0;
-	}
-	while (creds && ft::get_next_line(htpasswd_fd, str) > 0) {
-		std::string u, p;
-		get_key_value(str, u, p, ":");
-		p = base64_decode(p);
-		std::cerr << _GREEN "user tries to log in with: " << username << ":" << passwd << std::endl << _END;
-		std::cerr << _CYAN "file: " << u << ":" << p << std::endl << _END;
-		if (username == u && passwd == p) {
-			close(htpasswd_fd);
-			return 0;
-		}
-	}
-//	creds ? _response += "403 Forbidden\n" :
+
 	this->_status_code = 401;
 	_response += "401 Unauthorized\n";
 	this->_response +=	"Server: Webserv/0.1\n"
@@ -270,8 +254,6 @@ int ResponseHandler::authenticate(request_s& request) {
 	   					"WWW-Authenticate: Basic realm=";
 	this->_response += request.server.getauthbasicrealm();
 	this->_response += ", charset=\"UTF-8\"\n\n";
-	// std::cerr << "response: " << _response << std::endl;
-	close(htpasswd_fd);
 	return 1;
 }
 

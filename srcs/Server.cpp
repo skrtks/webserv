@@ -13,6 +13,9 @@
 #include "Server.hpp"
 #include "libftGnl.hpp"
 #include <sys/stat.h>
+#include <fstream>
+#include "Base64.hpp"
+#include "Colours.hpp"
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
@@ -132,8 +135,23 @@ std::string	Server::getauthbasicrealm() const {
 
 void	Server::sethtpasswdpath(const std::string &path) {
 	struct stat statstruct = {};
-	if (stat(path.c_str(), &statstruct) != -1)
-		this->_htpasswd_path = path;
+	if (stat(path.c_str(), &statstruct) == -1)
+		return ;
+
+	this->_htpasswd_path = path;
+	std::ifstream ifs;
+	ifs.open(_htpasswd_path.c_str());
+	if (ifs.bad())
+		return ;
+	std::cerr << "we opened " << _htpasswd_path.c_str() << std::endl;
+	std::string line;
+	while (std::getline(ifs, line)) {
+		std::string user, pass;
+//		std::cerr << "line = " << line << std::endl;
+		get_key_value(line, user, pass, ":");
+		this->_loginfo[user] = pass;
+		std::cerr << _CYAN "added '" << user << ':' << pass << "' to _loginfo map\n" << _END;
+	}
 }
 
 std::string	Server::gethtpasswdpath() const {
@@ -213,6 +231,17 @@ int Server::getSocketFd() const {
 void Server::setSocketFd(int socketFd) {
 	_socketFd = socketFd;
 }
+
+bool Server::getmatch(const std::string &username, const std::string &passwd) {
+	std::map<std::string, std::string>::const_iterator it = this->_loginfo.find(username);
+	
+	std::cerr << _CYAN "trying to log in with " << username << " and " << base64_decode(passwd) << _END << std::endl;
+	if (it != _loginfo.end() && it->second == base64_decode(passwd) )
+		return true;
+	std::cerr << "finding matching login info failed\n";
+	return false;
+}
+
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
