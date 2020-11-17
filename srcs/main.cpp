@@ -10,14 +10,15 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Process.hpp"
+#include "Connection.hpp"
+#include <iostream>
 
 int main(int argc, char **argv) {
-	Process process(argv[1]);
+	Connection serverProcess(argv[1]);
 	(void)argc;
 
 	try {
-		process.startServer();
+		serverProcess.startServer();
 	}
 	catch (std::runtime_error &e) {
 		std::cout << e.what() << std::endl;

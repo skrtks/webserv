@@ -27,6 +27,6 @@ add_executable(webserv srcs/Base64.cpp
 		includes/Server.hpp
 		includes/Servermanager.hpp
 		getnextline/get_next_line.cpp
-		getnextline/get_next_line.hpp srcs/Process.cpp srcs/Process.cpp includes/Process.hpp)
+		getnextline/get_next_line.hpp)
 
 target_link_libraries(webserv PUBLIC libft)

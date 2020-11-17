@@ -21,6 +21,17 @@ Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	FD_ZERO(&_readFds);
 	_connectionFd = 0;
 	_fdMax = 0;
+	_configPath = NULL;
+	loadConfiguration();
+}
+
+Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds() {
+	FD_ZERO(&_master);
+	FD_ZERO(&_readFds);
+	_connectionFd = 0;
+	_fdMax = 0;
+	_configPath = configPath;
+	loadConfiguration();
 }
 
 Connection::~Connection() {
@@ -111,7 +122,7 @@ void Connection::startListening() {
 				if (fd == 0) {
 					std::string clInput;
 					std::getline(std::cin, clInput);
-					std::cout << "CLI input: " << clInput << std::endl;
+					handleCLI(clInput);
 				}
 				else if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
@@ -178,24 +189,7 @@ void Connection::setServers(const std::vector<Server>& servers) {
 	_servers = servers;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// ------------------ Process Handling ------------------------
 void Connection::startServer() {
 	loadConfiguration();
 	setUpConnection();
@@ -221,18 +215,11 @@ void Connection::handleCLI(std::string input) {
 		startServer();
 	}
 	else if (input == "help") {
-		std::cout << "These are common Git commands used in various situations:\n"
+		std::cout << "Please use one of these commands:\n"
 					 "\n"
-					 "start a working area (see also: git help tutorial)\n"
-					 "   clone             Clone a repository into a new directory\n"
-					 "   init              Create an empty Git repository or reinitialize an existing one\n"
-					 "\n"
-					 "work on the current change (see also: git help everyday)\n"
-					 "   add               Add file contents to the index\n"
-					 "   mv                Move or rename a file, a directory, or a symlink\n"
-					 "   restore           Restore working tree files\n"
-					 "   rm                Remove files from the working tree and from the index\n"
-					 "   sparse-checkout   Initialize and modify the sparse-checkout" << std::endl;
+					 "   help              For this help\n"
+					 "   exit              Shut down the server\n"
+					 "   restart           Restart the server\n" << std::endl;
 	}
 	else {
 		std::cout << "Command \"" << input << "\" not found. Type \"help\" for available commands" << std::endl;

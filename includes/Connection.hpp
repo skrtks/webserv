@@ -39,6 +39,7 @@ class Connection {
 	void closeConnection(const int& fd);
 public:
 	Connection();
+	explicit Connection(char* configPath);
 	Connection(const Connection &obj);
 	Connection& operator= (const Connection &obj);
 	virtual ~Connection();
