@@ -22,7 +22,6 @@ Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	_connectionFd = 0;
 	_fdMax = 0;
 	_configPath = NULL;
-	loadConfiguration();
 }
 
 Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds() {
@@ -31,7 +30,6 @@ Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds() 
 	_connectionFd = 0;
 	_fdMax = 0;
 	_configPath = configPath;
-	loadConfiguration();
 }
 
 Connection::~Connection() {
@@ -196,6 +194,24 @@ void Connection::startServer() {
 	startListening();
 }
 
+void Connection::stopServer() {
+	// Go through existing connections and close them
+	for (int fd = 0; fd <= _fdMax; fd++) {
+		if (FD_ISSET(fd, &_readFds) && fd != 0) { // Returns true if fd is active
+			closeConnection(fd);
+		}
+	}
+	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
+		close(it->getSocketFd());
+	}
+	_connectionFd = 0;
+	_fdMax = 0;
+	_servers.clear();
+	_serverMap.clear();
+	_manager.clear();
+	ft_memset(&_serverAddr, 0, sizeof(_serverAddr)); // Clear struct from prev setup
+}
+
 void Connection::loadConfiguration() {
 	_manager = parse(_configPath);
 	for (size_t i = 0; i < _manager.size(); i++)
@@ -211,7 +227,7 @@ void Connection::handleCLI(std::string input) {
 	}
 	else if (input == "restart") {
 		std::cout << "Restarting server..." << std::endl;
-//		stopServer();
+		stopServer();
 		startServer();
 	}
 	else if (input == "help") {
