@@ -55,7 +55,6 @@ Connection& Connection::operator= (const Connection &obj) {
 		this->_parsedRequest = obj._parsedRequest;
 		this->_servers = obj._servers;
 		this->_serverMap = obj._serverMap;
-		this->_serverMap = obj._serverMap;
 		this->_manager = obj._manager;
 		this->_configPath = obj._configPath;
 	}
