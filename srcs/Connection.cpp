@@ -95,6 +95,7 @@ void Connection::startListening() {
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		// Add the listening socket to the master list
 		FD_SET(it->getSocketFd(), &_master);
+		FD_SET(0, &_master); // Add stdin so we always listen to cl commands
 		// Keep track of the biggest fd on the list
 		_fdMax = it->getSocketFd();
 		_serverMap.insert(std::make_pair(it->getSocketFd(), *it)); // Keep track of which socket is for which server obj
@@ -107,7 +108,12 @@ void Connection::startListening() {
 		// Go through existing connections looking for data to read
 		for (int fd = 0; fd <= _fdMax; fd++) {
 			if (FD_ISSET(fd, &_readFds)) { // Returns true if fd is active
-				if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
+				if (fd == 0) {
+					std::string clInput;
+					std::getline(std::cin, clInput);
+					std::cout << "CLI input: " << clInput << std::endl;
+				}
+				else if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
 				}
 				else { // Handle request & return response
