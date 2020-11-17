@@ -71,7 +71,7 @@ ResponseHandler::ResponseHandler() {
 ResponseHandler::~ResponseHandler() {
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) {
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _body_length(), _status_code() {
 	this->_header_vals = src._header_vals;
 	this->_response	= src._response;
 }
@@ -226,6 +226,9 @@ void ResponseHandler::generateResponse(request_s& request) {
 }
 
 int ResponseHandler::authenticate(request_s& request) {
+	std::cerr << _CYAN << "htpasswdpath = " << request.server.gethtpasswdpath() << _END << std::endl;
+	if (request.server.gethtpasswdpath().empty())
+		return 0;
 	bool creds = false;
 	std::string username, passwd, str;
 	try {
@@ -242,10 +245,11 @@ int ResponseHandler::authenticate(request_s& request) {
 	catch (std::exception& e) {
 		std::cerr << "turns out its not giving us login information." << std::endl;
 	}
+	std::cerr << _BLUE "gethtpasswdpath = " << request.server.gethtpasswdpath() << _END << std::endl;
 	int htpasswd_fd = open(request.server.gethtpasswdpath().c_str(), O_RDONLY);
 	if (htpasswd_fd < 0 ) {
-		std::cerr << "htpasswd_path is invalid\n";
-		return 1;
+		std::cerr << _RED "cant open .htpasswd\n" _END;
+		return 0;
 	}
 	while (creds && ft::get_next_line(htpasswd_fd, str) > 0) {
 		std::string u, p;
