@@ -177,3 +177,65 @@ void Connection::closeConnection(const int& fd) {
 void Connection::setServers(const std::vector<Server>& servers) {
 	_servers = servers;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void Connection::startServer() {
+	loadConfiguration();
+	setUpConnection();
+	startListening();
+}
+
+void Connection::loadConfiguration() {
+	_manager = parse(_configPath);
+	for (size_t i = 0; i < _manager.size(); i++)
+		std::cout << _manager[i];
+
+	setServers(_manager.getServers());
+}
+
+void Connection::handleCLI(std::string input) {
+	if (input == "exit") {
+		std::cout << "Shutting down..." << std::endl;
+		exit(0);
+	}
+	else if (input == "restart") {
+		std::cout << "Restarting server..." << std::endl;
+//		stopServer();
+		startServer();
+	}
+	else if (input == "help") {
+		std::cout << "These are common Git commands used in various situations:\n"
+					 "\n"
+					 "start a working area (see also: git help tutorial)\n"
+					 "   clone             Clone a repository into a new directory\n"
+					 "   init              Create an empty Git repository or reinitialize an existing one\n"
+					 "\n"
+					 "work on the current change (see also: git help everyday)\n"
+					 "   add               Add file contents to the index\n"
+					 "   mv                Move or rename a file, a directory, or a symlink\n"
+					 "   restore           Restore working tree files\n"
+					 "   rm                Remove files from the working tree and from the index\n"
+					 "   sparse-checkout   Initialize and modify the sparse-checkout" << std::endl;
+	}
+	else {
+		std::cout << "Command \"" << input << "\" not found. Type \"help\" for available commands" << std::endl;
+	}
+}
+

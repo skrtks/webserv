@@ -17,6 +17,7 @@
 #include <cerrno>
 #include "RequestParser.hpp"
 #include "Server.hpp"
+#include "Servermanager.hpp"
 
 #define BACKLOG 5
 #define BUFLEN 8192
@@ -30,6 +31,8 @@ class Connection {
 	request_s _parsedRequest;
 	std::vector<Server> _servers;
 	std::map<int, Server> _serverMap; // key: socketFd; value: Corresponding server object
+	Servermanager _manager;
+	char *_configPath;
 	int addConnection(const int &socketFd);
 	void receiveRequest(const int& fd);
 	void sendReply(const std::string& msg, const int& fd) const;
@@ -43,6 +46,10 @@ public:
 	void setUpConnection();
 	void startListening();
 	void setServers(const std::vector<Server>& servers);
+
+	void startServer();
+	void loadConfiguration();
+	void handleCLI(std::string input);
 };
 
 #endif //CONNECTION_HPP
