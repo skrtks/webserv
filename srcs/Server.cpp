@@ -56,6 +56,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_base_env = x._base_env;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
+		this->_loginfo = x._loginfo;
 	}
 	return *this;
 }
@@ -143,14 +144,11 @@ void	Server::sethtpasswdpath(const std::string &path) {
 	ifs.open(_htpasswd_path.c_str());
 	if (ifs.bad())
 		return ;
-	std::cerr << "we opened " << _htpasswd_path.c_str() << std::endl;
 	std::string line;
 	while (std::getline(ifs, line)) {
 		std::string user, pass;
-//		std::cerr << "line = " << line << std::endl;
 		get_key_value(line, user, pass, ":");
 		this->_loginfo[user] = pass;
-		std::cerr << _CYAN "added '" << user << ':' << pass << "' to _loginfo map\n" << _END;
 	}
 }
 
@@ -234,14 +232,10 @@ void Server::setSocketFd(int socketFd) {
 
 bool Server::getmatch(const std::string &username, const std::string &passwd) {
 	std::map<std::string, std::string>::const_iterator it = this->_loginfo.find(username);
-	
-	std::cerr << _CYAN "trying to log in with " << username << " and " << base64_decode(passwd) << _END << std::endl;
-	if (it != _loginfo.end() && it->second == base64_decode(passwd) )
+	if (it != _loginfo.end() && passwd == base64_decode(it->second) )
 		return true;
-	std::cerr << "finding matching login info failed\n";
 	return false;
 }
-
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
