@@ -12,18 +12,19 @@
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
+#include <sys/stat.h>
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
 		_index("index.html"), _root("htmlfiles"), 
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"), _fd(),
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path(), _fd(),
 		_socketFd() {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
 		_index("index.html"), _root("htmlfiles"),
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path(),
 		_socketFd() {
 	this->_fd = fd;
 }
@@ -130,7 +131,9 @@ std::string	Server::getauthbasicrealm() const {
 }
 
 void	Server::sethtpasswdpath(const std::string &path) {
-	this->_htpasswd_path = path;
+	struct stat statstruct = {};
+	if (stat(path.c_str(), &statstruct) != -1)
+		this->_htpasswd_path = path;
 }
 
 std::string	Server::gethtpasswdpath() const {
