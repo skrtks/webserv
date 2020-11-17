@@ -10,28 +10,18 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Servermanager.hpp"
-#include "Connection.hpp"
-#include "libftGnl.hpp"
+#include "Process.hpp"
 
 int main(int argc, char **argv) {
-	Servermanager manager;
-	Connection server;
+	Process process(argv[1]);
 	(void)argc;
 
-	manager = parse(argv[1]);
-	for (size_t i = 0; i < manager.size(); i++)
-		std::cout << manager[i];
-
-	server.setServers(manager.getServers());
 	try {
-		server.setUpConnection();
-		server.startListening();
+		process.startServer();
 	}
 	catch (std::runtime_error &e) {
 		std::cout << e.what() << std::endl;
 	}
-	// TODO: restart server in proper way after exception
 
 	return 0;
 }
