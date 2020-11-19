@@ -76,6 +76,7 @@ request_s RequestParser::parseRequest(const std::string &req) {
 		request.version = _version;
 		request.uri = _uri;
 	}
+	request.body = _rawRequest;
 	std::map<headerType, std::string>::iterator it;
 
 	if (!_headers[CONTENT_LENGTH].empty()) {
@@ -258,6 +259,10 @@ void RequestParser::parseHeaders() {
 				}
 				_headers.insert(std::make_pair(it->second, value));
 			}
+		}
+		else {
+			_rawRequest.erase(0, eoRequestLine + 2);
+			return;
 		}
 		// Erase processed line
 		_rawRequest.erase(0, eoRequestLine + 2);
