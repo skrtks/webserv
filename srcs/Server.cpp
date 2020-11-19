@@ -12,18 +12,22 @@
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
+#include <sys/stat.h>
+#include <fstream>
+#include "Base64.hpp"
+#include "Colours.hpp"
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
 		_index("index.html"), _root("htmlfiles"), 
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path(), _fd(),
 		_socketFd() {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
 		_index("index.html"), _root("htmlfiles"),
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path(),
 		_socketFd() {
 	this->_fd = fd;
 }
@@ -31,7 +35,7 @@ Server::Server(int fd) : _port(80), _client_body_size(1000000),
 Server::~Server() {
 }
 
-Server::Server(const Server& x) {
+Server::Server(const Server& x) : _port(), _client_body_size(), _fd(), _socketFd() {
 	*this = x;
 }
 
@@ -52,6 +56,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_base_env = x._base_env;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
+		this->_loginfo = x._loginfo;
 	}
 	return *this;
 }
@@ -130,7 +135,21 @@ std::string	Server::getauthbasicrealm() const {
 }
 
 void	Server::sethtpasswdpath(const std::string &path) {
+	struct stat statstruct = {};
+	if (stat(path.c_str(), &statstruct) == -1)
+		return ;
+
 	this->_htpasswd_path = path;
+	std::ifstream ifs;
+	ifs.open(_htpasswd_path.c_str());
+	if (ifs.bad())
+		return ;
+	std::string line;
+	while (std::getline(ifs, line)) {
+		std::string user, pass;
+		get_key_value(line, user, pass, ":");
+		this->_loginfo[user] = pass;
+	}
 }
 
 std::string	Server::gethtpasswdpath() const {
@@ -142,7 +161,7 @@ std::map<std::string, std::string> Server::getbaseenv() const {
 }
 
 void	Server::configurelocation(const std::string& in) {
-	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f\0");
+	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f");
 	Location	loc(v[0]);
 	loc.setup(this->_fd);
 	// if succesful
@@ -209,6 +228,13 @@ int Server::getSocketFd() const {
 
 void Server::setSocketFd(int socketFd) {
 	_socketFd = socketFd;
+}
+
+bool Server::getmatch(const std::string &username, const std::string &passwd) {
+	std::map<std::string, std::string>::const_iterator it = this->_loginfo.find(username);
+	if (it != _loginfo.end() && passwd == base64_decode(it->second) )
+		return true;
+	return false;
 }
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {

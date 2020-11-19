@@ -71,7 +71,7 @@ ResponseHandler::ResponseHandler() {
 ResponseHandler::~ResponseHandler() {
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) {
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _body_length(), _status_code() {
 	this->_header_vals = src._header_vals;
 	this->_response	= src._response;
 }
@@ -84,12 +84,17 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 	return *this;
 }
 
-char	**maptoenv(std::map<std::string, std::string> baseenv) {
-	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
+char	**maptoenv(std::map<std::string, std::string> baseenv, const request_s& req) {
 	int i = 0;
-
+	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
 	if (!env)
 		exit(1);
+	(void)req;
+	baseenv["AUTH_TYPE"] = "Basic"; //hardcoded for now
+//	for (std::map<headerType, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
+//		std::cout << "request.headers contains: " << it->first << " -> " << it->second << std::endl;
+//	}
+
 	for (std::map<std::string, std::string>::const_iterator it = baseenv.begin(); it != baseenv.end(); it++) {
 		std::string tmp = it->first + "=" + it->second;
 		env[i] = ft_strdup(tmp.c_str());
@@ -108,7 +113,8 @@ int	ResponseHandler::run_cgi(const request_s& request) {
 
 	if (stat(scriptpath.c_str(), &statstruct) == -1)
 		return (-1);
-	char	**env = maptoenv(request.server.getbaseenv());
+	std::cout << _BLUE << "scriptpath: " << scriptpath << std::endl << _END;
+	char	**env = maptoenv(request.server.getbaseenv(), request);
 	int pipefd[2];
 	
 	if (pipe(pipefd) == -1) {
@@ -145,18 +151,16 @@ int ResponseHandler::generatePage(request_s& request) {
 		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
 			std::cerr << _RED << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl << _END;
 		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
-			std::cerr << _BLUE << filepath << " is a directory" << std::endl << _END;
+//			std::cerr << _BLUE << filepath << " is a directory" << std::endl << _END;
 			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
 			_header_vals[CONTENT_LOCATION] = filepath;
 			fd = open(filepath.c_str(), O_RDONLY);
 		}
 		else {
 			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
-			std::cerr << _GREEN << filepath << " is a valid file, lets serve it at fd " << fd << std::endl << std::endl << _END;
 		}
 	}
 	if (fd == -1) {
-		std::cerr << _RED << "Serving the 404 error page" << std::endl << _END;
 		_status_code = 404;
 		filepath = request.server.getroot() + '/' + request.server.get404page();	// Serving the default error page
 		_header_vals[CONTENT_LOCATION] = filepath;
@@ -190,7 +194,7 @@ void ResponseHandler::handleBody(request_s& request) {
 }
 
 std::string ResponseHandler::handleRequest(request_s request) {
-	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this for production
+	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
 	generateResponse(request);
 	return _response;
 }
@@ -198,9 +202,8 @@ std::string ResponseHandler::handleRequest(request_s request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response = "HTTP/1.1 ";
-	std::cout << "STATUS CODE = " << request.status_code << std::endl;
-	// if (this->authenticate(request))
-	// 	std::cout << "Auth" << std::endl;
+	 if (this->authenticate(request))
+	 	return;
 	if (request.status_code)
 		this->_status_code = request.status_code;
 	handleBody(request);
@@ -210,56 +213,43 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LANGUAGE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
-	handleCONTENT_TYPE();
+	handleCONTENT_TYPE(request);
 	handleSERVER();
 	handleHOST(request);
 	_response += "\n";
 	_response += _body;
 	_response += "\r\n";
-	std::cout << "RESPONSE == \n" << _response << std::endl;
+//	std::cout << "RESPONSE == \n" << _response << std::endl;
 }
 
 int ResponseHandler::authenticate(request_s& request) {
-	bool creds = false;
+	if (request.server.gethtpasswdpath().empty())
+		return 0;
 	std::string username, passwd, str;
 	try {
 		std::string auth = request.headers.at(AUTHORIZATION);
-		std::cerr << _YELLOW << "auth gives: " << auth	 << std::endl << _END;
 		std::string type, credentials;
 		get_key_value(auth, type, credentials);
 		credentials = base64_decode(credentials);
 		get_key_value(credentials, username, passwd, ":");
-		std::cerr << "creds = true, username = " << username << ", pass = " << passwd << std::endl;
-		creds = true;
-		// request.headers.at(AUTHORIZATION) = "Basic -";
 	}
 	catch (std::exception& e) {
-		std::cerr << "turns out its not giving us login information." << std::endl;
+		std::cerr << "No credentials provided by client" << std::endl;
 	}
-	int htpasswd_fd = open(request.server.gethtpasswdpath().c_str(), O_RDONLY);
-	if (htpasswd_fd < 0 ) {
-		std::cerr << "htpasswd_path is invalid\n";
-		return 1;
+
+	if (request.server.getmatch(username, passwd)) {
+		std::cout << _GREEN << "Authorization successful!" << _END << std::endl;
+		return 0;
 	}
-	while (creds && ft::get_next_line(htpasswd_fd, str) > 0) {
-		std::string u, p;
-		get_key_value(str, u, p, ":");
-		p = base64_decode(p);
-		std::cerr << _GREEN "user tries to log in with: " << username << ":" << passwd << std::endl << _END;
-		std::cerr << _CYAN "file: " << u << ":" << p << std::endl << _END;
-		if (username == u && passwd == p) {
-			close(htpasswd_fd);
-			return 0;
-		}
-	}
-	creds ? _response += "403 Forbidden\n" : _response += "401 Unauthorized\n";
+
+	std::cout << _RED << "Authorization failed!" << _END << std::endl;
+	this->_status_code = 401;
+	_response += "401 Unauthorized\n";
 	this->_response +=	"Server: Webserv/0.1\n"
 					  	"Content-Type: text/html\n"
 	   					"WWW-Authenticate: Basic realm=";
 	this->_response += request.server.getauthbasicrealm();
 	this->_response += ", charset=\"UTF-8\"\n\n";
-	// std::cerr << "response: " << _response << std::endl;
-	close(htpasswd_fd);
 	return 1;
 }
 
@@ -329,16 +319,21 @@ void ResponseHandler::handleCONTENT_LENGTH( void ) {
 }
 
 void ResponseHandler::handleCONTENT_LOCATION( void ) {
-	if (_header_vals[CONTENT_LOCATION].empty() != true) {
+	if (!_header_vals[CONTENT_LOCATION].empty()) {
 		_response += "Content-Location: ";
 		_response += _header_vals[CONTENT_LOCATION];
 		_response += "\n";
 	}
 }
 
-void ResponseHandler::handleCONTENT_TYPE( void ) {
-	// for now hardcoded to text/html but will need to be non-static if we serve other datatypes
-	_header_vals[CONTENT_TYPE] = "text/html";
+void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
+	// Defaults to html if no css is found
+	if (request.uri.find(".css") != std::string::npos) {
+		_header_vals[CONTENT_TYPE] = "text/css";
+	}
+	else {
+		_header_vals[CONTENT_TYPE] = "text/html";
+	}
 	_response += "Content-Type: ";
 	_response += _header_vals[CONTENT_TYPE];
 	_response += "\n";

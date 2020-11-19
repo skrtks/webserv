@@ -17,9 +17,11 @@
 #include <cerrno>
 #include "RequestParser.hpp"
 #include "Server.hpp"
+#include "Servermanager.hpp"
 
 #define BACKLOG 5
 #define BUFLEN 8192
+#define TIMEOUT 1000000
 
 class Connection {
 	int _connectionFd, _fdMax;
@@ -30,12 +32,15 @@ class Connection {
 	request_s _parsedRequest;
 	std::vector<Server> _servers;
 	std::map<int, Server> _serverMap; // key: socketFd; value: Corresponding server object
+	Servermanager _manager;
+	char *_configPath;
 	int addConnection(const int &socketFd);
 	void receiveRequest(const int& fd);
 	void sendReply(const std::string& msg, const int& fd) const;
 	void closeConnection(const int& fd);
 public:
 	Connection();
+	explicit Connection(char* configPath);
 	Connection(const Connection &obj);
 	Connection& operator= (const Connection &obj);
 	virtual ~Connection();
@@ -43,6 +48,11 @@ public:
 	void setUpConnection();
 	void startListening();
 	void setServers(const std::vector<Server>& servers);
+
+	void startServer();
+	void loadConfiguration();
+	void handleCLI(const std::string& input);
+	void stopServer();
 };
 
 #endif //CONNECTION_HPP

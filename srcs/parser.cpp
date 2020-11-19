@@ -56,7 +56,7 @@ Servermanager	parse(char *av) {
 			}
 		}
 		catch (std::exception& e) {
-			std::cerr << "threw an exception in parse try block: " << e.what() << std::endl;
+			std::cerr << "Exception in parse try block: " << e.what() << std::endl;
 			close(fd);
 			exit(1);
 		}
