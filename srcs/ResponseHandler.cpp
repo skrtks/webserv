@@ -218,6 +218,9 @@ void ResponseHandler::handlePut(request_s request) {
 		_response += "201 Created";
 		write(fd, request.body.c_str(), request.body.length());
 	}
+	else {
+		_response += "500 Internal Server Error";
+	}
 	_response += "\n";
 	_response += "\r\n";
 }
