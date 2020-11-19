@@ -207,7 +207,7 @@ std::string ResponseHandler::handleRequest(request_s request) {
 void ResponseHandler::handlePut(request_s request) {
 	int fd;
 	_response = "HTTP/1.1 ";
-	// TODO check is PUT is allowed
+	// TODO check is PUT is allowed, if not return 405 Method Not Allowed
 	std::string filePath = request.server.getroot();
 	filePath += request.uri;
 	if ((fd = open(filePath.c_str(), O_WRONLY | O_TRUNC)) >= 0) {
