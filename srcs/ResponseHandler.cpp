@@ -357,6 +357,12 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	if (request.uri.find(".css") != std::string::npos) {
 		_header_vals[CONTENT_TYPE] = "text/css";
 	}
+	else if (request.uri.find(".ico") != std::string::npos) {
+		_header_vals[CONTENT_TYPE] = "image/x-icon";
+	}
+	else if (request.uri.find(".jpg") != std::string::npos || request.uri.find(".jpeg") != std::string::npos) {
+		_header_vals[CONTENT_TYPE] = "image/jpeg";
+	}
 	else {
 		_header_vals[CONTENT_TYPE] = "text/html";
 	}
