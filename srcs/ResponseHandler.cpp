@@ -158,11 +158,9 @@ int ResponseHandler::generatePage(request_s& request) {
 		}
 		else {
 			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
-			std::cerr << _GREEN << filepath << " is a valid file, lets serve it at fd " << fd << std::endl << std::endl << _END;
 		}
 	}
 	if (fd == -1) {
-		std::cerr << _RED << "Serving the 404 error page" << std::endl << _END;
 		_status_code = 404;
 		filepath = request.server.getroot() + '/' + request.server.get404page();	// Serving the default error page
 		_header_vals[CONTENT_LOCATION] = filepath;
@@ -196,7 +194,7 @@ void ResponseHandler::handleBody(request_s& request) {
 }
 
 std::string ResponseHandler::handleRequest(request_s request) {
-	std::cout << "Server for this request is: " << request.server.getservername() << std::endl; // todo: remove this for production
+	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
 	generateResponse(request);
 	return _response;
 }
@@ -204,7 +202,6 @@ std::string ResponseHandler::handleRequest(request_s request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response = "HTTP/1.1 ";
-	std::cout << "STATUS CODE = " << request.status_code << std::endl;
 	 if (this->authenticate(request))
 	 	return;
 	if (request.status_code)
@@ -226,27 +223,26 @@ void ResponseHandler::generateResponse(request_s& request) {
 }
 
 int ResponseHandler::authenticate(request_s& request) {
-	std::cerr << _CYAN << "htpasswdpath = " << request.server.gethtpasswdpath() << _END << std::endl;
 	if (request.server.gethtpasswdpath().empty())
 		return 0;
 	std::string username, passwd, str;
 	try {
 		std::string auth = request.headers.at(AUTHORIZATION);
-		std::cerr << _YELLOW << "auth gives: " << auth	 << std::endl << _END;
 		std::string type, credentials;
 		get_key_value(auth, type, credentials);
 		credentials = base64_decode(credentials);
 		get_key_value(credentials, username, passwd, ":");
-		std::cerr << "creds = true, username = " << username << ", pass = " << passwd << std::endl;
 	}
 	catch (std::exception& e) {
-		std::cerr << "turns out its not giving us login information." << std::endl;
+		std::cerr << "No credentials provided by client" << std::endl;
 	}
-	std::cerr << _BLUE "gethtpasswdpath = " << request.server.gethtpasswdpath() << _END << std::endl;
 
-	if (request.server.getmatch(username, passwd))
+	if (request.server.getmatch(username, passwd)) {
+		std::cout << _GREEN << "Authorization successful!" << _END << std::endl;
 		return 0;
+	}
 
+	std::cout << _RED << "Authorization failed!" << _END << std::endl;
 	this->_status_code = 401;
 	_response += "401 Unauthorized\n";
 	this->_response +=	"Server: Webserv/0.1\n"

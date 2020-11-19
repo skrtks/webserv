@@ -13,6 +13,7 @@
 #include "Connection.hpp"
 #include <iostream>
 #include <zconf.h>
+#include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
 
@@ -134,6 +135,7 @@ void Connection::startListening() {
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
 				}
 				else { // Handle request & return response
+					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 					receiveRequest(fd);
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[fd];
@@ -141,6 +143,7 @@ void Connection::startListening() {
 					sendReply(response, fd);
 					closeConnection(fd);
 					serverConnections.erase(fd);
+					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 				}
 			}
 		}
@@ -158,7 +161,6 @@ int Connection::addConnection(const int &socketFd) {
 	FD_SET(_connectionFd, &_master); // Add new connection to the set
 	if (_connectionFd > _fdMax)
 		_fdMax = _connectionFd;
-	std::cout << "New client connected" << std::endl;
 	return _connectionFd;
 }
 
@@ -177,12 +179,13 @@ void Connection::receiveRequest(const int& fd) {
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
-	std::cout << "REQUEST == \n" << _rawRequest << std::endl;
+	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
 }
 
 void Connection::sendReply(const std::string& msg, const int& fd) const {
 	if ((send(fd, msg.c_str(), msg.length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
+	std::cout << _GREEN << "Response send, first line is: " << msg.substr(0, msg.find('\n')) << _END << std::endl;
 }
 
 void Connection::closeConnection(const int& fd) {
