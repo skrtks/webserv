@@ -13,6 +13,7 @@
 #include "Location.hpp"
 #include <sys/stat.h>
 #include "libftGnl.hpp"
+#include "Colours.hpp"
 
 Location::Location() {
 	this->_location_match = "";
@@ -119,8 +120,10 @@ void	Location::setup(int fd) {
 }
 
 void	Location::addServerInfo(const std::string& root, const std::string& autoindex, const std::vector<std::string>& indexes) {
-	if (this->_root.empty())
+	if (this->_root.empty()) {
+		std::cerr << _CYAN "Overwriting this->_root with " << root << std::endl << _END;
 		this->_root = root;
+	}
 	if (this->_autoindex.empty())
 		this->_autoindex = autoindex;
 	if (this->_indexes.empty())

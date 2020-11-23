@@ -139,6 +139,7 @@ int ResponseHandler::generatePage(request_s& request) {
 //	struct stat	statstruct = {};
 //	std::string filepath = request.server.getroot() + request.uri;
 
+	std::cerr << _CYAN "ResponseHandler::generatePage()\n" _END;
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
 		fd = this->run_cgi(request);
 	else fd = request.server.getpage(request.uri, _header_vals, _status_code);
@@ -154,6 +155,7 @@ void ResponseHandler::handleBody(request_s& request) {
 
 	_body_length = 0;
 	_body = "";
+	std::cerr << _CYAN "ResponseHandler::handleBody(), status code = " << request.status_code << std::endl << _END;
 	if (request.status_code == 400)
 		fd = open("./htmlfiles/error.html", O_RDONLY);
 	else

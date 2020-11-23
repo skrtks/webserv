@@ -254,16 +254,23 @@ Location Server::matchlocation(const std::string &uri) const {
 			out = *it;
 		}
 	}
+	std::cerr << "I have found that my location has rootfolder " << out._root << std::endl;
 	return out;
 }
 
 int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode) const {
 	struct stat statstruct = {};
 	int fd = -1;
+	std::cerr << "im in Server::Getpage()\n";
 	Location loca = this->matchlocation(uri);
 	loca.addServerInfo(this->_root, this->_autoindex, this->_indexes);
 
-	std::string filepath = loca.getroot() + uri;
+	std::string TrimmedUri(uri);
+	TrimmedUri.erase(0, loca._location_match.length());
+	std::cerr << _YELLOW << "TrimmedUri is " << TrimmedUri << std::endl << _END;
+	std::cerr << "_location_match is " << loca._location_match << std::endl;
+	std::string filepath = loca.getroot() + '/' + TrimmedUri;
+	std::cerr << _CYAN "filepath = " << filepath << "stat return " << stat(filepath.c_str(), &statstruct) << " on it" << std::endl << _END;
 	if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (S_ISDIR(statstruct.st_mode)) {
 			filepath = loca.getindex();
