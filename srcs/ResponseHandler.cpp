@@ -244,7 +244,6 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 std::string ResponseHandler::getCurrentDatetime(void ) {
 	time_t		time;
 	char 		datetime[100];
-//	char*		datetime = new char[100];
 	std::string dtRet;
 	tm*			curr_time;
 	
@@ -253,7 +252,6 @@ std::string ResponseHandler::getCurrentDatetime(void ) {
 	curr_time = std::localtime(&time);
 	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time);
 	dtRet = datetime;
-//	delete[] datetime;
 	return (dtRet);
 }
 
