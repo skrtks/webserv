@@ -6,16 +6,22 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/11/10 12:10:49 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/23 17:18:05 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#include "Location.hpp"
-#include <cerrno>
-#include "Enums.hpp"
+# include "Base64.hpp"
+# include "Location.hpp"
+# include "Enums.hpp"
+# include "Colours.hpp"
+# include <cerrno>
+# include <fcntl.h>
+# include <iostream>
+# include <zconf.h>
+# include <sys/stat.h>
 
 class Server {
 	public:
@@ -61,6 +67,7 @@ class Server {
 		Location	matchlocation(const std::string& uri) const;
 		void		configurelocation(const std::string& in);
 		void		setup(int fd);
+		bool		getmatch(const std::string& username, const std::string& passwd);
 private:
 		size_t		_port;
 		long int	_client_body_size;
@@ -76,6 +83,7 @@ private:
 		std::vector<std::string> _indexes;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_base_env;
+		std::map<std::string, std::string>	_loginfo;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Server& x);

@@ -22,9 +22,7 @@ namespace ft {
 		while (end != std::string::npos) {
 			start = s.find_first_not_of(delim, end);
 			end = s.find_first_of(delim, start);
-			if (end != std::string::npos)
-				vec.push_back(s.substr(start, end - start));
-			else if (start != std::string::npos)
+			if (end != std::string::npos || start != std::string::npos)
 				vec.push_back(s.substr(start, end - start));
 		}
 		return vec;

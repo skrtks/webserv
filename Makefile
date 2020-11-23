@@ -18,6 +18,9 @@ INCLUDE = -Iincludes
 
 CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
 ifdef DEBUG
+ CXXFLAGS += -g
+endif
+ifdef ASAN
  CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 endif
 

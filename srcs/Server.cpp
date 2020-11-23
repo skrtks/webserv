@@ -6,16 +6,13 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/11/10 12:11:31 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/23 17:18:11 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
-#include "Colours.hpp"
-#include <fcntl.h>
-#include <zconf.h>
-#include <sys/stat.h>
+#include <fstream>
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
@@ -55,6 +52,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_base_env = x._base_env;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
+		this->_loginfo = x._loginfo;
 	}
 	return *this;
 }
@@ -140,7 +138,21 @@ std::string	Server::getauthbasicrealm() const {
 }
 
 void	Server::sethtpasswdpath(const std::string &path) {
+	struct stat statstruct = {};
+	if (stat(path.c_str(), &statstruct) == -1)
+		return ;
+
 	this->_htpasswd_path = path;
+	std::ifstream ifs;
+	ifs.open(_htpasswd_path.c_str());
+	if (ifs.bad())
+		return ;
+	std::string line;
+	while (std::getline(ifs, line)) {
+		std::string user, pass;
+		get_key_value(line, user, pass, ":");
+		this->_loginfo[user] = pass;
+	}
 }
 
 std::string	Server::gethtpasswdpath() const {
@@ -229,63 +241,50 @@ std::string Server::getautoindex() const {
 	return this->_autoindex;
 }
 
-size_t	str_compare_equal_for(const std::string& a, const std::string& b) {
-	size_t i = 0;
-	while (a[i] == b[i]) {
-		if (!a[i] || !b[i])
-			break ;
-		++i;
-	}
-	return i;
-}
-
 Location Server::matchlocation(const std::string &uri) const {
-	size_t		n, tmp = 0;
-
+	size_t		n;
 	Location	out;
-	out._root = this->_root;
-	out._autoindex = this->_autoindex;
-	out._indexes = this->_indexes;
-	// add CGI and _allow_method?
-	for (std::vector<Location>::const_iterator it = _locations.begin(); it != _locations.end(); ++it) {
-		n = str_compare_equal_for(it->getlocationmatch(), uri);
-		if (n > tmp) {
-			tmp = n;
+
+	for (std::vector<Location>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); ++it) {
+		n = it->getlocationmatch().length();
+		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
-		}
 	}
-	std::cerr << "I have found that my location has rootfolder " << out._root << std::endl;
-	return out;
+	return (out);
 }
 
 int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode) const {
 	struct stat statstruct = {};
 	int fd = -1;
-	std::cerr << "im in Server::Getpage()\n";
 	Location loca = this->matchlocation(uri);
-	loca.addServerInfo(this->_root, this->_autoindex, this->_indexes);
+	loca.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page); 	// add CGI and _allow_method?
 
-	std::string TrimmedUri(uri);
+	std::string	TrimmedUri(uri),
+				filepath(loca.getroot());
 	TrimmedUri.erase(0, loca._location_match.length());
-	std::cerr << _YELLOW << "TrimmedUri is " << TrimmedUri << std::endl << _END;
-	std::cerr << "_location_match is " << loca._location_match << std::endl;
-	std::string filepath = loca.getroot() + '/' + TrimmedUri;
-	std::cerr << _CYAN "filepath = " << filepath << "stat return " << stat(filepath.c_str(), &statstruct) << " on it" << std::endl << _END;
+
+	if (filepath[filepath.length() - 1] != '/' && TrimmedUri[0] != '/') // I wanna use .front() and .back() but they're C++11 :sadge:
+		filepath += '/';
+	filepath += TrimmedUri;
 	if (stat(filepath.c_str(), &statstruct) != -1) {
-		if (S_ISDIR(statstruct.st_mode)) {
+		if (S_ISDIR(statstruct.st_mode))
 			filepath = loca.getindex();
-		}
 		if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
-		std::cerr << _RED << "filepath = " << filepath << ", fd = " << fd << std::endl << _END;
 	}
 	if (fd == -1) {
-		filepath = _root + '/' + get404page();
+		filepath = loca.getroot() + '/' + loca.geterrorpage();
 		fd = open(filepath.c_str(), O_RDONLY);
 		statuscode = 404;
 	}
  	headervals[CONTENT_LOCATION] = filepath;
-	return fd;
+	return (fd);
+}
+
+bool Server::getmatch(const std::string& username, const std::string& passwd) {
+	std::map<std::string, std::string>::const_iterator it = this->_loginfo.find(username);
+
+	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
 }
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {
@@ -299,5 +298,5 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 		o << v[i];
 	}
 	o << std::endl;
-	return o;
+	return (o);
 }
