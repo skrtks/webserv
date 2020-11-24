@@ -185,7 +185,7 @@ std::string ResponseHandler::handleRequest(request_s& request) {
 	return _response;
 }
 
-void ResponseHandler::handlePut(const request_s& request) {
+void ResponseHandler::handlePut(request_s& request) {
 	int fd;
 	_response = "HTTP/1.1 ";
 	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
@@ -193,9 +193,10 @@ void ResponseHandler::handlePut(const request_s& request) {
 	for (std::vector<std::string>::const_iterator it = AllowedMethods.begin(); it != AllowedMethods.end(); ++it)
 		if (*it == "PUT")
 			PutIsAllowed = true;
-		
-	std::string filePath = request.server.matchlocation(request.uri).getroot();
-	filePath += request.uri;
+
+//	fd = request.server.getpage(request.uri, request.headers, request.status_code);
+	std::string filePath = request.server.getfilepath(request.uri);
+	std::cerr << "put:: filepath is " << filePath << std::endl;
 	if (!PutIsAllowed) {
 		_response += "405 Method Not Allowed";
 	}

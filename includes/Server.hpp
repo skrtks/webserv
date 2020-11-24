@@ -65,6 +65,7 @@ class Server {
 
 		void		create_base_env();
 		Location	matchlocation(const std::string& uri) const;
+		std::string	getfilepath(const std::string& uri) const;
 		void		configurelocation(const std::string& in);
 		void		setup(int fd);
 		bool		getmatch(const std::string& username, const std::string& passwd);
