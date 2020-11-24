@@ -32,7 +32,7 @@ public:
 	ResponseHandler(const ResponseHandler &src);
 	ResponseHandler& operator= (const ResponseHandler &rhs);
 
-	std::string	handleRequest(request_s request);
+	std::string	handleRequest(request_s& request);
 	void		handleBody(request_s& request);
 	void		handleStatusCode(request_s& request);
 	std::string getCurrentDatetime(void );
@@ -55,7 +55,7 @@ public:
 	void 		generateResponse(request_s& request);
 	int			run_cgi(const request_s& request);
 	int			generatePage(request_s& request);
-	void handlePut(request_s request);
+	void handlePut(const request_s& request);
 };
 
 
