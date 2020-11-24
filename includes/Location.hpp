@@ -19,12 +19,13 @@
 
 class Location {
 	public:
+		friend class Server;
 		//coplien form
 		Location();
-		explicit Location(std::string& location_match);
+		explicit Location(std::string& );
 		~Location();
-		Location(const Location& x);
-		Location&	operator=(const Location& x);
+		Location(const Location& );
+		Location&	operator=(const Location& );
 
 		//setters
 		void	setroot(const std::string& );
@@ -32,21 +33,26 @@ class Location {
 		void	setallow_method(const std::string& );
 		void	setindex(const std::string& );
 		void	setcgi(const std::string& );
+		void	seterrorpage(const std::string& );
 		
 		//getters
 		std::string					getroot() const;
 		std::string					getautoindex() const;
 		std::string					getlocationmatch() const;
 		std::vector<std::string>	getallowmethods() const;
+		std::string					getindex() const;
 		std::vector<std::string>	getindexes() const;
 		std::vector<std::string>	getcgi() const;
+		std::string					geterrorpage() const;
 		
-		void	setup(int fd);
+		void	setup(int );
+		void	addServerInfo(const std::string& root, const std::string& autoindex, const std::vector<std::string>& indexes, const std::string& errorpage);
 
 	private:
 	std::string					_root,
 								_autoindex,
-								_location_match;
+								_location_match,
+								_error_page;
 	std::vector<std::string>	_allow_method,
 								_indexes,
 								_cgi;
