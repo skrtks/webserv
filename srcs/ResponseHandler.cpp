@@ -194,19 +194,21 @@ void ResponseHandler::handlePut(request_s& request) {
 		if (*it == "PUT")
 			PutIsAllowed = true;
 
-//	fd = request.server.getpage(request.uri, request.headers, request.status_code);
 	std::string filePath = request.server.getfilepath(request.uri);
-	std::cerr << "put:: filepath is " << filePath << std::endl;
+	std::cerr << _CYAN "put:: filepath is " << filePath << std::endl << _END;
+
 	if (!PutIsAllowed) {
 		_response += "405 Method Not Allowed";
 	}
 	else if ((fd = open(filePath.c_str(), O_WRONLY | O_TRUNC)) >= 0) {
 		_response += "204 No Content";
 		write(fd, request.body.c_str(), request.body.length());
+		close(fd);
 	}
 	else if ((fd = open(filePath.c_str(), O_WRONLY | O_CREAT)) >= 0) {
 		_response += "201 Created";
 		write(fd, request.body.c_str(), request.body.length());
+		close(fd);
 	}
 	else {
 		_response += "500 Internal Server Error";
