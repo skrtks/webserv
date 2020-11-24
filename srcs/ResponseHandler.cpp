@@ -142,30 +142,11 @@ int	ResponseHandler::run_cgi(const request_s& request) {
 
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
-	struct stat	statstruct = {};
-	std::string filepath = request.server.getroot() + request.uri;
 
-	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9)	// Run CGI script that creates an html page
+	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
 		fd = this->run_cgi(request);
-	else if (stat(filepath.c_str(), &statstruct) != -1) {
-		if (statstruct.st_size > request.server.getclientbodysize()) // should this account for images that are in the embedded in the html page? How would you check that?
-			std::cerr << _RED << "Cant serve requested file, filesize is " << statstruct.st_size << ". Client body limit is " << request.server.getclientbodysize() << std::endl << _END;
-		else if (S_ISDIR(statstruct.st_mode)) {											// In case of a directory, we serve index.html
-//			std::cerr << _BLUE << filepath << " is a directory" << std::endl << _END;
-			filepath = request.server.getroot() + '/' + request.server.getindex();	// We don't do location matching just yet.
-			_header_vals[CONTENT_LOCATION] = filepath;
-			fd = open(filepath.c_str(), O_RDONLY);
-		}
-		else {
-			fd = open(filepath.c_str(), O_RDONLY);									// Serving [rootfolder]/[URI]
-		}
-	}
-	if (fd == -1) {
-		_status_code = 404;
-		filepath = request.server.getroot() + '/' + request.server.get404page();	// Serving the default error page
-		_header_vals[CONTENT_LOCATION] = filepath;
-		fd = open(filepath.c_str(), O_RDONLY);
-	}
+	else
+		fd = request.server.getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
 	return (fd);
@@ -177,7 +158,7 @@ void ResponseHandler::handleBody(request_s& request) {
 	int		fd = 0;
 
 	_body_length = 0;
-	_body = "";
+	_body.clear();
 	if (request.status_code == 400)
 		fd = open("./htmlfiles/error.html", O_RDONLY);
 	else
@@ -262,7 +243,7 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 
 std::string ResponseHandler::getCurrentDatetime(void ) {
 	time_t		time;
-	char*		datetime = new char[100];
+	char 		datetime[100];
 	std::string dtRet;
 	tm*			curr_time;
 	
@@ -271,7 +252,6 @@ std::string ResponseHandler::getCurrentDatetime(void ) {
 	curr_time = std::localtime(&time);
 	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time);
 	dtRet = datetime;
-	delete[] datetime;
 	return (dtRet);
 }
 
@@ -370,7 +350,6 @@ void ResponseHandler::handleSERVER( void ) {
 }
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
-	
 	_header_vals[TRANSFER_ENCODING] = "identity";
 	if (_body_length > request.server.getclientbodysize() || _body_length < 0) // arbitrary number, docs state that chunked transfer encoding is usually used for mb/gb onwards datatransfers
 	{

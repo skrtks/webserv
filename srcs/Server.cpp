@@ -6,28 +6,24 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/11/10 12:11:31 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/23 17:18:11 by pde-bakk      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
-#include <sys/stat.h>
 #include <fstream>
-#include "Base64.hpp"
-#include "Colours.hpp"
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
-		_index("index.html"), _root("htmlfiles"), 
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path(), _fd(),
-		_socketFd() {
+		_root("htmlfiles"),
+		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_fd(), _socketFd() {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
-		_index("index.html"), _root("htmlfiles"),
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path(),
+		_root("htmlfiles"), _auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
 		_socketFd() {
 	this->_fd = fd;
 }
@@ -47,7 +43,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_client_body_size = x._client_body_size;
 		this->_error_page = x._error_page;
 		this->_404_page = x._404_page;
-		this->_index = x._index;
+		this->_indexes = x._indexes;
 		this->_root = x._root;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
@@ -78,11 +74,18 @@ void	Server::sethost(const std::string& host) {
 }
 
 std::string	Server::getindex() const {
-	return this->_index;
+	struct stat statstruct = {};
+	std::string filepath;
+	for (std::vector<std::string>::const_iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
+		filepath = this->_root + *it;
+		if (stat(filepath.c_str(), &statstruct) != -1)
+			return *it;
+	}
+	return this->_error_page;
 }
 
-void	Server::setindex(const std::string& index) {
-	this->_index = index;
+void	Server::setindexes(const std::string& index) {
+	this->_indexes = ft::split(index, " \t\r\n\v\f");
 }
 
 std::string	Server::getroot() const {
@@ -164,7 +167,6 @@ void	Server::configurelocation(const std::string& in) {
 	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f");
 	Location	loc(v[0]);
 	loc.setup(this->_fd);
-	// if succesful
 	this->_locations.push_back(loc);
 }
 
@@ -197,7 +199,8 @@ void	Server::setup(int fd) {
 	std::map<std::string, void (Server::*)(const std::string&)> m;
 	m["port"] = &Server::setport;
 	m["host"] = &Server::sethost;
-	m["index"] = &Server::setindex;
+	m["autoindex"] = &Server::setautoindex;
+	m["index"] = &Server::setindexes;
 	m["root"] = &Server::setroot;
 	m["auth_basic"] = &Server::setauth_basic_realm;
 	m["auth_basic_user_file"] = &Server::sethtpasswdpath;
@@ -230,11 +233,58 @@ void Server::setSocketFd(int socketFd) {
 	_socketFd = socketFd;
 }
 
-bool Server::getmatch(const std::string &username, const std::string &passwd) {
+void Server::setautoindex(const std::string& ai) {
+	this->_autoindex = ai;
+}
+
+std::string Server::getautoindex() const {
+	return this->_autoindex;
+}
+
+Location Server::matchlocation(const std::string &uri) const {
+	size_t		n;
+	Location	out;
+
+	for (std::vector<Location>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); ++it) {
+		n = it->getlocationmatch().length();
+		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
+			out = *it;
+	}
+	return (out);
+}
+
+int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode) const {
+	struct stat statstruct = {};
+	int fd = -1;
+	Location loca = this->matchlocation(uri);
+	loca.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page); 	// add CGI and _allow_method?
+
+	std::string	TrimmedUri(uri),
+				filepath(loca.getroot());
+	TrimmedUri.erase(0, loca._location_match.length());
+
+	if (filepath[filepath.length() - 1] != '/' && TrimmedUri[0] != '/') // I wanna use .front() and .back() but they're C++11 :sadge:
+		filepath += '/';
+	filepath += TrimmedUri;
+	if (stat(filepath.c_str(), &statstruct) != -1) {
+		if (S_ISDIR(statstruct.st_mode))
+			filepath = loca.getindex();
+		if (!filepath.empty())
+			fd = open(filepath.c_str(), O_RDONLY);
+	}
+	if (fd == -1) {
+		filepath = loca.getroot() + '/' + loca.geterrorpage();
+		fd = open(filepath.c_str(), O_RDONLY);
+		statuscode = 404;
+	}
+ 	headervals[CONTENT_LOCATION] = filepath;
+	return (fd);
+}
+
+bool Server::getmatch(const std::string& username, const std::string& passwd) {
 	std::map<std::string, std::string>::const_iterator it = this->_loginfo.find(username);
-	if (it != _loginfo.end() && passwd == base64_decode(it->second) )
-		return true;
-	return false;
+
+	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
 }
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {
@@ -248,5 +298,5 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 		o << v[i];
 	}
 	o << std::endl;
-	return o;
+	return (o);
 }

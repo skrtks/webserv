@@ -22,27 +22,6 @@
 #include <sstream>
 #include "Server.hpp"
 
-enum headerType {
-	ACCEPT_CHARSET,
-	ACCEPT_LANGUAGE,
-	ALLOW,
-	AUTHORIZATION,
-	CONTENT_LANGUAGE,
-	CONTENT_LENGTH,
-	CONTENT_LOCATION,
-	CONTENT_TYPE,
-	DATE,
-	HOST,
-	LAST_MODIFIED,
-	LOCATION,
-	REFERER,
-	RETRY_AFTER,
-	SERVER,
-	TRANSFER_ENCODING,
-	USER_AGENT,
-	WWW_AUTHENTICATE
-};
-
 enum e_method {
 	GET, // These are mandatory according to rfc's
 	HEAD, // These are mandatory according to rfc's
