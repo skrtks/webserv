@@ -189,9 +189,18 @@ void ResponseHandler::handlePut(request_s request) {
 	int fd;
 	_response = "HTTP/1.1 ";
 	// TODO check is PUT is allowed, if not return 405 Method Not Allowed
+	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
+	bool PutIsAllowed = false;
+	for (std::vector<std::string>::const_iterator it = AllowedMethods.begin(); it != AllowedMethods.end(); ++it)
+		if (*it == "PUT")
+			PutIsAllowed = true;
+		
 	std::string filePath = request.server.getroot();
 	filePath += request.uri;
-	if ((fd = open(filePath.c_str(), O_WRONLY | O_TRUNC)) >= 0) {
+	if (!PutIsAllowed) {
+		_response += "405 Method Not Allowed";
+	}
+	else if ((fd = open(filePath.c_str(), O_WRONLY | O_TRUNC)) >= 0) {
 		_response += "204 No Content";
 		write(fd, request.body.c_str(), request.body.length());
 	}

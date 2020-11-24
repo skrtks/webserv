@@ -250,6 +250,7 @@ Location Server::matchlocation(const std::string &uri) const {
 		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
+	out.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page); 	// add CGI and _allow_method?
 	return (out);
 }
 
@@ -257,7 +258,6 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 	struct stat statstruct = {};
 	int fd = -1;
 	Location loca = this->matchlocation(uri);
-	loca.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page); 	// add CGI and _allow_method?
 
 	std::string	TrimmedUri(uri),
 				filepath(loca.getroot());
