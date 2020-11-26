@@ -207,8 +207,10 @@ void ResponseHandler::handlePut(request_s& request) {
 			if (statret == -1)
 				this->_response += "201 Created\n";
 			else this->_response += "204 No Content\n";
-			write(fd, request.body.c_str(), request.body.length());
+			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
 			close(fd);
+			if (WriteRet != request.body.length())
+				throw std::runtime_error(_RED _BOLD "Write return in ResponseHandler::handlePut is not equal to request.body.length()");
 		}
 		else {
 			this->_response += "500 Internal Server Error\n";
