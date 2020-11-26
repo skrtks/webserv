@@ -186,7 +186,8 @@ std::string ResponseHandler::handleRequest(request_s& request) {
 }
 
 void ResponseHandler::handlePut(request_s& request) {
-	int fd;
+	int fd = -1;
+	struct stat statstruct = {};
 	_response = "HTTP/1.1 ";
 	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
 	bool PutIsAllowed = false;
@@ -195,25 +196,25 @@ void ResponseHandler::handlePut(request_s& request) {
 			PutIsAllowed = true;
 
 	std::string filePath = request.server.getfilepath(request.uri);
-	std::cerr << _CYAN "put:: filepath is " << filePath << std::endl << _END;
+	int statret = stat(filePath.c_str(), &statstruct);
 
 	if (!PutIsAllowed) {
-		_response += "405 Method Not Allowed";
-	}
-	else if ((fd = open(filePath.c_str(), O_WRONLY | O_TRUNC)) >= 0) {
-		_response += "204 No Content";
-		write(fd, request.body.c_str(), request.body.length());
-		close(fd);
-	}
-	else if ((fd = open(filePath.c_str(), O_WRONLY | O_CREAT)) >= 0) {
-		_response += "201 Created";
-		write(fd, request.body.c_str(), request.body.length());
-		close(fd);
+		_response += "405 Method Not Allowed\n";
 	}
 	else {
-		_response += "500 Internal Server Error";
+		fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
+		if (fd != -1) {
+			if (statret == -1)
+				this->_response += "201 Created\n";
+			else this->_response += "204 No Content\n";
+			write(fd, request.body.c_str(), request.body.length());
+			close(fd);
+		}
+		else {
+			this->_response += "500 Internal Server Error\n";
+			std::cerr << _RED "strerror: " << strerror(errno) << std::endl << _END;
+		}
 	}
-	_response += "\n";
 	_response += "\r\n";
 }
 
