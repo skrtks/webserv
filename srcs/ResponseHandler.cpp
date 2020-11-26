@@ -186,7 +186,6 @@ std::string ResponseHandler::handleRequest(request_s& request) {
 }
 
 void ResponseHandler::handlePut(request_s& request) {
-	int fd = -1;
 	struct stat statstruct = {};
 	_response = "HTTP/1.1 ";
 	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
@@ -202,7 +201,7 @@ void ResponseHandler::handlePut(request_s& request) {
 		_response += "405 Method Not Allowed\n";
 	}
 	else {
-		fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
+		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
 		if (fd != -1) {
 			if (statret == -1)
 				this->_response += "201 Created\n";
