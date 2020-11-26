@@ -250,22 +250,28 @@ Location Server::matchlocation(const std::string &uri) const {
 		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
+	out.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page); 	// add CGI and _allow_method?
 	return (out);
+}
+
+std::string	Server::getfilepath(const std::string& uri) const {
+	Location loca = this->matchlocation(uri);
+
+	std::string	TrimmedUri(uri),
+				filepath(loca.getroot());
+	TrimmedUri.erase(0, loca._location_match.length());
+	if (filepath[filepath.length() - 1] != '/' && TrimmedUri[0] != '/') // I wanna use .front() and .back() but they're C++11 :sadge:
+		filepath += '/';
+	filepath += TrimmedUri;
+	return (filepath);
 }
 
 int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode) const {
 	struct stat statstruct = {};
 	int fd = -1;
 	Location loca = this->matchlocation(uri);
-	loca.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page); 	// add CGI and _allow_method?
+	std::string filepath = this->getfilepath(uri);
 
-	std::string	TrimmedUri(uri),
-				filepath(loca.getroot());
-	TrimmedUri.erase(0, loca._location_match.length());
-
-	if (filepath[filepath.length() - 1] != '/' && TrimmedUri[0] != '/') // I wanna use .front() and .back() but they're C++11 :sadge:
-		filepath += '/';
-	filepath += TrimmedUri;
 	if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (S_ISDIR(statstruct.st_mode))
 			filepath = loca.getindex();

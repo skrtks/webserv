@@ -36,6 +36,7 @@ struct request_s {
 	std::pair<int, int>					version;
 	std::map<headerType, std::string>	headers;
 	Server								server;
+	std::string							body;
 };
 
 class RequestParser {

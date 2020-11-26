@@ -174,10 +174,49 @@ void ResponseHandler::handleBody(request_s& request) {
 	close(fd);
 }
 
-std::string ResponseHandler::handleRequest(request_s request) {
+std::string ResponseHandler::handleRequest(request_s& request) {
 	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
-	generateResponse(request);
+	if (request.method == PUT) {
+		handlePut(request);
+	}
+	else {
+		generateResponse(request);
+	}
 	return _response;
+}
+
+void ResponseHandler::handlePut(request_s& request) {
+	struct stat statstruct = {};
+	_response = "HTTP/1.1 ";
+	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
+	bool PutIsAllowed = false;
+	for (std::vector<std::string>::const_iterator it = AllowedMethods.begin(); it != AllowedMethods.end(); ++it)
+		if (*it == "PUT")
+			PutIsAllowed = true;
+
+	std::string filePath = request.server.getfilepath(request.uri);
+	int statret = stat(filePath.c_str(), &statstruct);
+
+	if (!PutIsAllowed) {
+		_response += "405 Method Not Allowed\n";
+	}
+	else {
+		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
+		if (fd != -1) {
+			if (statret == -1)
+				this->_response += "201 Created\n";
+			else this->_response += "204 No Content\n";
+			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
+			close(fd);
+			if (WriteRet != request.body.length())
+				throw std::runtime_error(_RED _BOLD "Write return in ResponseHandler::handlePut is not equal to request.body.length()");
+		}
+		else {
+			this->_response += "500 Internal Server Error\n";
+			std::cerr << _RED "strerror: " << strerror(errno) << std::endl << _END;
+		}
+	}
+	_response += "\r\n";
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
@@ -310,6 +349,12 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	// Defaults to html if no css is found
 	if (request.uri.find(".css") != std::string::npos) {
 		_header_vals[CONTENT_TYPE] = "text/css";
+	}
+	else if (request.uri.find(".ico") != std::string::npos) {
+		_header_vals[CONTENT_TYPE] = "image/x-icon";
+	}
+	else if (request.uri.find(".jpg") != std::string::npos || request.uri.find(".jpeg") != std::string::npos) {
+		_header_vals[CONTENT_TYPE] = "image/jpeg";
 	}
 	else {
 		_header_vals[CONTENT_TYPE] = "text/html";
