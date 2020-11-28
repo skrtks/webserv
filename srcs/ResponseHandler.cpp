@@ -179,10 +179,17 @@ std::string ResponseHandler::handleRequest(request_s& request) {
 	if (request.method == PUT) {
 		handlePut(request);
 	}
+	else if (request.method == POST) {
+		handlePost(request);
+	}
 	else {
 		generateResponse(request);
 	}
 	return _response;
+}
+
+void ResponseHandler::handlePost(request_s& request) {
+
 }
 
 void ResponseHandler::handlePut(request_s& request) {
@@ -217,6 +224,9 @@ void ResponseHandler::handlePut(request_s& request) {
 		}
 	}
 	_response += "\r\n";
+	handleLOCATION(filePath);
+	_response += "\r\n";
+	_response += "\r\n";
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
@@ -238,6 +248,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleHOST(request);
 	_response += "\n";
 	_response += _body;
+	_body.clear();
 	_response += "\r\n";
 //	std::cout << "RESPONSE == \n" << _response << std::endl;
 }
@@ -289,7 +300,7 @@ std::string ResponseHandler::getCurrentDatetime(void ) {
 	// gettimeofday(&time, NULL);
 	std::time(&time);
 	curr_time = std::localtime(&time);
-	std::strftime(datetime, 100, "%a, %d %B %Y %T GMT", curr_time);
+	std::strftime(datetime, 100, "%a, %d %B %Y %H:%M:%S GMT", curr_time);
 	dtRet = datetime;
 	return (dtRet);
 }
@@ -379,15 +390,20 @@ void ResponseHandler::handleHOST( request_s& request ) {
 }
 
 void ResponseHandler::handleLAST_MODIFIED( void ) {
-	std::cout << "Value is: " << "NULL" << std::endl;
+	_response += "Last-Modified: ";
+	_response += getCurrentDatetime();
+	_response += "\n";
 }
 
-void ResponseHandler::handleLOCATION( void ) {
-	std::cout << "Value is: " << "NULL" << std::endl;
+void ResponseHandler::handleLOCATION( std::string url ) {
+	_response += "Location: ";
+	_response += url;
+	_response += "\n";
+	std::cout << "Location is: " << url << std::endl;
 }
 
 void ResponseHandler::handleRETRY_AFTER( void ) {
-	std::cout << "Value is: " << "NULL" << std::endl;
+	_response += "Retry-After: 120\n";
 }
 
 void ResponseHandler::handleSERVER( void ) {
@@ -396,7 +412,7 @@ void ResponseHandler::handleSERVER( void ) {
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
 	_header_vals[TRANSFER_ENCODING] = "identity";
-	if (_body_length > request.server.getclientbodysize() || _body_length < 0) // arbitrary number, docs state that chunked transfer encoding is usually used for mb/gb onwards datatransfers
+	if (_body_length > request.server.getclientbodysize())
 	{
 		
 	}
