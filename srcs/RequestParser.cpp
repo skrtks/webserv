@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/08 18:04:22 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/29 14:00:32 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,7 +205,9 @@ void RequestParser::parseHeaders() {
 	while (!_rawRequest.empty()) {
 		upperHeader.clear();
 		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
-		if (eoRequestLine != 0) {
+		// std::cout << eoRequestLine << std::endl;
+		// std::cout << _rawRequest << std::endl;
+		if (eoRequestLine != 0 && std::string::npos != eoRequestLine) {
 			if (_rawRequest[0] == ' ') {
 				std::cout << "BAD REQ 8" << std::endl;
 				_status_code = 400;
@@ -242,6 +244,7 @@ void RequestParser::parseHeaders() {
 			// Extract value string and check if not empty or beginning with newline
 			std::string value = _rawRequest.substr(pos, eoRequestLine - pos - owsOffset);
 			if (value.empty() || _rawRequest[pos] == '\r') {
+				std::cout << _rawRequest << std::endl;
 				std::cout << "BAD REQ 11" << std::endl;
 				_status_code = 400;
 				return ;

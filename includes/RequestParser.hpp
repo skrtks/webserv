@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:32 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/10 12:05:14 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/28 19:45:53 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ struct request_s {
 	std::map<headerType, std::string>	headers;
 	Server								server;
 	std::string							body;
+	bool								transfer_buffer;
 };
 
 class RequestParser {

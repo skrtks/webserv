@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/08 15:36:30 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/29 13:47:07 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,7 @@ void Connection::setUpConnection() {
 void Connection::startListening() {
 	RequestParser					requestParser;
 	ResponseHandler					responseHandler;
-	std::string						response;
+	std::vector<std::string>				response;
 	std::map<int, Server>::iterator	serverMapIt;
 	std::map<int, Server> 			serverConnections;
 
@@ -140,7 +140,7 @@ void Connection::startListening() {
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
-					sendReply(response, fd);
+					sendReply(response, fd, _parsedRequest);
 					closeConnection(fd);
 					serverConnections.erase(fd);
 					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
@@ -173,19 +173,32 @@ void Connection::receiveRequest(const int& fd) {
 	ft_memset(buf, 0, BUFLEN);
 	do {
 		bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
+		std::cout << bytesReceived << std::endl;
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
-		request += buf;
+			std::cout << buf << std::endl;
+		request.append(buf, 0, bytesReceived);
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
 	_rawRequest = request;
 	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
 }
 
-void Connection::sendReply(const std::string& msg, const int& fd) const {
-	if ((send(fd, msg.c_str(), msg.length(), 0) == -1))
+void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
+	std::cout << "\nRESPONSE --------" << std::endl;
+	for (unsigned long i = 0; i < msg.size(); i++)
+		std::cout << msg[i] << std::endl;
+	std::cout << "\nRESPONSE END ----" << std::endl;
+	if (request.transfer_buffer == true) {
+		for (unsigned long i = 0; i < msg.size(); i++) {
+			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
+				throw std::runtime_error(strerror(errno));
+		}
+	}
+	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
-	std::cout << _GREEN << "Response send, first line is: " << msg.substr(0, msg.find('\n')) << _END << std::endl;
+	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
+	msg.clear();
 }
 
 void Connection::closeConnection(const int& fd) {

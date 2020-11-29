@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        ::::::::            */
-/*   ResponseHandler.hpp                                 :+:    :+:            */
+/*   ResponseHandler.hpp                                :+:    :+:            */
 /*                                                     +:+                    */
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:14 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/10/20 00:08:28 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/28 21:01:34 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 class ResponseHandler {
 	std::map<headerType, std::string>	_header_vals;
 	std::map<int, std::string>			_status_codes;
-	std::string							_response;
+	std::vector<std::string>			_response;
 	std::string							_body;
 	int									_body_length;
 	int									_status_code;
@@ -32,7 +32,7 @@ public:
 	ResponseHandler(const ResponseHandler &src);
 	ResponseHandler& operator= (const ResponseHandler &rhs);
 
-	std::string	handleRequest(request_s& request);
+	std::vector<std::string>	handleRequest(request_s& request);
 	void		handleBody(request_s& request);
 	void		handleStatusCode(request_s& request);
 	std::string getCurrentDatetime(void );
@@ -56,6 +56,7 @@ public:
 	int			run_cgi(const request_s& request);
 	int			generatePage(request_s& request);
 	void		handlePut(request_s& request);
+	void		handlePost(request_s& request);
 };
 
 

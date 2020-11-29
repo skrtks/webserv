@@ -38,34 +38,34 @@ ResponseHandler::ResponseHandler() {
 	_header_vals[TRANSFER_ENCODING].clear();
 	_header_vals[WWW_AUTHENTICATE].clear();
 
-	_status_codes[100] = "100 Continue\n"; // Only a part of the request has been received by the server, but as long as it has not been rejected, the client should continue with the request.
-	_status_codes[200] = "200 OK\n";
-	_status_codes[201] = "201 Created\n";
-	_status_codes[202] = "202 Accepted\n"; // The request is accepted for processing, but the processing is not complete.
-	_status_codes[203] = "203 Non-Authoritative Information\n"; // The information in the entity header is from a local or third-party copy, not from the original server.
-	_status_codes[204] = "204 No Content\n";
-	_status_codes[300] = "300 Multiple Choices\n"; // A link list. The user can select a link and go to that location. Maximum five addresses  .
-	_status_codes[301] = "301 Moved Permanently\n";
-	_status_codes[302] = "302 Found\n"; // The requested page has moved temporarily to a new url .
-	_status_codes[307] = "307 Temporary Redirect\n"; // The requested page has moved temporarily to a new url.
-	_status_codes[400] = "400 Bad Request\n"; // The server did not understand the request.
-	_status_codes[404] = "404 Not Found\n";
-	_status_codes[405] = "405 Method Not Allowed\n";
-	_status_codes[406] = "406 Not Acceptable\n";
-	_status_codes[407] = "407 Proxy Authentication Required\n";
-	_status_codes[408] = "408 Request Timeout\n";
-	_status_codes[409] = "409 Conflict\n"; // The request could not be completed because of a conflict.
-	_status_codes[410] = "410 Gone\n"; // The requested page is no longer available .
-	_status_codes[411] = "411 Length Required\n"; // The "Content-Length" is not defined. The server will not accept the request without it .
-	_status_codes[413] = "413 Request Entity Too Large\n";
-	_status_codes[414] = "414 Request-url Too Long\n";
-	_status_codes[415] = "415 Unsupported Media Type\n";
-	_status_codes[500] = "500 Internal Server Error\n"; // The request was not completed. The server met an unexpected condition.
-	_status_codes[501] = "501 Not Implemented\n"; // The request was not completed. The server did not support the functionality required.
-	_status_codes[502] = "502 Bad Gateway\n"; // The request was not completed. The server received an invalid response from the upstream server.
-	_status_codes[503] = "503 Service Unavailable\n"; // The request was not completed. The server is temporarily overloading or down.
-	_status_codes[504] = "504 Gateway Timeout\n";
-	_status_codes[505] = "505 HTTP Version Not Supported\n";
+	_status_codes[100] = "100 Continue\r\n"; // Only a part of the request has been received by the server, but as long as it has not been rejected, the client should continue with the request.
+	_status_codes[200] = "200 OK\r\n";
+	_status_codes[201] = "201 Created\r\n";
+	_status_codes[202] = "202 Accepted\r\n"; // The request is accepted for processing, but the processing is not complete.
+	_status_codes[203] = "203 Non-Authoritative Information\r\n"; // The information in the entity header is from a local or third-party copy, not from the original server.
+	_status_codes[204] = "204 No Content\r\n";
+	_status_codes[300] = "300 Multiple Choices\r\n"; // A link list. The user can select a link and go to that location. Maximum five addresses  .
+	_status_codes[301] = "301 Moved Permanently\r\n";
+	_status_codes[302] = "302 Found\r\n"; // The requested page has moved temporarily to a new url .
+	_status_codes[307] = "307 Temporary Redirect\r\n"; // The requested page has moved temporarily to a new url.
+	_status_codes[400] = "400 Bad Request\r\n"; // The server did not understand the request.
+	_status_codes[404] = "404 Not Found\r\n";
+	_status_codes[405] = "405 Method Not Allowed\r\n";
+	_status_codes[406] = "406 Not Acceptable\r\n";
+	_status_codes[407] = "407 Proxy Authentication Required\r\n";
+	_status_codes[408] = "408 Request Timeout\r\n";
+	_status_codes[409] = "409 Conflict\r\n"; // The request could not be completed because of a conflict.
+	_status_codes[410] = "410 Gone\r\n"; // The requested page is no longer available .
+	_status_codes[411] = "411 Length Required\r\n"; // The "Content-Length" is not defined. The server will not accept the request without it .
+	_status_codes[413] = "413 Request Entity Too Large\r\n";
+	_status_codes[414] = "414 Request-url Too Long\r\n";
+	_status_codes[415] = "415 Unsupported Media Type\r\n";
+	_status_codes[500] = "500 Internal Server Error\r\n"; // The request was not completed. The server met an unexpected condition.
+	_status_codes[501] = "501 Not Implemented\r\n"; // The request was not completed. The server did not support the functionality required.
+	_status_codes[502] = "502 Bad Gateway\r\n"; // The request was not completed. The server received an invalid response from the upstream server.
+	_status_codes[503] = "503 Service Unavailable\r\n"; // The request was not completed. The server is temporarily overloading or down.
+	_status_codes[504] = "504 Gateway Timeout\r\n";
+	_status_codes[505] = "505 HTTP Version Not Supported\r\n";
 }
 
 ResponseHandler::~ResponseHandler() {
@@ -174,8 +174,10 @@ void ResponseHandler::handleBody(request_s& request) {
 	close(fd);
 }
 
-std::string ResponseHandler::handleRequest(request_s& request) {
+std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
+	std::string response;
+	_response.emplace_back(response);
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -189,12 +191,25 @@ std::string ResponseHandler::handleRequest(request_s& request) {
 }
 
 void ResponseHandler::handlePost(request_s& request) {
+	int		fd = 0;
 
+	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
+		fd = this->run_cgi(request);
+	
+	_response[0] = "HTTP/1.1 ";
+	if (request.body.empty())
+		_status_code = 204;
+	else
+		_status_code = 201;
+	handleStatusCode(request);
+	handleDATE();
+	
+	_response[0] += "\r\n";
 }
 
 void ResponseHandler::handlePut(request_s& request) {
 	struct stat statstruct = {};
-	_response = "HTTP/1.1 ";
+	_response[0] = "HTTP/1.1 ";
 	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
 	bool PutIsAllowed = false;
 	for (std::vector<std::string>::const_iterator it = AllowedMethods.begin(); it != AllowedMethods.end(); ++it)
@@ -205,35 +220,35 @@ void ResponseHandler::handlePut(request_s& request) {
 	int statret = stat(filePath.c_str(), &statstruct);
 
 	if (!PutIsAllowed) {
-		_response += "405 Method Not Allowed\n";
+		_response[0] += "405 Method Not Allowed\r\n";
 	}
 	else {
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
 		if (fd != -1) {
 			if (statret == -1)
-				this->_response += "201 Created\n";
-			else this->_response += "204 No Content\n";
+				this->_response[0] += "201 Created\r\n";
+			else this->_response[0] += "204 No Content\r\n";
 			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
 			close(fd);
 			if (WriteRet != request.body.length())
 				throw std::runtime_error(_RED _BOLD "Write return in ResponseHandler::handlePut is not equal to request.body.length()");
 		}
 		else {
-			this->_response += "500 Internal Server Error\n";
+			this->_response[0] += "500 Internal Server Error\r\n";
 			std::cerr << _RED "strerror: " << strerror(errno) << std::endl << _END;
 		}
 	}
-	_response += "\r\n";
+	_response[0] += "\r\n";
 	handleLOCATION(filePath);
-	_response += "\r\n";
-	_response += "\r\n";
+	_response[0] += "\r\n";
+	_response[0] += "\r\n";
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
-	_response = "HTTP/1.1 ";
-	 if (this->authenticate(request))
-	 	return;
+	_response[0] = "HTTP/1.1 ";
+	// if (this->authenticate(request))
+	//  	return;
 	if (request.status_code)
 		this->_status_code = request.status_code;
 	handleBody(request);
@@ -245,12 +260,11 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LOCATION();
 	handleCONTENT_TYPE(request);
 	handleSERVER();
-	handleHOST(request);
-	_response += "\n";
-	_response += _body;
+	_response[0] += "\r\n";
+	_response[0] += _body;
 	_body.clear();
-	_response += "\r\n";
-//	std::cout << "RESPONSE == \n" << _response << std::endl;
+	_response[0] += "\r\n";
+//	std::cout << "RESPONSE == \n" << _response[0] << std::endl;
 }
 
 int ResponseHandler::authenticate(request_s& request) {
@@ -275,19 +289,19 @@ int ResponseHandler::authenticate(request_s& request) {
 
 	std::cout << _RED << "Authorization failed!" << _END << std::endl;
 	this->_status_code = 401;
-	_response += "401 Unauthorized\n";
-	this->_response +=	"Server: Webserv/0.1\n"
-					  	"Content-Type: text/html\n"
+	_response[0] += "401 Unauthorized\r\n";
+	this->_response[0] +=	"Server: Webserv/0.1\r\n"
+					  	"Content-Type: text/html\r\n"
 	   					"WWW-Authenticate: Basic realm=";
-	this->_response += request.server.getauthbasicrealm();
-	this->_response += ", charset=\"UTF-8\"\n\n";
+	this->_response[0] += request.server.getauthbasicrealm();
+	this->_response[0] += ", charset=\"UTF-8\"\r\n";
 	return 1;
 }
 
 void	ResponseHandler::handleStatusCode(request_s& request) {
 	if (request.version.first != 1 && _status_code == 200)
 		_status_code = 505;
-	_response += _status_codes[_status_code];
+	_response[0] += _status_codes[_status_code];
 }
 
 
@@ -306,10 +320,10 @@ std::string ResponseHandler::getCurrentDatetime(void ) {
 }
 
 void ResponseHandler::handleALLOW( void ) {
-	_header_vals[ALLOW] = "GET, HEAD";
-	_response += "Allow: ";
-	_response += _header_vals[ALLOW];
-	_response += "\n";
+	_header_vals[ALLOW] = "GET, HEAD, POST, PUT";
+	_response[0] += "Allow: ";
+	_response[0] += _header_vals[ALLOW];
+	_response[0] += "\r\n";
 	//std::cout << "ALLOW Value is: " << _header_vals[ALLOW] << std::endl;
 }
 
@@ -331,9 +345,9 @@ void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
 	{
 		_header_vals[CONTENT_LANGUAGE] = "en-US";
 	}
-	_response += "Content-Language: ";
-	_response += _header_vals[CONTENT_LANGUAGE];
-	_response += "\n";
+	_response[0] += "Content-Language: ";
+	_response[0] += _header_vals[CONTENT_LANGUAGE];
+	_response[0] += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LENGTH( void ) {
@@ -343,16 +357,16 @@ void ResponseHandler::handleCONTENT_LENGTH( void ) {
 	ss << _body_length;
 	str = ss.str();
 	_header_vals[CONTENT_LENGTH] = str;
-	_response += "Content-Length: ";
-	_response += _header_vals[CONTENT_LENGTH];
-	_response += "\n";
+	_response[0] += "Content-Length: ";
+	_response[0] += _header_vals[CONTENT_LENGTH];
+	_response[0] += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LOCATION( void ) {
 	if (!_header_vals[CONTENT_LOCATION].empty()) {
-		_response += "Content-Location: ";
-		_response += _header_vals[CONTENT_LOCATION];
-		_response += "\n";
+		_response[0] += "Content-Location: ";
+		_response[0] += _header_vals[CONTENT_LOCATION];
+		_response[0] += "\r\n";
 	}
 }
 
@@ -370,16 +384,16 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	else {
 		_header_vals[CONTENT_TYPE] = "text/html";
 	}
-	_response += "Content-Type: ";
-	_response += _header_vals[CONTENT_TYPE];
-	_response += "\n";
+	_response[0] += "Content-Type: ";
+	_response[0] += _header_vals[CONTENT_TYPE];
+	_response[0] += "\r\n";
 }
 
 void ResponseHandler::handleDATE( void ) {
 	_header_vals[DATE] = getCurrentDatetime();
-	_response += "Date: ";
-	_response += _header_vals[DATE];
-	_response += "\n";
+	_response[0] += "Date: ";
+	_response[0] += _header_vals[DATE];
+	_response[0] += "\r\n";
 }
 
 void ResponseHandler::handleHOST( request_s& request ) {
@@ -390,31 +404,63 @@ void ResponseHandler::handleHOST( request_s& request ) {
 }
 
 void ResponseHandler::handleLAST_MODIFIED( void ) {
-	_response += "Last-Modified: ";
-	_response += getCurrentDatetime();
-	_response += "\n";
+	_response[0] += "Last-Modified: ";
+	_response[0] += getCurrentDatetime();
+	_header_vals[LAST_MODIFIED] = getCurrentDatetime();
+	_response[0] += "\r\n";
 }
 
 void ResponseHandler::handleLOCATION( std::string url ) {
-	_response += "Location: ";
-	_response += url;
-	_response += "\n";
+	_header_vals[LOCATION] = url;
+	_response[0] += "Location: ";
+	_response[0] += url;
+	_response[0] += "\r\n";
 	std::cout << "Location is: " << url << std::endl;
 }
 
 void ResponseHandler::handleRETRY_AFTER( void ) {
-	_response += "Retry-After: 120\n";
+	_response[0] += "Retry-After: 120\r\n";
 }
 
 void ResponseHandler::handleSERVER( void ) {
-	_response += "Server: Webserv/1.0\n";
+	_response[0] += "Server: Webserv/1.0\r\n";
 }
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
-	_header_vals[TRANSFER_ENCODING] = "identity";
-	if (_body_length > request.server.getclientbodysize())
-	{
-		
+	std::stringstream ss;
+	std::string response;
+	int i = 0;
+	_header_vals[TRANSFER_ENCODING] = "chunked";
+	response += "Transfer-Encoding: chunked\r\n\r\n";
+	request.transfer_buffer = true;
+	while (_body.length() > 10000) {
+		ss << std::hex << 10000;
+		response += ss.str();
+		ss.str("");
+		response += "\r\n";
+		response.append(_body, 0, 10000);
+		response += "\r\n";
+		_body.erase(0, 10000);
+		if (i == 0)
+			_response[0] += response;
+		else
+			_response.emplace_back(response);
+		response.clear();
+		i++;
 	}
-	//std::cout << "TRANSFER_ENCODING Value is: " << _header_vals[TRANSFER_ENCODING] << std::endl;
+	ss << std::hex << _body.length();
+	response += ss.str();
+	ss.str("");
+	response += "\r\n";
+	response.append(_body, 0, _body.length());
+	_body.clear();
+	response += "\r\n";
+	if (i == 0)
+		_response[0] += response;
+	else
+		_response.emplace_back(response);
+	response.clear();
+	i++;
+	response += "0\r\n\r\n";
+	_response.emplace_back(response);
 }
