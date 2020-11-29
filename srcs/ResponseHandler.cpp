@@ -14,6 +14,7 @@
 #include "libftGnl.hpp"
 #include <fcntl.h>
 #include <zconf.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include "Base64.hpp"
 #include "Colours.hpp"
@@ -192,6 +193,8 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 
 void ResponseHandler::handlePost(request_s& request) {
 	int		fd = 0;
+	char 	buf[1024];
+	int size;
 
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
 		fd = this->run_cgi(request);
@@ -203,7 +206,11 @@ void ResponseHandler::handlePost(request_s& request) {
 		_status_code = 201;
 	handleStatusCode(request);
 	handleDATE();
-	
+	_response[0] += "\r\n";
+	while ((size = read(fd, buf, 1024)) > 0) {
+		_response[0].append(buf, 0, size);
+		memset(buf, 0, 1024);
+	}
 	_response[0] += "\r\n";
 }
 
