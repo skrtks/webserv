@@ -3,7 +3,7 @@ use strict;
 use CGI qw(:standard);
 use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
 
-print "IN PEARL"
+print "IN PERL";
 # print header;
 print start_html("Environment");
 
