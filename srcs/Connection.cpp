@@ -40,7 +40,7 @@ Connection::~Connection() {
 	close(_connectionFd);
 }
 
-Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds() {
+Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds(), _configPath() {
 	*this = obj;
 }
 
@@ -176,7 +176,7 @@ void Connection::receiveRequest(const int& fd) {
 		std::cout << bytesReceived << std::endl;
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
-			std::cout << buf << std::endl;
+		std::cout << buf << std::endl;
 		request.append(buf, 0, bytesReceived);
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived == BUFLEN - 1);
@@ -189,7 +189,7 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 	for (unsigned long i = 0; i < msg.size(); i++)
 		std::cout << msg[i] << std::endl;
 	std::cout << "\nRESPONSE END ----" << std::endl;
-	if (request.transfer_buffer == true) {
+	if (request.transfer_buffer) {
 		for (unsigned long i = 0; i < msg.size(); i++) {
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
 				throw std::runtime_error(strerror(errno));
