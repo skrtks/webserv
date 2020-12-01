@@ -45,7 +45,7 @@ public:
 	void		handleDATE( void );
 	void		handleHOST( request_s& request );
 	void		handleLAST_MODIFIED( void );
-	void		handleLOCATION( std::string url ); // Not yet used
+	void		handleLOCATION( std::string& url ); // Not yet used
 	void		handleRETRY_AFTER( void ); // Not yet used
 	void		handleSERVER( void );
 	void		handleTRANSFER_ENCODING( request_s& request ); // Not yet used
@@ -53,7 +53,7 @@ public:
 
 	int			authenticate(request_s& request);
 	void 		generateResponse(request_s& request);
-	int			run_cgi(const request_s& request);
+	int			run_cgi(request_s& request);
 	int			generatePage(request_s& request);
 	void		handlePut(request_s& request);
 	void		handlePost(request_s& request);

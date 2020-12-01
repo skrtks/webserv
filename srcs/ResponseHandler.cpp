@@ -85,13 +85,13 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 	return *this;
 }
 
-char	**maptoenv(std::map<std::string, std::string> baseenv, const request_s& req) {
+char	**maptoenv(std::map<std::string, std::string> baseenv, request_s& req) {
 	int i = 0;
 	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
 	if (!env)
 		exit(1);
 	(void)req;
-	baseenv["AUTH_TYPE"] = "Basic"; //hardcoded for now
+	baseenv["AUTH_TYPE"] = req.headers[AUTHORIZATION];
 	for (std::map<headerType, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
 		std::cout << _CYAN "request.headers contains: " << it->first << " -> " << it->second << std::endl << _END;
 	}
@@ -106,7 +106,7 @@ char	**maptoenv(std::map<std::string, std::string> baseenv, const request_s& req
 	return env;
 }
 
-int	ResponseHandler::run_cgi(const request_s& request) {
+int	ResponseHandler::run_cgi(request_s& request) {
 	std::string		scriptpath = request.uri.substr(1, request.uri.length() - 1);
 	pid_t			pid;
 	struct stat		statstruct = {};
@@ -288,6 +288,7 @@ int ResponseHandler::authenticate(request_s& request) {
 	catch (std::exception& e) {
 		std::cerr << "No credentials provided by client" << std::endl;
 	}
+	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
 
 	if (request.server.getmatch(username, passwd)) {
 		std::cout << _GREEN << "Authorization successful!" << _END << std::endl;
@@ -417,7 +418,7 @@ void ResponseHandler::handleLAST_MODIFIED( void ) {
 	_response[0] += "\r\n";
 }
 
-void ResponseHandler::handleLOCATION( std::string url ) {
+void ResponseHandler::handleLOCATION( std::string& url ) {
 	_header_vals[LOCATION] = url;
 	_response[0] += "Location: ";
 	_response[0] += url;
