@@ -92,9 +92,9 @@ char	**maptoenv(std::map<std::string, std::string> baseenv, const request_s& req
 		exit(1);
 	(void)req;
 	baseenv["AUTH_TYPE"] = "Basic"; //hardcoded for now
-//	for (std::map<headerType, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
-//		std::cout << "request.headers contains: " << it->first << " -> " << it->second << std::endl;
-//	}
+	for (std::map<headerType, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
+		std::cout << _CYAN "request.headers contains: " << it->first << " -> " << it->second << std::endl << _END;
+	}
 
 	for (std::map<std::string, std::string>::const_iterator it = baseenv.begin(); it != baseenv.end(); it++) {
 		std::string tmp = it->first + "=" + it->second;
@@ -178,7 +178,7 @@ void ResponseHandler::handleBody(request_s& request) {
 std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
 	std::string response;
-	_response.emplace_back(response);
+	_response.push_back(response);
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -254,8 +254,8 @@ void ResponseHandler::handlePut(request_s& request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
-	// if (this->authenticate(request))
-	//  	return;
+	 if (this->authenticate(request))
+	  	return;
 	if (request.status_code)
 		this->_status_code = request.status_code;
 	handleBody(request);
@@ -451,7 +451,7 @@ void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
 		if (i == 0)
 			_response[0] += response;
 		else
-			_response.emplace_back(response);
+			_response.push_back(response);
 		response.clear();
 		i++;
 	}
@@ -465,9 +465,9 @@ void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
 	if (i == 0)
 		_response[0] += response;
 	else
-		_response.emplace_back(response);
+		_response.push_back(response);
 	response.clear();
 	i++;
 	response += "0\r\n\r\n";
-	_response.emplace_back(response);
+	_response.push_back(response);
 }

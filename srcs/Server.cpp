@@ -17,13 +17,13 @@
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
 		_root("htmlfiles"),
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_auth_basic_realm(), _htpasswd_path(),
 		_fd(), _socketFd() {
 }
 
 Server::Server(int fd) : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
-		_root("htmlfiles"), _auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
 		_socketFd() {
 	this->_fd = fd;
 }
@@ -176,7 +176,7 @@ std::vector<Location>	Server::getlocations() const {
 
 void	Server::create_base_env() {
 	this->_base_env["AUTH_TYPE"] = "";
-	this->_base_env["CONTENT_LENGTH"] = "";
+	this->_base_env["CONTENT_LENGTH"] = "0";
 	this->_base_env["CONTENT_TYPE"] = "";
 	this->_base_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	this->_base_env["PATH_INFO"] = "";
@@ -217,7 +217,7 @@ void	Server::setup(int fd) {
 		if (is_first_char(str, '}')) // End of server block
 			break ;
 		get_key_value(str, key, value);
-//		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
+		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 	}
 	this->create_base_env();
