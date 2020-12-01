@@ -15,6 +15,8 @@
 #include <fcntl.h>
 #include <zconf.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include "Base64.hpp"
 #include "Colours.hpp"
@@ -86,12 +88,26 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 }
 
 char	**maptoenv(std::map<std::string, std::string> baseenv, request_s& req) {
+	int split_path = req.uri.find_first_of('/', req.uri.find_first_of('.') );
 	int i = 0;
 	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
 	if (!env)
 		exit(1);
 	(void)req;
 	baseenv["AUTH_TYPE"] = req.headers[AUTHORIZATION];
+	baseenv["CONTENT_LENGTH"] = req.headers[CONTENT_LENGTH];
+	baseenv["CONTENT_TYPE"] = req.headers[CONTENT_TYPE];
+	baseenv["PATH_INFO"] = req.uri.substr(split_path, req.uri.find_first_of('?') - split_path); // Do we need to use it?
+	char buf[500];
+	std::string	realpath = getcwd(buf, 500);
+	baseenv["PATH_TRANSLATED"] = realpath + '/' + req.server.getroot() + baseenv["PATH_INFO"];
+	baseenv["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
+	baseenv["REMOTE_ADDR"] = req.server.gethost();
+	baseenv["REMOTE_IDENT"];
+	baseenv["REMOTE_USER"] = req.headers[REMOTE_USER];
+	baseenv["REQUEST_METHOD"] = RequestParser::getMethod(req.method);
+	baseenv["REQUEST_URI"] = req.uri;
+	baseenv["SCRIPT_NAME"] = req.uri.substr(0, split_path - 1 );
 	for (std::map<headerType, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
 		std::cout << _CYAN "request.headers contains: " << it->first << " -> " << it->second << std::endl << _END;
 	}
@@ -107,7 +123,8 @@ char	**maptoenv(std::map<std::string, std::string> baseenv, request_s& req) {
 }
 
 int	ResponseHandler::run_cgi(request_s& request) {
-	std::string		scriptpath = request.uri.substr(1, request.uri.length() - 1);
+	int split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
+	std::string		scriptpath = request.uri.substr(1, split_path - 1 );
 	pid_t			pid;
 	struct stat		statstruct = {};
 	char			*args[2] = {&scriptpath[0], NULL};
@@ -275,8 +292,10 @@ void ResponseHandler::generateResponse(request_s& request) {
 }
 
 int ResponseHandler::authenticate(request_s& request) {
-	if (request.server.gethtpasswdpath().empty())
+	if (request.server.gethtpasswdpath().empty()) {
+		request.headers[AUTHORIZATION].clear();
 		return 0;
+	}
 	std::string username, passwd, str;
 	try {
 		std::string auth = request.headers.at(AUTHORIZATION);
@@ -289,7 +308,7 @@ int ResponseHandler::authenticate(request_s& request) {
 		std::cerr << "No credentials provided by client" << std::endl;
 	}
 	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
-
+	request.headers[REMOTE_USER] = username;
 	if (request.server.getmatch(username, passwd)) {
 		std::cout << _GREEN << "Authorization successful!" << _END << std::endl;
 		return 0;

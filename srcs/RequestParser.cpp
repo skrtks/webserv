@@ -293,3 +293,18 @@ void RequestParser::setRawRequest(const std::string& rawRequest) {
 const std::pair<int, int>& RequestParser::getVersion() const {
 	return _version;
 }
+
+std::string RequestParser::getMethod(e_method &x) {
+	switch (x) {
+		case GET:
+			return "GET";
+		case HEAD:
+			return "HEAD";
+		case POST:
+			return "POST";
+		case PUT:
+			return "PUT";
+		default:
+			return "NOMETHOD";
+	}
+}
