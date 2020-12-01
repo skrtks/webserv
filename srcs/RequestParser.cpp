@@ -202,6 +202,7 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 void RequestParser::parseHeaders() {
 	std::string upperHeader;
 	int owsOffset;
+	this->_headers[CONTENT_LENGTH] = std::string(ft::inttostring(this->_rawRequest.length()));
 	while (!_rawRequest.empty()) {
 		upperHeader.clear();
 		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
@@ -225,7 +226,7 @@ void RequestParser::parseHeaders() {
 				_status_code = 400;
 				return ;
 			}
-			for (int i = 0; header[i]; i++) {
+			for (size_t i = 0; header[i]; i++) {
 				if (header[i] == ' ') {
 					std::cout << "BAD REQ 10" << std::endl;
 					_status_code = 400;
@@ -238,7 +239,7 @@ void RequestParser::parseHeaders() {
 				pos++;
 			owsOffset = 0;
 			// Create offset for OWS at end of value string
-			for (int i = eoRequestLine - 1; i >= 0 && _rawRequest[i] == ' '; --i) {
+			for (size_t i = eoRequestLine - 1; i != std::string::npos && _rawRequest[i] == ' '; --i) {
 				owsOffset++;
 			}
 			// Extract value string and check if not empty or beginning with newline
