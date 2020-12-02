@@ -49,7 +49,6 @@ Server&	Server::operator=(const Server& x) {
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
-		this->_base_env = x._base_env;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_loginfo = x._loginfo;
@@ -159,10 +158,6 @@ std::string	Server::gethtpasswdpath() const {
 	return this->_htpasswd_path;
 }
 
-std::map<std::string, std::string> Server::getbaseenv() const {
-	return this->_base_env;
-}
-
 void	Server::configurelocation(const std::string& in) {
 	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f");
 	Location	loc(v[0]);
@@ -172,26 +167,6 @@ void	Server::configurelocation(const std::string& in) {
 
 std::vector<Location>	Server::getlocations() const {
 	return this->_locations;
-}
-
-void	Server::create_base_env() {
-	this->_base_env["AUTH_TYPE"] = "";
-	this->_base_env["CONTENT_LENGTH"] = "0";
-	this->_base_env["CONTENT_TYPE"] = "";
-	this->_base_env["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_base_env["PATH_INFO"] = "";
-	this->_base_env["PATH_TRANSLATED"] = "";
-	this->_base_env["QUERY_STRING"] = "";
-	this->_base_env["REMOTE_ADDR"] = "";
-	this->_base_env["REMOTE_IDENT"] = "";
-	this->_base_env["REMOTE_USER"] = "";
-	this->_base_env["REQUEST_METHOD"] = "";
-	this->_base_env["REQUEST_URI"] = "";
-	this->_base_env["SCRIPT_NAME"] = "";
-	this->_base_env["SERVER_NAME"] = this->getservername();
-	this->_base_env["SERVER_PORT"] = std::string(ft::inttostring(this->getport()));
-	this->_base_env["SERVER_PROTOCOL"] = "HTTP/1.1";
-	this->_base_env["SERVER_SOFTWARE"] = "HTTP 1.1";
 }
 
 void	Server::setup(int fd) {
@@ -220,7 +195,6 @@ void	Server::setup(int fd) {
 		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 	}
-	this->create_base_env();
 	if (_port <= 0 || _host.empty() || _client_body_size <= 0 || _error_page.empty() || _server_name.empty())
 		throw std::runtime_error("invalid setting in server block");
 }

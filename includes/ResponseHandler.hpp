@@ -14,7 +14,7 @@
 #define RESPONSEHANDLER_HPP
 
 #include "RequestParser.hpp"
-
+#include "Cgi.hpp"
 #define SEC_PER_DAY   86400
 #define SEC_PER_HOUR  3600
 #define SEC_PER_MIN   60
@@ -26,6 +26,7 @@ class ResponseHandler {
 	std::string							_body;
 	int									_body_length;
 	int									_status_code;
+	Cgi									CGI;
 public:
 	ResponseHandler();
 	virtual ~ResponseHandler();
@@ -53,7 +54,6 @@ public:
 
 	int			authenticate(request_s& request);
 	void 		generateResponse(request_s& request);
-	int			run_cgi(request_s& request);
 	int			generatePage(request_s& request);
 	void		handlePut(request_s& request);
 	void		handlePost(request_s& request);
