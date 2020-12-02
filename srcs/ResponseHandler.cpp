@@ -332,7 +332,7 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 }
 
 
-std::string ResponseHandler::getCurrentDatetime(void ) {
+std::string ResponseHandler::getCurrentDatetime() {
 	time_t		time;
 	char 		datetime[100];
 	std::string dtRet;
@@ -346,7 +346,7 @@ std::string ResponseHandler::getCurrentDatetime(void ) {
 	return (dtRet);
 }
 
-void ResponseHandler::handleALLOW( void ) {
+void ResponseHandler::handleALLOW() {
 	_header_vals[ALLOW] = "GET, HEAD, POST, PUT";
 	_response[0] += "Allow: ";
 	_response[0] += _header_vals[ALLOW];
@@ -354,7 +354,7 @@ void ResponseHandler::handleALLOW( void ) {
 	//std::cout << "ALLOW Value is: " << _header_vals[ALLOW] << std::endl;
 }
 
-void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
+void ResponseHandler::handleCONTENT_LANGUAGE() {
 //	int		idx = 0;
 	std::string lang;
 	size_t	found = 0;
@@ -377,7 +377,7 @@ void ResponseHandler::handleCONTENT_LANGUAGE( void ) {
 	_response[0] += "\r\n";
 }
 
-void ResponseHandler::handleCONTENT_LENGTH( void ) {
+void ResponseHandler::handleCONTENT_LENGTH() {
 	std::stringstream	ss;
 	std::string			str;
 
@@ -389,7 +389,7 @@ void ResponseHandler::handleCONTENT_LENGTH( void ) {
 	_response[0] += "\r\n";
 }
 
-void ResponseHandler::handleCONTENT_LOCATION( void ) {
+void ResponseHandler::handleCONTENT_LOCATION() {
 	if (!_header_vals[CONTENT_LOCATION].empty()) {
 		_response[0] += "Content-Location: ";
 		_response[0] += _header_vals[CONTENT_LOCATION];
@@ -416,7 +416,7 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	_response[0] += "\r\n";
 }
 
-void ResponseHandler::handleDATE( void ) {
+void ResponseHandler::handleDATE() {
 	_header_vals[DATE] = getCurrentDatetime();
 	_response[0] += "Date: ";
 	_response[0] += _header_vals[DATE];
@@ -430,7 +430,7 @@ void ResponseHandler::handleHOST( request_s& request ) {
 	//std::cout << "HOST: " << _header_vals[HOST] << std::endl;
 }
 
-void ResponseHandler::handleLAST_MODIFIED( void ) {
+void ResponseHandler::handleLAST_MODIFIED() {
 	_response[0] += "Last-Modified: ";
 	_response[0] += getCurrentDatetime();
 	_header_vals[LAST_MODIFIED] = getCurrentDatetime();
@@ -445,11 +445,11 @@ void ResponseHandler::handleLOCATION( std::string& url ) {
 	std::cout << "Location is: " << url << std::endl;
 }
 
-void ResponseHandler::handleRETRY_AFTER( void ) {
+void ResponseHandler::handleRETRY_AFTER() {
 	_response[0] += "Retry-After: 120\r\n";
 }
 
-void ResponseHandler::handleSERVER( void ) {
+void ResponseHandler::handleSERVER() {
 	_response[0] += "Server: Webserv/1.0\r\n";
 }
 
