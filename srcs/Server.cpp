@@ -267,6 +267,16 @@ bool Server::getmatch(const std::string& username, const std::string& passwd) {
 	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
 }
 
+bool Server::isMethodAllowed(const std::string& uri, const std::string& extension) const {
+	std::vector<std::string> methods = matchlocation(uri).getallowmethods();
+
+	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); ++it) {
+		if (extension == *it)
+			return (true);
+	}
+	return (false);
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "Default root folder: " << x.getroot() << std::endl;

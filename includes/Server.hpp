@@ -68,6 +68,7 @@ public:
 		std::string	getfilepath(const std::string& uri) const;
 		void		setup(int fd);
 		bool		getmatch(const std::string& username, const std::string& passwd);
+		bool		isMethodAllowed(const std::string& uri, const std::string& extension) const;
 private:
 		size_t		_port;
 		long int	_client_body_size;

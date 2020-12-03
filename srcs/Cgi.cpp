@@ -33,7 +33,7 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["CONTENT_LENGTH"] = req.headers[CONTENT_LENGTH];
 	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE]; //TODO fill this one
 	this->_m["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_m["PATH_INFO"] = req.uri.substr(split_path, req.uri.find_first_of('?') - split_path);
+	this->_m["PATH_INFO"] = split_path >= 0 ? req.uri.substr(split_path, req.uri.find_first_of('?') - split_path) : "";
 	this->_m["PATH_TRANSLATED"] = realpath + '/' + req.server.getroot() + this->_m["PATH_INFO"];
 	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
 	this->_m["REMOTE_ADDR"] = req.server.gethost();
@@ -74,13 +74,16 @@ void	Cgi::clear_env() {
 
 int Cgi::run_cgi(request_s &request) {
 	int split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
-	std::string		scriptpath = request.uri.substr(1, split_path - 1 );
+	std::string		scriptpath = request.uri.substr(1, split_path - 1);
+	std::string		extension(scriptpath);
 	pid_t			pid;
 	struct stat		statstruct = {};
 	char			*args[2] = {&scriptpath[0], NULL};
 
-	std::cout << _BLUE << "scriptpath: " << scriptpath << std::endl << _END;
-	if (stat(scriptpath.c_str(), &statstruct) == -1)
+	if (scriptpath.rfind('.') != std::string::npos)
+		extension = scriptpath.substr(scriptpath.rfind('.') + 1);
+
+	if (stat(scriptpath.c_str(), &statstruct) == -1 || request.server.isMethodAllowed(request.uri, extension))
 		return (open(request.server.geterrorpage().c_str(), O_RDONLY));
 	this->populate_map(request);
 	this->map_to_env();
