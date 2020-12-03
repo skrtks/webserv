@@ -87,82 +87,11 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 	return *this;
 }
 
-char	**maptoenv(std::map<std::string, std::string> baseenv, request_s& req) {
-	int split_path = req.uri.find_first_of('/', req.uri.find_first_of('.') );
-	int i = 0;
-	char **env = (char**) ft_calloc(baseenv.size() + 1, sizeof(char*));
-	if (!env)
-		exit(1);
-	(void)req;
-	baseenv["AUTH_TYPE"] = req.headers[AUTHORIZATION];
-	baseenv["CONTENT_LENGTH"] = req.headers[CONTENT_LENGTH];
-	baseenv["CONTENT_TYPE"] = req.headers[CONTENT_TYPE];
-	baseenv["PATH_INFO"] = req.uri.substr(split_path, req.uri.find_first_of('?') - split_path); // Do we need to use it?
-	char buf[500];
-	std::string	realpath = getcwd(buf, 500);
-	baseenv["PATH_TRANSLATED"] = realpath + '/' + req.server.getroot() + baseenv["PATH_INFO"];
-	baseenv["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
-	baseenv["REMOTE_ADDR"] = req.server.gethost();
-	baseenv["REMOTE_IDENT"];
-	baseenv["REMOTE_USER"] = req.headers[REMOTE_USER];
-	baseenv["REQUEST_METHOD"] = RequestParser::getMethod(req.method);
-	baseenv["REQUEST_URI"] = req.uri;
-	baseenv["SCRIPT_NAME"] = req.uri.substr(0, split_path - 1 );
-	for (std::map<headerType, std::string>::const_iterator it = req.headers.begin(); it != req.headers.end(); ++it) {
-		std::cout << _CYAN "request.headers contains: " << it->first << " -> " << it->second << std::endl << _END;
-	}
-
-	for (std::map<std::string, std::string>::const_iterator it = baseenv.begin(); it != baseenv.end(); it++) {
-		std::string tmp = it->first + "=" + it->second;
-		env[i] = ft_strdup(tmp.c_str());
-		if (!env[i])
-			exit(1);
-		++i;
-	}
-	return env;
-}
-
-int	ResponseHandler::run_cgi(request_s& request) {
-	int split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
-	std::string		scriptpath = request.uri.substr(1, split_path - 1 );
-	pid_t			pid;
-	struct stat		statstruct = {};
-	char			*args[2] = {&scriptpath[0], NULL};
-
-	if (stat(scriptpath.c_str(), &statstruct) == -1)
-		return (-1);
-	std::cout << _BLUE << "scriptpath: " << scriptpath << std::endl << _END;
-	char	**env = maptoenv(request.server.getbaseenv(), request);
-	int pipefd[2];
-	
-	if (pipe(pipefd) == -1) {
-		strerror(errno);
-		exit(1);
-	}
-	if ((pid = fork()) == -1) {
-		strerror(errno);
-		exit(1);
-	}
-	else if (pid == 0) {
-		dup2(pipefd[1], 1);
-		close(pipefd[0]);
-		int ret = execve(scriptpath.c_str(), args, env);
-		if (ret == -1)
-			std::cerr << "execve: " << strerror(errno) << std::endl;
-		exit(1);
-	}
-	close(pipefd[1]);
-	for (int i = 0; env[i]; i++) 
-		free(env[i]);
-	free(env);
-	return pipefd[0];
-}
-
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
-		fd = this->run_cgi(request);
+		fd = this->CGI.run_cgi(request);
 	else
 		fd = request.server.getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
@@ -214,7 +143,7 @@ void ResponseHandler::handlePost(request_s& request) {
 	int size;
 
 	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
-		fd = this->run_cgi(request);
+		fd = this->CGI.run_cgi(request);
 	
 	_response[0] = "HTTP/1.1 ";
 	if (request.body.empty())
@@ -275,14 +204,14 @@ void ResponseHandler::generateResponse(request_s& request) {
 	  	return;
 	if (request.status_code)
 		this->_status_code = request.status_code;
+	handleCONTENT_TYPE(request);
 	handleBody(request);
 	handleStatusCode(request);
 	handleALLOW();
 	handleDATE();
-	handleCONTENT_LANGUAGE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
-	handleCONTENT_TYPE(request);
+	handleCONTENT_LANGUAGE();
 	handleSERVER();
 	_response[0] += "\r\n";
 	_response[0] += _body;
@@ -411,6 +340,7 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	else {
 		_header_vals[CONTENT_TYPE] = "text/html";
 	}
+	request.headers[CONTENT_TYPE] = this->_header_vals[CONTENT_TYPE];
 	_response[0] += "Content-Type: ";
 	_response[0] += _header_vals[CONTENT_TYPE];
 	_response[0] += "\r\n";

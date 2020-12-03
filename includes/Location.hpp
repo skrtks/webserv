@@ -18,16 +18,16 @@
 # include <vector>
 
 class Location {
-	public:
-		friend class Server;
-		//coplien form
-		Location();
-		explicit Location(std::string& );
-		~Location();
-		Location(const Location& );
-		Location&	operator=(const Location& );
+public:
+	friend class Server;
+	//coplien form
+	Location();
+	explicit Location(std::string& );
+	~Location();
+	Location(const Location& );
+	Location&	operator=(const Location& );
 
-		//setters
+private:		//setters
 		void	setroot(const std::string& );
 		void	setautoindex(const std::string& );
 		void	setallow_method(const std::string& );
@@ -35,7 +35,7 @@ class Location {
 		void	setcgi(const std::string& );
 		void	seterrorpage(const std::string& );
 		
-		//getters
+public:			//getters
 		std::string					getroot() const;
 		std::string					getautoindex() const;
 		std::string					getlocationmatch() const;
@@ -46,9 +46,10 @@ class Location {
 		std::string					geterrorpage() const;
 		
 		void	setup(int );
-		void	addServerInfo(const std::string& root, const std::string& autoindex, const std::vector<std::string>& indexes, const std::string& errorpage);
+		void	addServerInfo(const std::string& root, const std::string& autoindex,
+					 const std::vector<std::string>& indexes, const std::string& errorpage);
 
-	private:
+private:
 	std::string					_root,
 								_autoindex,
 								_location_match,

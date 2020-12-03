@@ -32,7 +32,7 @@ class Server {
 		Server(const Server& x);
 		Server& 	operator=(const Server& x);
 
-		//setters
+private:	//setters
 		void		setport(const std::string& port);
 		void		sethost(const std::string& host);
 		void		setindexes(const std::string& index);
@@ -43,8 +43,10 @@ class Server {
 		void		set404page(const std::string& page);
 		void		setauth_basic_realm(const std::string& realm);
 		void		sethtpasswdpath(const std::string& path);
-		void		setSocketFd(int socketFd);
 		void		setautoindex(const std::string& ai);
+		void		configurelocation(const std::string& in);
+public:
+		void		setSocketFd(int socketFd);
 
 		//getters
 		size_t					getport() const;
@@ -61,14 +63,12 @@ class Server {
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
-		std::map<std::string, std::string> getbaseenv() const;
 
-		void		create_base_env();
 		Location	matchlocation(const std::string& uri) const;
 		std::string	getfilepath(const std::string& uri) const;
-		void		configurelocation(const std::string& in);
 		void		setup(int fd);
 		bool		getmatch(const std::string& username, const std::string& passwd);
+		bool		isMethodAllowed(const std::string& uri, const std::string& extension) const;
 private:
 		size_t		_port;
 		long int	_client_body_size;
@@ -83,7 +83,6 @@ private:
 		int			_fd, _socketFd;
 		std::vector<std::string> _indexes;
 		std::vector<Location> _locations;
-		std::map<std::string, std::string>	_base_env;
 		std::map<std::string, std::string>	_loginfo;
 };
 
