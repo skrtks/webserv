@@ -183,12 +183,12 @@ void ResponseHandler::generateResponse(request_s& request) {
 		request.uri = "/cgi-bin" + request.uri;
 	handleBody(request);
 	handleStatusCode(request);
-	handleCONTENT_TYPE(request);
+	handleCONTENT_TYPE(request); //TODO Do we need to do this before handleBody( )
 	handleALLOW();
 	handleDATE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
-	handleCONTENT_LANGUAGE();
+	handleCONTENT_LANGUAGE(); //TODO Do we need to do this before handleBody( )
 	handleSERVER();
 	_response[0] += "\r\n";
 	_response[0] += _body;
