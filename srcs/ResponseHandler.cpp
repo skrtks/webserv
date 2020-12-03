@@ -204,14 +204,14 @@ void ResponseHandler::generateResponse(request_s& request) {
 	  	return;
 	if (request.status_code)
 		this->_status_code = request.status_code;
+	handleCONTENT_TYPE(request);
 	handleBody(request);
 	handleStatusCode(request);
 	handleALLOW();
 	handleDATE();
-	handleCONTENT_LANGUAGE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
-	handleCONTENT_TYPE(request);
+	handleCONTENT_LANGUAGE();
 	handleSERVER();
 	_response[0] += "\r\n";
 	_response[0] += _body;
@@ -340,6 +340,8 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	else {
 		_header_vals[CONTENT_TYPE] = "text/html";
 	}
+//	std::cerr << _RED << "Content_type = " << CONTENT_TYPE << std::endl << _END;
+	request.headers[CONTENT_TYPE] = this->_header_vals[CONTENT_TYPE];
 	_response[0] += "Content-Type: ";
 	_response[0] += _header_vals[CONTENT_TYPE];
 	_response[0] += "\r\n";
