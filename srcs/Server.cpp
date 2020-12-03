@@ -12,7 +12,6 @@
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
-#include <fstream>
 
 Server::Server() : _port(80), _client_body_size(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
@@ -142,12 +141,11 @@ void	Server::sethtpasswdpath(const std::string &path) {
 		return ;
 
 	this->_htpasswd_path = path;
-	std::ifstream ifs;
-	ifs.open(_htpasswd_path.c_str());
-	if (ifs.bad())
-		return ;
+	int htpasswd_fd = open(this->_htpasswd_path.c_str(), O_RDONLY);
+	if (htpasswd_fd < 0)
+		return;
 	std::string line;
-	while (std::getline(ifs, line)) {
+	while (ft::get_next_line(htpasswd_fd, line)) {
 		std::string user, pass;
 		get_key_value(line, user, pass, ":");
 		this->_loginfo[user] = pass;
