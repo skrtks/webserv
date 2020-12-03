@@ -33,7 +33,7 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["CONTENT_LENGTH"] = req.headers[CONTENT_LENGTH];
 	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE]; //TODO fill this one
 	this->_m["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_m["PATH_INFO"] = req.uri.substr(split_path, req.uri.find_first_of('?') - split_path);
+	this->_m["PATH_INFO"] = split_path >= 0 ? req.uri.substr(split_path, req.uri.find_first_of('?') - split_path) : "";
 	this->_m["PATH_TRANSLATED"] = realpath + '/' + req.server.getroot() + this->_m["PATH_INFO"];
 	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
 	this->_m["REMOTE_ADDR"] = req.server.gethost();
