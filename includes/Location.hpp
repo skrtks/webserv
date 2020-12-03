@@ -32,7 +32,7 @@ private:		//setters
 		void	setautoindex(const std::string& );
 		void	setallow_method(const std::string& );
 		void	setindex(const std::string& );
-		void	setcgi(const std::string& );
+		void	setcgiallowedextensions(const std::string& );
 		void	seterrorpage(const std::string& );
 		
 public:			//getters
@@ -42,7 +42,7 @@ public:			//getters
 		std::vector<std::string>	getallowmethods() const;
 		std::string					getindex() const;
 		std::vector<std::string>	getindexes() const;
-		std::vector<std::string>	getcgi() const;
+		std::vector<std::string>	getcgiallowedextensions() const;
 		std::string					geterrorpage() const;
 		
 		void	setup(int );
@@ -56,7 +56,7 @@ private:
 								_error_page;
 	std::vector<std::string>	_allow_method,
 								_indexes,
-								_cgi;
+								_cgi_allowed_extensions;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Location& x);

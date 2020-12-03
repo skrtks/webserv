@@ -37,7 +37,7 @@ Location&	Location::operator=(const Location& x) {
 		this->_autoindex = x._autoindex;
 		this->_allow_method = x._allow_method;
 		this->_indexes = x._indexes;
-		this->_cgi = x._cgi;
+		this->_cgi_allowed_extensions = x._cgi_allowed_extensions;
 		this->_location_match = x._location_match;
 		this->_error_page = x._error_page;
 	}
@@ -48,7 +48,7 @@ Location&	Location::operator=(const Location& x) {
 void	Location::setautoindex(const std::string& in) { this->_autoindex = in; }
 void	Location::setallow_method(const std::string& in) { this->_allow_method = ft::split(in, " \t\r\n\v\f"); }
 void	Location::setindex(const std::string& in) { this->_indexes = ft::split(in, " \t\r\n\v\f"); }
-void	Location::setcgi(const std::string& in) { this->_cgi = ft::split(in, " \t\r\n\v\f"); }
+void	Location::setcgiallowedextensions(const std::string& in) { this->_cgi_allowed_extensions = ft::split(in, " \t\r\n\v\f"); }
 void	Location::seterrorpage(const std::string& in) { this->_error_page = in; }
 void	Location::setroot(const std::string& in) {
 	struct stat statstruct = {};
@@ -63,7 +63,7 @@ std::string					Location::getautoindex() const { return this->_autoindex; }
 std::string					Location::getlocationmatch() const { return this->_location_match; }
 std::vector<std::string>	Location::getallowmethods() const { return this->_allow_method; }
 std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
-std::vector<std::string>	Location::getcgi() const { return this->_cgi; }
+std::vector<std::string>	Location::getcgiallowedextensions() const { return this->_cgi_allowed_extensions; }
 std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
 std::string					Location::getindex() const {
 	struct stat statstruct = {};
@@ -83,7 +83,7 @@ void	Location::setup(int fd) {
 	m["autoindex"] = &Location::setautoindex;
 	m["allow_method"] = &Location::setallow_method;
 	m["index"] = &Location::setindex;
-	m["cgi"] = &Location::setcgi;
+	m["cgi"] = &Location::setcgiallowedextensions;
 	m["error_page"] = &Location::seterrorpage;
 	std::string str;
 	
@@ -129,7 +129,7 @@ std::ostream&	operator<<(std::ostream& o, const Location& x) {
 		o << " \"" << v[i] << "\"";
 	o << std::endl;
 	o	<< "\tcgi:";
-	v = x.getcgi();
+	v = x.getcgiallowedextensions();
 	for (size_t i = 0; i < v.size(); i++)
 		o << " \"" << v[i] << "\"";
 	o << std::endl;
