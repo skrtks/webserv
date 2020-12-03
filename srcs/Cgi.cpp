@@ -33,14 +33,17 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["CONTENT_LENGTH"] = req.headers[CONTENT_LENGTH];
 	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE]; //TODO fill this one
 	this->_m["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_m["PATH_INFO"] = split_path >= 0 ? req.uri.substr(split_path, req.uri.find_first_of('?') - split_path) : "";
-	this->_m["PATH_TRANSLATED"] = realpath + '/' + req.server.getroot() + this->_m["PATH_INFO"];
+	this->_m["PATH_INFO"] = "";
+	if (split_path >= 0)
+		this->_m["PATH_INFO"] = req.uri.substr(split_path, req.uri.find_first_of('?') - split_path);
+	this->_m["PATH_TRANSLATED"] = "";
+	if (!_m["PATH_INFO"].empty())
+		this->_m["PATH_TRANSLATED"] = realpath + '/' + req.server.getroot() + this->_m["PATH_INFO"];
 	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
 	this->_m["REMOTE_ADDR"] = req.server.gethost();
 	this->_m["REMOTE_IDENT"] = ""; //TODO fill this one
 	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
-	this->_m["REQUEST_METHOD"] = "GET";
-//	this->_m["REQUEST_METHOD"] = RequestParser::getMethod(req.method);
+	this->_m["REQUEST_METHOD"] = RequestParser::getMethod(req.method);
 	this->_m["REQUEST_URI"] = req.uri;
 	this->_m["SCRIPT_NAME"] = req.uri.substr(0, split_path - 1 );
 	this->_m["SERVER_NAME"] = req.server.getservername();
@@ -82,31 +85,32 @@ int Cgi::run_cgi(request_s &request) {
 	char			*args[2] = {&scriptpath[0], NULL};
 
 	if (scriptpath.rfind('.') != std::string::npos)
-		extension = scriptpath.substr(scriptpath.rfind('.') + 1);
+		extension = scriptpath.substr(scriptpath.rfind('.') );
 
-	if (stat(scriptpath.c_str(), &statstruct) == -1 || request.server.isMethodAllowed(request.uri, extension))
+	if (stat(scriptpath.c_str(), &statstruct) == -1 || !request.server.isExtensionAllowed(request.uri, extension))
 		return (open(request.server.geterrorpage().c_str(), O_RDONLY));
+
 	this->populate_map(request);
 	this->map_to_env();
-	int pipefd[2];
+	int pipefd[2],
+		secondpipe[2];
 
-	if (pipe(pipefd) == -1) {
-		strerror(errno);
-		exit(1);
-	}
-	if ((pid = fork()) == -1) {
+	if ( pipe(pipefd) == -1 || pipe(secondpipe) == -1 || (pid = fork()) == -1 ) {
 		strerror(errno);
 		exit(1);
 	}
 	else if (pid == 0) {
 		dup2(pipefd[1], 1);
-		close(pipefd[0]);
-		int ret = execve(scriptpath.c_str(), args, _env);
-		if (ret == -1)
+		dup2(secondpipe[0], 0); // Not needed, except for when using POST method
+		close(pipefd[0]); // Close pipes we dont use in our child
+		close(secondpipe[1]);
+		if (execve(scriptpath.c_str(), args, _env) == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(1);
 	}
+	(void)write(secondpipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
 	close(pipefd[1]);
+	close(secondpipe[0]);
 	this->clear_env();
 	return pipefd[0];
 }
