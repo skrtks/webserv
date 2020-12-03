@@ -79,9 +79,9 @@ int Cgi::run_cgi(request_s &request) {
 	struct stat		statstruct = {};
 	char			*args[2] = {&scriptpath[0], NULL};
 
-	if (stat(scriptpath.c_str(), &statstruct) == -1)
-		return (-1);
 	std::cout << _BLUE << "scriptpath: " << scriptpath << std::endl << _END;
+	if (stat(scriptpath.c_str(), &statstruct) == -1)
+		return (open(request.server.geterrorpage().c_str(), O_RDONLY));
 	this->populate_map(request);
 	this->map_to_env();
 	int pipefd[2];
