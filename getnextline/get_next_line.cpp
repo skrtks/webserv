@@ -14,30 +14,32 @@
 
 namespace ft {
 
-	static int	finish(std::string& buf, std::string& str, std::string& line, int ret)
+	static int	finish(std::string& line, int ret, std::string& buf)
 	{
-		buf = str.substr(str.find_first_of('\n') + 1, str.length() - str.find_first_of('\n') - 1);
-		line = str.substr(0, str.find_first_of('\n'));
+		buf = line.substr(line.find_first_of('\n') + 1, line.length() - line.find_first_of('\n') - 1);
+		line = line.substr(0, line.find_first_of("\r\n"));
 		return (ret > 0);
 	}
 
 	int	get_next_line(int fd, std::string& line)
 	{
-		static std::string	buf;
-		std::string			str;
-		int					ret = 1;
+		int	ret = 1;
+		static std::map<int, std::string> m; // m[fd] is my buffer string
 
+		line.clear();
 		while (ret > 0) {
-			str += buf;
-			if (str.find("\n\0") != str.npos) {
-				return (finish(buf, str, line, ret));
+			line += m[fd];
+			if (line.find('\n') != std::string::npos) {
+				return (finish(line, ret, m[fd]));
 			}
-			buf.clear();
+			m[fd].clear();
 			char *tmp = (char*) malloc(BUFFER_SIZE + 1);
+			if (!tmp)
+				return (0);
 			for (int i = 0; i < BUFFER_SIZE + 1; i++)
 				tmp[i] = 0;
 			ret = read(fd, tmp, BUFFER_SIZE);
-			buf.assign(tmp);
+			m[fd].assign(tmp);
 			free(tmp);
 		}
 		return 0;
