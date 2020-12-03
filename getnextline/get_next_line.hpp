@@ -17,6 +17,7 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <stdlib.h>
+# include <map>
 
 # ifndef BUFFER_SIZE
 #  define BUFFER_SIZE 8
