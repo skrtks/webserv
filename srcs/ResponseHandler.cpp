@@ -134,30 +134,6 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	return _response;
 }
 
-void ResponseHandler::	handlePost(request_s& request) {
-	int		ret = 0;
-	char	buf[1024];
-	int		fd = 0;
-
-	_body_length = 0;
-	_body.clear();
-	if (request.uri == "/post.bla") { // Run CGI script that creates an html page
-		request.uri = "/cgi-bin" + request.uri;
-		fd = this->CGI.run_cgi(request);
-	}
-	else
-		fd = open("./htmlfiles/error.html", O_RDONLY);
-	do {
-		ret = read(fd, buf, 1024);
-		if (ret <= 0)
-			break ;
-		_body_length += ret;
-		_body.append(buf, ret);
-		memset(buf, 0, 1024);
-	} while (ret > 0);
-	close(fd);
-}
-
 void ResponseHandler::handlePut(request_s& request) {
 	struct stat statstruct = {};
 	_response[0] = "HTTP/1.1 ";
@@ -203,12 +179,9 @@ void ResponseHandler::generateResponse(request_s& request) {
 	if (request.status_code)
 		this->_status_code = request.status_code;
 
-	if (request.method == POST) {
-		handlePost(request);
-	}
-	else {
-		handleBody(request);
-	}
+	if (request.method == POST)
+		request.uri = "/cgi-bin" + request.uri;
+	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
 	handleALLOW();
@@ -221,7 +194,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 	_response[0] += _body;
 	_body.clear();
 	_response[0] += "\r\n";
-//	std::cout << "RESPONSE == \n" << _response[0] << std::endl;
 }
 
 int ResponseHandler::authenticate(request_s& request) {
