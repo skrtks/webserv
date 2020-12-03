@@ -340,7 +340,6 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	else {
 		_header_vals[CONTENT_TYPE] = "text/html";
 	}
-//	std::cerr << _RED << "Content_type = " << CONTENT_TYPE << std::endl << _END;
 	request.headers[CONTENT_TYPE] = this->_header_vals[CONTENT_TYPE];
 	_response[0] += "Content-Type: ";
 	_response[0] += _header_vals[CONTENT_TYPE];
