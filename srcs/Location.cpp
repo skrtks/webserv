@@ -50,6 +50,7 @@ void	Location::setallow_method(const std::string& in) { this->_allow_method = ft
 void	Location::setindex(const std::string& in) { this->_indexes = ft::split(in, " \t\r\n\v\f"); }
 void	Location::setcgi(const std::string& in) { this->_cgi = ft::split(in, " \t\r\n\v\f"); }
 void	Location::seterrorpage(const std::string& in) { this->_error_page = in; }
+
 void	Location::setroot(const std::string& in) {
 	struct stat statstruct = {};
 	this->_root = in;
@@ -65,6 +66,7 @@ std::vector<std::string>	Location::getallowmethods() const { return this->_allow
 std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
 std::vector<std::string>	Location::getcgi() const { return this->_cgi; }
 std::string					Location::geterrorpage() const { return this->_error_page; }
+
 std::string					Location::getindex() const {
 	struct stat statstruct = {};
 	std::string filepath;
