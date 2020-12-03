@@ -36,27 +36,26 @@ public:
 	std::vector<std::string>	handleRequest(request_s& request);
 	void		handleBody(request_s& request);
 	void		handleStatusCode(request_s& request);
-	std::string getCurrentDatetime(void );
-	void		handleALLOW( void );
-	void		handleAUTHORIZATION( void );  // Not yet implemented
-	void		handleCONTENT_LANGUAGE( void );
-	void		handleCONTENT_LENGTH( void );
-	void		handleCONTENT_LOCATION( void );
+	std::string getCurrentDatetime( );
+	void		handleALLOW( );
+	void		handleAUTHORIZATION( );  // Not yet implemented
+	void		handleCONTENT_LANGUAGE( );
+	void		handleCONTENT_LENGTH( );
+	void		handleCONTENT_LOCATION( );
 	void		handleCONTENT_TYPE(request_s& request);
-	void		handleDATE( void );
+	void		handleDATE( );
 	void		handleHOST( request_s& request );
-	void		handleLAST_MODIFIED( void );
+	void		handleLAST_MODIFIED( );
 	void		handleLOCATION( std::string& url ); // Not yet used
-	void		handleRETRY_AFTER( void ); // Not yet used
-	void		handleSERVER( void );
+	void		handleRETRY_AFTER( ); // Not yet used
+	void		handleSERVER( );
 	void		handleTRANSFER_ENCODING( request_s& request ); // Not yet used
-	void		handleWWW_AUTHENTICATE( void ); // Not yet implemented
+	void		handleWWW_AUTHENTICATE( ); // Not yet implemented
 
 	int			authenticate(request_s& request);
 	void 		generateResponse(request_s& request);
 	int			generatePage(request_s& request);
 	void		handlePut(request_s& request);
-	void		handlePost(request_s& request);
 };
 
 
