@@ -190,7 +190,7 @@ void	Server::setup(int fd) {
 		if (is_first_char(str, '}')) // End of server block
 			break ;
 		get_key_value(str, key, value);
-		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
+//		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 	}
 	if (_port <= 0 || _host.empty() || _client_body_size <= 0 || _error_page.empty() || _server_name.empty())
@@ -265,10 +265,10 @@ bool Server::getmatch(const std::string& username, const std::string& passwd) {
 	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
 }
 
-bool Server::isMethodAllowed(const std::string& uri, const std::string& extension) const {
-	std::vector<std::string> methods = matchlocation(uri).getallowmethods();
+bool Server::isExtensionAllowed(const std::string& uri, const std::string& extension) const {
+	std::vector<std::string> extensions = matchlocation(uri).getcgiallowedextensions();
 
-	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); ++it) {
+	for (std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); ++it) {
 		if (extension == *it)
 			return (true);
 	}
