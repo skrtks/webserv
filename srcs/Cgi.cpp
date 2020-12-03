@@ -80,7 +80,7 @@ int Cgi::run_cgi(request_s &request) {
 	char			*args[2] = {&scriptpath[0], NULL};
 
 	if (stat(scriptpath.c_str(), &statstruct) == -1)
-		return (-1);
+		return (open(("htmlfiles/" + request.server.geterrorpage()).c_str(), O_RDONLY));
 	std::cout << _BLUE << "scriptpath: " << scriptpath << std::endl << _END;
 	this->populate_map(request);
 	this->map_to_env();
