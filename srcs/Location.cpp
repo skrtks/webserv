@@ -64,7 +64,7 @@ std::string					Location::getlocationmatch() const { return this->_location_matc
 std::vector<std::string>	Location::getallowmethods() const { return this->_allow_method; }
 std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
 std::vector<std::string>	Location::getcgi() const { return this->_cgi; }
-std::string					Location::geterrorpage() const { return this->_error_page; }
+std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
 std::string					Location::getindex() const {
 	struct stat statstruct = {};
 	std::string filepath;

@@ -114,7 +114,7 @@ void	Server::setclientbodysize(const std::string& clientbodysize) {
 }
 
 std::string	Server::geterrorpage() const {
-	return this->_error_page;
+	return this->getroot() + '/' + this->_error_page;
 }
 
 void	Server::seterrorpage(const std::string& errorpage) {
@@ -253,7 +253,7 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 			fd = open(filepath.c_str(), O_RDONLY);
 	}
 	if (fd == -1) {
-		filepath = loca.getroot() + '/' + loca.geterrorpage();
+		filepath = loca.geterrorpage();
 		fd = open(filepath.c_str(), O_RDONLY);
 		statuscode = 404;
 	}
