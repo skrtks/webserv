@@ -128,36 +128,34 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	if (request.method == PUT) {
 		handlePut(request);
 	}
-	else if (request.method == POST) {
-		handlePost(request);
-	}
 	else {
 		generateResponse(request);
 	}
 	return _response;
 }
 
-void ResponseHandler::handlePost(request_s& request) {
+void ResponseHandler::	handlePost(request_s& request) {
+	int		ret = 0;
+	char	buf[1024];
 	int		fd = 0;
-	char 	buf[1024];
-	int size;
 
-	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
+	_body_length = 0;
+	_body.clear();
+	if (request.uri == "/post.bla") { // Run CGI script that creates an html page
+		request.uri = "/cgi-bin" + request.uri;
 		fd = this->CGI.run_cgi(request);
-	
-	_response[0] = "HTTP/1.1 ";
-	if (request.body.empty())
-		_status_code = 204;
-	else
-		_status_code = 201;
-	handleStatusCode(request);
-	handleDATE();
-	_response[0] += "\r\n";
-	while ((size = read(fd, buf, 1024)) > 0) {
-		_response[0].append(buf, 0, size);
-		memset(buf, 0, 1024);
 	}
-	_response[0] += "\r\n";
+	else
+		fd = open("./htmlfiles/error.html", O_RDONLY);
+	do {
+		ret = read(fd, buf, 1024);
+		if (ret <= 0)
+			break ;
+		_body_length += ret;
+		_body.append(buf, ret);
+		memset(buf, 0, 1024);
+	} while (ret > 0);
+	close(fd);
 }
 
 void ResponseHandler::handlePut(request_s& request) {
@@ -204,9 +202,15 @@ void ResponseHandler::generateResponse(request_s& request) {
 	  	return;
 	if (request.status_code)
 		this->_status_code = request.status_code;
-	handleCONTENT_TYPE(request);
-	handleBody(request);
+
+	if (request.method == POST) {
+		handlePost(request);
+	}
+	else {
+		handleBody(request);
+	}
 	handleStatusCode(request);
+	handleCONTENT_TYPE(request);
 	handleALLOW();
 	handleDATE();
 	handleCONTENT_LENGTH();

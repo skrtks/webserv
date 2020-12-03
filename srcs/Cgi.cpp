@@ -39,7 +39,8 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["REMOTE_ADDR"] = req.server.gethost();
 	this->_m["REMOTE_IDENT"] = ""; //TODO fill this one
 	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
-	this->_m["REQUEST_METHOD"] = RequestParser::getMethod(req.method);
+	this->_m["REQUEST_METHOD"] = "GET";
+//	this->_m["REQUEST_METHOD"] = RequestParser::getMethod(req.method);
 	this->_m["REQUEST_URI"] = req.uri;
 	this->_m["SCRIPT_NAME"] = req.uri.substr(0, split_path - 1 );
 	this->_m["SERVER_NAME"] = req.server.getservername();

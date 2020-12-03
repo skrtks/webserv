@@ -79,11 +79,11 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	request.body = _rawRequest;
 	std::map<headerType, std::string>::iterator it;
 
-	if (!_headers[CONTENT_LENGTH].empty()) {
-		int length = ft_atoi(_headers[CONTENT_LENGTH].c_str());
-		if (_headers[CONTENT_LENGTH].find_first_not_of("0123456789") != std::string::npos || length < 0)
-			_status_code = 400;
-	}
+//	if (!_headers[CONTENT_LENGTH].empty()) {
+//		int length = ft_atoi(_headers[CONTENT_LENGTH].c_str());
+//		if (_headers[CONTENT_LENGTH].find_first_not_of("0123456789") != std::string::npos || length < 0)
+//			_status_code = 400;
+//	}
 	if (_status_code)
 		request.status_code = _status_code;
 	else
@@ -202,7 +202,7 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 void RequestParser::parseHeaders() {
 	std::string upperHeader;
 	int owsOffset;
-	this->_headers[CONTENT_LENGTH] = std::string(ft::inttostring(this->_rawRequest.length()));
+//	this->_headers[CONTENT_LENGTH] = std::string(ft::inttostring(this->_rawRequest.length()));
 	while (!_rawRequest.empty()) {
 		upperHeader.clear();
 		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
