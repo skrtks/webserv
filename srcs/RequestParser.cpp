@@ -202,12 +202,9 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 void RequestParser::parseHeaders() {
 	std::string upperHeader;
 	int owsOffset;
-//	this->_headers[CONTENT_LENGTH] = std::string(ft::inttostring(this->_rawRequest.length()));
 	while (!_rawRequest.empty()) {
 		upperHeader.clear();
 		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
-		// std::cout << eoRequestLine << std::endl;
-		// std::cout << _rawRequest << std::endl;
 		if (eoRequestLine != 0 && std::string::npos != eoRequestLine) {
 			if (_rawRequest[0] == ' ') {
 				std::cout << "BAD REQ 8" << std::endl;
@@ -265,6 +262,12 @@ void RequestParser::parseHeaders() {
 			}
 		}
 		else {
+			eoRequestLine = _rawRequest.find("\r\n", 0);
+			if (eoRequestLine == std::string::npos) {
+				std::cout << "BAD REQ 7" << std::endl;
+				_status_code = 400;
+				return ;
+			}
 			_rawRequest.erase(0, eoRequestLine + 2);
 			return;
 		}
