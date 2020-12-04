@@ -56,6 +56,7 @@ public:
 	void 		generateResponse(request_s& request);
 	int			generatePage(request_s& request);
 	void		handlePut(request_s& request);
+	void 		handlePost(request_s& request);
 };
 
 

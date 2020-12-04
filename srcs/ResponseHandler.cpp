@@ -171,6 +171,24 @@ void ResponseHandler::handlePut(request_s& request) {
 	_response[0] += "\r\n";
 }
 
+void ResponseHandler::handlePost(request_s& request) {
+	_response[0] = "HTTP/1.1 ";
+	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
+	bool PostIsAllowed = false;
+	for (std::vector<std::string>::const_iterator it = AllowedMethods.begin(); it != AllowedMethods.end(); ++it)
+		if (*it == "POST")
+			PostIsAllowed = true;
+
+	request.uri = "/cgi-bin" + request.uri;
+
+	if (!PostIsAllowed) {
+		_response[0] += "405 Method Not Allowed\r\n";
+	}
+	else {
+		handleBody(request);
+	}
+}
+
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
@@ -180,8 +198,9 @@ void ResponseHandler::generateResponse(request_s& request) {
 		this->_status_code = request.status_code;
 
 	if (request.method == POST)
-		request.uri = "/cgi-bin" + request.uri;
-	handleBody(request);
+		handlePost(request);
+	else
+		handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request); //TODO Do we need to do this before handleBody( )
 	handleALLOW();
