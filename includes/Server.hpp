@@ -15,8 +15,6 @@
 
 # include "Base64.hpp"
 # include "Location.hpp"
-# include "Enums.hpp"
-# include "Colours.hpp"
 # include <cerrno>
 # include <fcntl.h>
 # include <iostream>

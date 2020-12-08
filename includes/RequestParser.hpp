@@ -22,13 +22,6 @@
 #include <sstream>
 #include "Server.hpp"
 
-enum e_method {
-	GET, // These are mandatory according to rfc's
-	HEAD, // These are mandatory according to rfc's
-	POST,
-	PUT
-};
-
 struct request_s {
 	int									status_code;
 	e_method							method;

@@ -16,6 +16,7 @@
 # include <string>
 # include <map>
 # include <vector>
+# include "Enums.hpp"
 
 class Location {
 public:
@@ -40,7 +41,7 @@ public:			//getters
 		std::string					getroot() const;
 		std::string					getautoindex() const;
 		std::string					getlocationmatch() const;
-		std::vector<std::string>	getallowmethods() const;
+		std::vector<e_method>		getallowmethods() const;
 		std::string					getindex() const;
 		std::vector<std::string>	getindexes() const;
 		std::vector<std::string>	getcgiallowedextensions() const;
@@ -48,6 +49,7 @@ public:			//getters
 		long						getmaxbody() const;
 		
 		void	setup(int );
+		bool	checkifMethodAllowed(const e_method& meth) const;
 		void	addServerInfo(const std::string& root, const std::string& autoindex,
 					 const std::vector<std::string>& indexes, const std::string& errorpage);
 
@@ -56,9 +58,9 @@ private:
 								_autoindex,
 								_location_match,
 								_error_page;
-	std::vector<std::string>	_allow_method,
-								_indexes,
+	std::vector<std::string>	_indexes,
 								_cgi_allowed_extensions;
+	std::vector<e_method>		_allow_method;
 	long						_maxBody;
 };
 

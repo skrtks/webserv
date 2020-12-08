@@ -107,10 +107,15 @@ void ResponseHandler::handleBody(request_s& request) {
 
 	_body_length = 0;
 	_body.clear();
-	if (request.status_code == 400)
-		fd = open("./htmlfiles/error.html", O_RDONLY);
-	else
+//	std::cerr << _CYAN "status_code is " << request.status_code << std::endl << _END;
+	if (request.status_code == 400) {
+		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
+//		std::cerr << _CYAN << "fd is " << fd << ", error page is at " << request.server.matchlocation(request.uri).geterrorpage() << std::endl << _END;
+	}
+	else {
 		fd = generatePage(request);
+//		std::cerr << _CYAN << "generate page: fd is " << fd << std::endl << _END;
+	}
 	do {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
@@ -126,9 +131,8 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
 	this->_body_length = request.body.length();
 	this->_response.resize(1);
-//	std::string response;
 	_response.front() = "";
-	std::cerr << _RED << "in handleRequest, _response immediately has size " << _response.size() << std::endl << _END;
+//	std::cerr << _RED << "in handleRequest, _response immediately has size " << _response.size() << std::endl << _END;
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -141,17 +145,14 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 void ResponseHandler::handlePut(request_s& request) {
 	struct stat statstruct = {};
 	_response[0] = "HTTP/1.1 ";
-	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
-	bool PutIsAllowed = false;
-	for (std::vector<std::string>::const_iterator it = AllowedMethods.begin(); it != AllowedMethods.end(); ++it)
-		if (*it == "PUT")
-			PutIsAllowed = true;
 
 	std::string filePath = request.server.getfilepath(request.uri);
 	int statret = stat(filePath.c_str(), &statstruct);
 
-	if (!PutIsAllowed) {
-		_response[0] += "405 Method Not Allowed\r\n";
+	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+		_status_code = 405;
+		_body.clear();
+		_body_length = _body.length();
 	}
 	else {
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
@@ -175,28 +176,30 @@ void ResponseHandler::handlePut(request_s& request) {
 	_response[0] += "\r\n";
 }
 
-void ResponseHandler::handlePost(request_s& request) {
-	_response[0] = "HTTP/1.1 ";
-	std::vector<std::string> AllowedMethods = request.server.matchlocation(request.uri).getallowmethods();
-	bool PostIsAllowed = false;
-	for (std::vector<std::string>::const_iterator it = AllowedMethods.begin(); it != AllowedMethods.end(); ++it)
-		if (*it == "POST")
-			PostIsAllowed = true;
-
-	request.uri = "cgi-bin" + request.uri;
-	std::cerr << _CYAN "in handlePost, request.uri is " << request.uri << std::endl << _END;
-
-	if (!PostIsAllowed) {
-		_status_code = 405;
-	}
-	else {
-		handleBody(request);
-	}
-}
+//void ResponseHandler::handlePost(request_s& request) {
+//	_response[0] = "HTTP/1.1 ";
+//	request.uri = "cgi-bin" + request.uri;
+//	std::cerr << _CYAN "in handlePost, request.uri is " << request.uri << std::endl << _END;
+//
+//	if (!PostIsAllowed) {
+//		_status_code = 405;
+//		_body_length = 0;
+//		_body.clear();
+//	}
+//	else {
+//		handleBody(request);
+//	}
+//}
 
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
+
+	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+		_status_code = 405;
+		_body.clear();
+		_body_length = _body.length();
+	}
 	 if (this->authenticate(request))
 	  	return;
 	 if (this->_body_length > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
@@ -206,10 +209,10 @@ void ResponseHandler::generateResponse(request_s& request) {
 	if (request.status_code)
 		this->_status_code = request.status_code;
 
-	if (request.method == POST)
-		handlePost(request);
-	else
-		handleBody(request);
+//	if (request.method == POST)
+//		handlePost(request);
+//	else
+	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request); //TODO Do we need to do this before handleBody( ) ?
 	handleALLOW();
@@ -220,9 +223,11 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleSERVER();
 	handleCONNECTION_HEADER();
 	_response[0] += "\r\n";
-	_response[0] += _body;
+	if (request.method != HEAD) {
+		_response[0] += _body;
+		_response[0] += "\r\n";
+	}
 	_body.clear();
-	_response[0] += "\r\n";
 }
 
 int ResponseHandler::authenticate(request_s& request) {
@@ -316,9 +321,7 @@ void ResponseHandler::handleCONTENT_LENGTH() {
 	std::stringstream	ss;
 	std::string			str;
 
-	ss << _body_length;
-	str = ss.str();
-	_header_vals[CONTENT_LENGTH] = str;
+	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body_length);
 	_response[0] += "Content-Length: ";
 	_response[0] += _header_vals[CONTENT_LENGTH];
 	_response[0] += "\r\n";
@@ -391,6 +394,7 @@ void ResponseHandler::handleSERVER() {
 
 void ResponseHandler::handleCONNECTION_HEADER() {
 	_response[0] += "Connection: " + _header_vals[CONNECTION] + "\r\n";
+	_response[0] += "Accept-Encoding: gzip\r\n";
 }
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {

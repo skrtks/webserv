@@ -89,7 +89,7 @@ void Connection::setUpConnection() {
 		// Associate the socket with a port and ip
 		for (int i = 0; i < 6; ++i) {
 			if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
-				std::cout << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
+				std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
 				if (i == 5) throw std::runtime_error(strerror(errno));
 			}
 			else {
@@ -190,19 +190,19 @@ void Connection::receiveRequest(const int& fd) {
 		std::cout << bytesReceived << std::endl;
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
-		std::cout << buf << std::endl;
+//		std::cout << buf << std::endl;
 		request.append(buf, 0, bytesReceived);
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived > 0);
 	_rawRequest = request;
-	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
+//	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
-	std::cout << "\nRESPONSE --------" << std::endl;
-	for (size_t i = 0; i < msg.size(); i++)
-		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
-	std::cout << "\nRESPONSE END ----" << std::endl;
+//	std::cout << "\nRESPONSE --------" << std::endl;
+//	for (size_t i = 0; i < msg.size(); i++)
+//		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
+//	std::cout << "\nRESPONSE END ----" << std::endl;
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))

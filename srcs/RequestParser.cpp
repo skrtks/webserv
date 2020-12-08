@@ -97,12 +97,12 @@ void RequestParser::parseRequestLine() {
 
 	// Check if first char is space
 	if (_rawRequest[0] == ' ') {
-		std::cout << "BAD REQ 1" << std::endl;
+		std::cerr << "BAD REQ 1" << std::endl;
 		_status_code = 400;
 		return ;
 	}
 	if (_rawRequest.find("\r\n", 0) == std::string::npos) {
-		std::cout << "BAD REQ 2" << std::endl;
+		std::cerr << "BAD REQ 2" << std::endl;
 		_status_code = 400;
 		return ;
 	}
@@ -116,7 +116,7 @@ void RequestParser::parseRequestLine() {
 			doubleSpace = 1;
 	}
 	if (numSpaces != 2 || doubleSpace == 1) {
-		std::cout << "BAD REQ 3" << std::endl;
+		std::cerr << "BAD REQ 3" << std::endl;
 		_status_code = 400;
 		return ;
 	}
@@ -125,7 +125,7 @@ void RequestParser::parseRequestLine() {
 	extractUri(eoRequestLine, pos, pos2);
 	pos++;
 	if (_uri.length() > 10000000) {
-		std::cout << "BAD REQ 3.1" << std::endl;
+		std::cerr << "BAD REQ 3.1" << std::endl;
 		_status_code = 414;
 		return ;
 	}
@@ -141,14 +141,14 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 
 	pos = _rawRequest.find("HTTP/", pos);
 	if (pos > eoRequestLine) {
-		std::cout << "BAD REQ 3.2" << std::endl;
+		std::cerr << "BAD REQ 3.2" << std::endl;
 		_status_code = 400;
 		return ;
 	}
 	pos += 5;
 	pos2 = _rawRequest.find("\r\n", pos);
 	if (pos2 > eoRequestLine) {
-		std::cout << "BAD REQ 4" << std::endl;
+		std::cerr << "BAD REQ 4" << std::endl;
 		_status_code = 400;
 		return ;
 	}
@@ -163,14 +163,14 @@ void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
 
 	pos2 = _rawRequest.find(' ', pos);
 	if (pos2 > eoRequestLine) {
-		std::cout << "BAD REQ 5" << std::endl;
+		std::cerr << "BAD REQ 5" << std::endl;
 		_status_code = 400;
 		return ;
 	}
 	ret = _rawRequest.substr(pos, pos2 - pos);
 	_uri = ret;
 	if (_uri[0] == ':') {
-		std::cout << "BAD REQ5.1" << std::endl;
+		std::cerr << "BAD REQ5.1" << std::endl;
 		_status_code = 400;
 		return ;
 	}
@@ -181,7 +181,7 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 
 	pos = _rawRequest.find(' ', 0);
 	if (pos > eoRequestLine) {
-		std::cout << "BAD REQ 6" << std::endl;
+		std::cerr << "BAD REQ 6" << std::endl;
 		_status_code = 400;
 		return ;
 	}
@@ -206,25 +206,25 @@ void RequestParser::parseHeaders() {
 		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
 		if (eoRequestLine != 0 && std::string::npos != eoRequestLine) {
 			if (_rawRequest[0] == ' ') {
-				std::cout << "BAD REQ 8" << std::endl;
+				std::cerr << "BAD REQ 8" << std::endl;
 				_status_code = 400;
 				return ;
 			}
 			size_t pos = _rawRequest.find(':', 0);
 			if (pos > eoRequestLine) {
-				std::cout << "BAD REQ 9" << std::endl;
+				std::cerr << "BAD REQ 9" << std::endl;
 				_status_code = 400;
 				return ;
 			}
 			std::string header = _rawRequest.substr(0, pos);
 			if (header.empty() || header.length() == 0) {
-				std::cout << "BAD REQ 10.1" << std::endl;
+				std::cerr << "BAD REQ 10.1" << std::endl;
 				_status_code = 400;
 				return ;
 			}
 			for (size_t i = 0; header[i]; i++) {
 				if (header[i] == ' ') {
-					std::cout << "BAD REQ 10" << std::endl;
+					std::cerr << "BAD REQ 10" << std::endl;
 					_status_code = 400;
 					return ;
 				}
@@ -241,8 +241,8 @@ void RequestParser::parseHeaders() {
 			// Extract value string and check if not empty or beginning with newline
 			std::string value = _rawRequest.substr(pos, eoRequestLine - pos - owsOffset);
 			if (value.empty() || _rawRequest[pos] == '\r') {
-				std::cout << _rawRequest << std::endl;
-				std::cout << "BAD REQ 11" << std::endl;
+				std::cerr << _rawRequest << std::endl;
+				std::cerr << "BAD REQ 11" << std::endl;
 				_status_code = 400;
 				return ;
 			}
@@ -253,7 +253,7 @@ void RequestParser::parseHeaders() {
 			std::map<std::string, headerType>::iterator it = _headerMap.find(upperHeader);
 			if (it != _headerMap.end()) {
 				if (_headers.find(it->second) != _headers.end()) {
-					std::cout << "BAD REQ 12" << std::endl;
+					std::cerr << "BAD REQ 12" << std::endl;
 					_status_code = 400;
 					return ;
 				}

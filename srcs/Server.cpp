@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "Colours.hpp"
 #include "Server.hpp"
 #include "libftGnl.hpp"
 
@@ -219,6 +220,8 @@ Location Server::matchlocation(const std::string &uri) const {
 
 	for (std::vector<Location>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); ++it) {
 		n = it->getlocationmatch().length();
+		if (it->getlocationmatch()[n - 1] == '/' && n > 1)
+			n -= 1;
 		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
@@ -242,16 +245,21 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 	struct stat statstruct = {};
 	int fd = -1;
 	Location loca = this->matchlocation(uri);
+//	std::cerr << _CYAN "Location match is " << loca.getlocationmatch() << std::endl << _END;
 	std::string filepath = this->getfilepath(uri);
+//	std::cerr << _CYAN "filepath is " << filepath << std::endl << _END;
 
 	if (stat(filepath.c_str(), &statstruct) != -1) { // or if file too big?
-		if (S_ISDIR(statstruct.st_mode))
-			filepath = loca.getindex();
+		if (S_ISDIR(statstruct.st_mode)) {
+			filepath += '/' + loca.getindex();
+//			std::cerr << _CYAN "S_ISDIR, filepath is index is " << filepath << std::endl << _END;
+		}
 		if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
 	}
 	if (fd == -1) {
 		filepath = loca.geterrorpage();
+//		std::cerr << _RED << "fd = -1, error page is filepath is " << filepath << std::endl << _END;
 		fd = open(filepath.c_str(), O_RDONLY);
 		statuscode = 404;
 	}
