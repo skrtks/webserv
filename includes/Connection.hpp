@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:41 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/07 10:55:00 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/28 20:05:15 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ class Connection {
 	char *_configPath;
 	int addConnection(const int &socketFd);
 	void receiveRequest(const int& fd);
-	void sendReply(const std::string& msg, const int& fd) const;
+	void sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const;
 	void closeConnection(const int& fd);
 public:
 	Connection();

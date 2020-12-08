@@ -18,6 +18,7 @@ add_executable(webserv srcs/Base64.cpp
 		srcs/Servermanager.cpp
 		srcs/split.cpp
 		includes/Base64.hpp
+		includes/Cgi.hpp
 		includes/Colours.hpp
 		includes/Connection.hpp
 		includes/libftGnl.hpp
@@ -27,6 +28,6 @@ add_executable(webserv srcs/Base64.cpp
 		includes/Server.hpp
 		includes/Servermanager.hpp
 		getnextline/get_next_line.cpp
-		getnextline/get_next_line.hpp includes/Enums.hpp)
+		getnextline/get_next_line.hpp includes/Enums.hpp srcs/Cgi.cpp)
 
 target_link_libraries(webserv PUBLIC libft)

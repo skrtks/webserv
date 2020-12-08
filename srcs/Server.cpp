@@ -10,20 +10,20 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "Colours.hpp"
 #include "Server.hpp"
 #include "libftGnl.hpp"
-#include <fstream>
 
-Server::Server() : _port(80), _client_body_size(1000000),
+Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
 		_root("htmlfiles"),
-		_auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_auth_basic_realm(), _htpasswd_path(),
 		_fd(), _socketFd() {
 }
 
-Server::Server(int fd) : _port(80), _client_body_size(1000000),
+Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
-		_root("htmlfiles"), _auth_basic_realm("Access to the staging site"), _htpasswd_path("configfiles/.htpasswd"),
+		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
 		_socketFd() {
 	this->_fd = fd;
 }
@@ -31,7 +31,7 @@ Server::Server(int fd) : _port(80), _client_body_size(1000000),
 Server::~Server() {
 }
 
-Server::Server(const Server& x) : _port(), _client_body_size(), _fd(), _socketFd() {
+Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd() {
 	*this = x;
 }
 
@@ -40,7 +40,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_port = x._port;
 		this->_host = x._host;
 		this->_server_name = x._server_name;
-		this->_client_body_size = x._client_body_size;
+		this->_maxfilesize = x._maxfilesize;
 		this->_error_page = x._error_page;
 		this->_404_page = x._404_page;
 		this->_indexes = x._indexes;
@@ -49,7 +49,6 @@ Server&	Server::operator=(const Server& x) {
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
-		this->_base_env = x._base_env;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_loginfo = x._loginfo;
@@ -104,18 +103,18 @@ void	Server::setservername(const std::string& servername) {
 	this->_server_name = servername;
 }
 
-long int	Server::getclientbodysize() const {
-	return this->_client_body_size;
+long int	Server::getmaxfilesize() const {
+	return this->_maxfilesize;
 }
 
-void	Server::setclientbodysize(const std::string& clientbodysize) {
-	this->_client_body_size = ft_atol(clientbodysize.c_str());
+void	Server::setmaxfilesize(const std::string& clientbodysize) {
+	this->_maxfilesize = ft_atol(clientbodysize.c_str());
 	if (clientbodysize[clientbodysize.find_first_not_of("1234567890")] == 'M')
-		this->_client_body_size *= 1000000;
+		this->_maxfilesize *= 1000000;
 }
 
 std::string	Server::geterrorpage() const {
-	return this->_error_page;
+	return this->getroot() + '/' + this->_error_page;
 }
 
 void	Server::seterrorpage(const std::string& errorpage) {
@@ -143,12 +142,11 @@ void	Server::sethtpasswdpath(const std::string &path) {
 		return ;
 
 	this->_htpasswd_path = path;
-	std::ifstream ifs;
-	ifs.open(_htpasswd_path.c_str());
-	if (ifs.bad())
-		return ;
+	int htpasswd_fd = open(this->_htpasswd_path.c_str(), O_RDONLY);
+	if (htpasswd_fd < 0)
+		return;
 	std::string line;
-	while (std::getline(ifs, line)) {
+	while (ft::get_next_line(htpasswd_fd, line)) {
 		std::string user, pass;
 		get_key_value(line, user, pass, ":");
 		this->_loginfo[user] = pass;
@@ -157,10 +155,6 @@ void	Server::sethtpasswdpath(const std::string &path) {
 
 std::string	Server::gethtpasswdpath() const {
 	return this->_htpasswd_path;
-}
-
-std::map<std::string, std::string> Server::getbaseenv() const {
-	return this->_base_env;
 }
 
 void	Server::configurelocation(const std::string& in) {
@@ -174,26 +168,6 @@ std::vector<Location>	Server::getlocations() const {
 	return this->_locations;
 }
 
-void	Server::create_base_env() {
-	this->_base_env["AUTH_TYPE"] = "";
-	this->_base_env["CONTENT_LENGTH"] = "";
-	this->_base_env["CONTENT_TYPE"] = "";
-	this->_base_env["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_base_env["PATH_INFO"] = "";
-	this->_base_env["PATH_TRANSLATED"] = "";
-	this->_base_env["QUERY_STRING"] = "";
-	this->_base_env["REMOTE_ADDR"] = "";
-	this->_base_env["REMOTE_IDENT"] = "";
-	this->_base_env["REMOTE_USER"] = "";
-	this->_base_env["REQUEST_METHOD"] = "";
-	this->_base_env["REQUEST_URI"] = "";
-	this->_base_env["SCRIPT_NAME"] = "";
-	this->_base_env["SERVER_NAME"] = this->getservername();
-	this->_base_env["SERVER_PORT"] = std::string(ft::inttostring(this->getport()));
-	this->_base_env["SERVER_PROTOCOL"] = "HTTP/1.1";
-	this->_base_env["SERVER_SOFTWARE"] = "HTTP 1.1";
-}
-
 void	Server::setup(int fd) {
 	this->_fd = fd;
 	std::map<std::string, void (Server::*)(const std::string&)> m;
@@ -205,8 +179,8 @@ void	Server::setup(int fd) {
 	m["auth_basic"] = &Server::setauth_basic_realm;
 	m["auth_basic_user_file"] = &Server::sethtpasswdpath;
 	m["server_name"] = &Server::setservername;
-	m["LIMIT_CLIENT_BODY_SIZE"] = &Server::setclientbodysize;
-	m["DEFAULT_ERROR_PAGE"] = &Server::seterrorpage;
+	m["max_filesize"] = &Server::setmaxfilesize;
+	m["error_page"] = &Server::seterrorpage;
 	m["location"] = &Server::configurelocation;
 	std::string str;
 
@@ -220,8 +194,7 @@ void	Server::setup(int fd) {
 //		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 	}
-	this->create_base_env();
-	if (_port <= 0 || _host.empty() || _client_body_size <= 0 || _error_page.empty() || _server_name.empty())
+	if (_port <= 0 || _host.empty() || _maxfilesize <= 0 || _error_page.empty() || _server_name.empty())
 		throw std::runtime_error("invalid setting in server block");
 }
 
@@ -247,6 +220,8 @@ Location Server::matchlocation(const std::string &uri) const {
 
 	for (std::vector<Location>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); ++it) {
 		n = it->getlocationmatch().length();
+		if (it->getlocationmatch()[n - 1] == '/' && n > 1)
+			n -= 1;
 		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
@@ -270,16 +245,21 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 	struct stat statstruct = {};
 	int fd = -1;
 	Location loca = this->matchlocation(uri);
+//	std::cerr << _CYAN "Location match is " << loca.getlocationmatch() << std::endl << _END;
 	std::string filepath = this->getfilepath(uri);
+//	std::cerr << _CYAN "filepath is " << filepath << std::endl << _END;
 
-	if (stat(filepath.c_str(), &statstruct) != -1) {
-		if (S_ISDIR(statstruct.st_mode))
-			filepath = loca.getindex();
+	if (stat(filepath.c_str(), &statstruct) != -1) { // or if file too big?
+		if (S_ISDIR(statstruct.st_mode)) {
+			filepath += '/' + loca.getindex();
+//			std::cerr << _CYAN "S_ISDIR, filepath is index is " << filepath << std::endl << _END;
+		}
 		if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
 	}
 	if (fd == -1) {
-		filepath = loca.getroot() + '/' + loca.geterrorpage();
+		filepath = loca.geterrorpage();
+//		std::cerr << _RED << "fd = -1, error page is filepath is " << filepath << std::endl << _END;
 		fd = open(filepath.c_str(), O_RDONLY);
 		statuscode = 404;
 	}
@@ -293,12 +273,22 @@ bool Server::getmatch(const std::string& username, const std::string& passwd) {
 	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
 }
 
+bool Server::isExtensionAllowed(const std::string& uri, const std::string& extension) const {
+	std::vector<std::string> extensions = matchlocation(uri).getcgiallowedextensions();
+
+	for (std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); ++it) {
+		if (extension == *it)
+			return (true);
+	}
+	return (false);
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "Default root folder: " << x.getroot() << std::endl;
 	o << "Default index page: " << x.getindex() << std::endl;
 	o << "error page: " << x.geterrorpage() << std::endl;
-	o << "client body limit: " << x.getclientbodysize() << std::endl << std::endl;
+	o << "client body limit: " << x.getmaxfilesize() << std::endl << std::endl;
 	std::vector<Location> v = x.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
 		o << v[i];

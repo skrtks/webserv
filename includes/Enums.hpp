@@ -10,6 +10,7 @@ enum headerType {
 	ACCEPT_LANGUAGE,
 	ALLOW,
 	AUTHORIZATION,
+	CONNECTION,
 	CONTENT_LANGUAGE,
 	CONTENT_LENGTH,
 	CONTENT_LOCATION,
@@ -19,11 +20,19 @@ enum headerType {
 	LAST_MODIFIED,
 	LOCATION,
 	REFERER,
+	REMOTE_USER,
 	RETRY_AFTER,
 	SERVER,
 	TRANSFER_ENCODING,
 	USER_AGENT,
 	WWW_AUTHENTICATE
+};
+
+enum e_method {
+	GET, // These are mandatory according to rfc's
+	HEAD, // These are mandatory according to rfc's
+	POST,
+	PUT
 };
 
 #endif //WEBSERV_ENUMS_HPP

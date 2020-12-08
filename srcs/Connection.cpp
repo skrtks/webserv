@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/08 15:36:30 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/11/29 13:47:07 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 #include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
+
+#define REQUEST_TIMEOUT 100000
 
 Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	FD_ZERO(&_master);
@@ -40,7 +42,7 @@ Connection::~Connection() {
 	close(_connectionFd);
 }
 
-Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds() {
+Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds(), _configPath() {
 	*this = obj;
 }
 
@@ -87,7 +89,7 @@ void Connection::setUpConnection() {
 		// Associate the socket with a port and ip
 		for (int i = 0; i < 6; ++i) {
 			if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
-				std::cout << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
+				std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
 				if (i == 5) throw std::runtime_error(strerror(errno));
 			}
 			else {
@@ -106,7 +108,7 @@ void Connection::setUpConnection() {
 void Connection::startListening() {
 	RequestParser					requestParser;
 	ResponseHandler					responseHandler;
-	std::string						response;
+	std::vector<std::string>				response;
 	std::map<int, Server>::iterator	serverMapIt;
 	std::map<int, Server> 			serverConnections;
 
@@ -140,7 +142,7 @@ void Connection::startListening() {
 					_parsedRequest = requestParser.parseRequest(_rawRequest);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
-					sendReply(response, fd);
+					sendReply(response, fd, _parsedRequest);
 					closeConnection(fd);
 					serverConnections.erase(fd);
 					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
@@ -165,27 +167,52 @@ int Connection::addConnection(const int &socketFd) {
 }
 
 void Connection::receiveRequest(const int& fd) {
+	struct timeval timeout = {0, REQUEST_TIMEOUT};
+
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
+	fd_set fdSet;
 	// Loop to receive complete request, even if buffer is smaller
+	FD_SET(fd, &fdSet);
 	request.clear();
 	ft_memset(buf, 0, BUFLEN);
+	bytesReceived = 0;
 	do {
-		bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
+		if (select(fd + 1, &fdSet, NULL, NULL, &timeout) >= 0) {
+			if (FD_ISSET(fd, &fdSet))
+				bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
+			else
+				bytesReceived = 0;
+		} else {
+			bytesReceived = 0;
+		}
+		std::cout << bytesReceived << std::endl;
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
-		request += buf;
+//		std::cout << buf << std::endl;
+		request.append(buf, 0, bytesReceived);
 		ft_memset(buf, 0, BUFLEN);
-	} while (bytesReceived == BUFLEN - 1);
+	} while (bytesReceived > 0);
 	_rawRequest = request;
-	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
+//	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
 }
 
-void Connection::sendReply(const std::string& msg, const int& fd) const {
-	if ((send(fd, msg.c_str(), msg.length(), 0) == -1))
+void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
+//	std::cout << "\nRESPONSE --------" << std::endl;
+//	for (size_t i = 0; i < msg.size(); i++)
+//		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
+//	std::cout << "\nRESPONSE END ----" << std::endl;
+	if (request.transfer_buffer) {
+		for (size_t i = 0; i < msg.size(); i++) {
+			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
+				throw std::runtime_error(strerror(errno));
+		}
+	}
+	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
-	std::cout << _GREEN << "Response send, first line is: " << msg.substr(0, msg.find('\n')) << _END << std::endl;
+//	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
+	msg.clear();
 }
 
 void Connection::closeConnection(const int& fd) {

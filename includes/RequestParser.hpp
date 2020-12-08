@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:32 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/10 12:05:14 by peerdb        ########   odam.nl         */
+/*   Updated: 2020/11/28 19:45:53 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,6 @@
 #include <sstream>
 #include "Server.hpp"
 
-enum e_method {
-	GET, // These are mandatory according to rfc's
-	HEAD, // These are mandatory according to rfc's
-	POST,
-	PUT
-};
-
 struct request_s {
 	int									status_code;
 	e_method							method;
@@ -37,6 +30,7 @@ struct request_s {
 	std::map<headerType, std::string>	headers;
 	Server								server;
 	std::string							body;
+	bool								transfer_buffer;
 };
 
 class RequestParser {
@@ -63,6 +57,7 @@ public:
 	void			extractUri(size_t eoRequestLine, size_t pos, size_t pos2);
 	void			extractVersion(size_t eoRequestLine, size_t& pos, size_t &pos2);
 	e_method		getMethod() const;
+	static std::string		getMethod(e_method& x) ;
 	
 	const std::string&							getUri() const;
 	const std::pair<int, int>& 					getVersion() const;

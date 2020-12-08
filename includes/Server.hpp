@@ -15,8 +15,6 @@
 
 # include "Base64.hpp"
 # include "Location.hpp"
-# include "Enums.hpp"
-# include "Colours.hpp"
 # include <cerrno>
 # include <fcntl.h>
 # include <iostream>
@@ -32,19 +30,21 @@ class Server {
 		Server(const Server& x);
 		Server& 	operator=(const Server& x);
 
-		//setters
-		void		setport(const std::string& port);
-		void		sethost(const std::string& host);
-		void		setindexes(const std::string& index);
-		void		setroot(const std::string& root);
-		void		setservername(const std::string& servername);
-		void		setclientbodysize(const std::string& clientbodysize);
-		void		seterrorpage(const std::string& errorpage);
-		void		set404page(const std::string& page);
-		void		setauth_basic_realm(const std::string& realm);
-		void		sethtpasswdpath(const std::string& path);
+private:	//setters
+		void		setport(const std::string& );
+		void		sethost(const std::string& );
+		void		setindexes(const std::string& );
+		void		setroot(const std::string& );
+		void		setservername(const std::string& );
+		void		setmaxfilesize(const std::string& );
+		void		seterrorpage(const std::string& );
+		void		set404page(const std::string& );
+		void		setauth_basic_realm(const std::string& );
+		void		sethtpasswdpath(const std::string& );
+		void		setautoindex(const std::string& );
+		void		configurelocation(const std::string& );
+public:
 		void		setSocketFd(int socketFd);
-		void		setautoindex(const std::string& ai);
 
 		//getters
 		size_t					getport() const;
@@ -52,7 +52,7 @@ class Server {
 		std::string				getindex() const;
 		std::string				getroot() const;
 		std::string				getservername() const;
-		long int				getclientbodysize() const;
+		long int				getmaxfilesize() const;
 		std::string				geterrorpage() const;
 		std::string				get404page() const;
 		std::string 			getauthbasicrealm() const;
@@ -61,17 +61,15 @@ class Server {
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
-		std::map<std::string, std::string> getbaseenv() const;
 
-		void		create_base_env();
 		Location	matchlocation(const std::string& uri) const;
 		std::string	getfilepath(const std::string& uri) const;
-		void		configurelocation(const std::string& in);
 		void		setup(int fd);
 		bool		getmatch(const std::string& username, const std::string& passwd);
+		bool		isExtensionAllowed(const std::string& uri, const std::string& extension) const;
 private:
 		size_t		_port;
-		long int	_client_body_size;
+		long int	_maxfilesize;
 		std::string _host,
 					_server_name,
 					_error_page,
@@ -83,7 +81,6 @@ private:
 		int			_fd, _socketFd;
 		std::vector<std::string> _indexes;
 		std::vector<Location> _locations;
-		std::map<std::string, std::string>	_base_env;
 		std::map<std::string, std::string>	_loginfo;
 };
 

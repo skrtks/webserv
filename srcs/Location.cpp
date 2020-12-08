@@ -15,11 +15,11 @@
 #include "libftGnl.hpp"
 #include "Colours.hpp"
 
-Location::Location() {
+Location::Location() : _maxBody(LONG_MAX) {
 	this->_location_match = "";
 }
 
-Location::Location(std::string& location_match) {
+Location::Location(std::string& location_match) : _maxBody(LONG_MAX) {
 	this->_location_match = location_match;
 	this->_autoindex = "off";
 }
@@ -27,7 +27,7 @@ Location::Location(std::string& location_match) {
 Location::~Location() {
 }
 
-Location::Location(const Location& x) {
+Location::Location(const Location& x) : _maxBody(LONG_MAX) {
 	*this = x;
 }
 
@@ -37,19 +37,37 @@ Location&	Location::operator=(const Location& x) {
 		this->_autoindex = x._autoindex;
 		this->_allow_method = x._allow_method;
 		this->_indexes = x._indexes;
-		this->_cgi = x._cgi;
+		this->_cgi_allowed_extensions = x._cgi_allowed_extensions;
 		this->_location_match = x._location_match;
 		this->_error_page = x._error_page;
+		this->_maxBody = x._maxBody;
 	}
 	return *this;
 }
 
+std::vector<e_method>	StringToMethod(const std::vector<std::string>& in) {
+	std::vector<e_method>	out;
+	for (std::vector<std::string>::const_iterator it = in.begin(); it != in.end(); it++) {
+		if (*it == "HEAD")
+			out.push_back(HEAD);
+		else if (*it == "GET")
+			out.push_back(GET);
+		else if (*it == "POST")
+			out.push_back(POST);
+		else if (*it == "PUT")
+			out.push_back(PUT);
+		else throw std::runtime_error("invalid method");
+	}
+	return (out);
+}
+
 //setters
 void	Location::setautoindex(const std::string& in) { this->_autoindex = in; }
-void	Location::setallow_method(const std::string& in) { this->_allow_method = ft::split(in, " \t\r\n\v\f"); }
+void	Location::setallow_method(const std::string& in) { this->_allow_method = StringToMethod(ft::split(in, " \t\r\n\v\f")); }
 void	Location::setindex(const std::string& in) { this->_indexes = ft::split(in, " \t\r\n\v\f"); }
-void	Location::setcgi(const std::string& in) { this->_cgi = ft::split(in, " \t\r\n\v\f"); }
+void	Location::setcgiallowedextensions(const std::string& in) { this->_cgi_allowed_extensions = ft::split(in, " \t\r\n\v\f"); }
 void	Location::seterrorpage(const std::string& in) { this->_error_page = in; }
+void	Location::setmaxbody(const std::string& in) { this->_maxBody = ft_atoi(in.c_str()); }
 void	Location::setroot(const std::string& in) {
 	struct stat statstruct = {};
 	this->_root = in;
@@ -61,20 +79,18 @@ void	Location::setroot(const std::string& in) {
 std::string					Location::getroot() const { return this->_root; }
 std::string					Location::getautoindex() const { return this->_autoindex; }
 std::string					Location::getlocationmatch() const { return this->_location_match; }
-std::vector<std::string>	Location::getallowmethods() const { return this->_allow_method; }
+std::vector<e_method>		Location::getallowmethods() const { return this->_allow_method; }
 std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
-std::vector<std::string>	Location::getcgi() const { return this->_cgi; }
-std::string					Location::geterrorpage() const { return this->_error_page; }
-std::string					Location::getindex() const {
-	struct stat statstruct = {};
-	std::string filepath;
+std::vector<std::string>	Location::getcgiallowedextensions() const { return this->_cgi_allowed_extensions; }
+std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
+long int					Location::getmaxbody() const { return this->_maxBody; }
+std::string					Location::getindex() const { return this->_indexes[0]; }
 
-	for (std::vector<std::string>::const_iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
-		filepath = this->_root + '/' + *it;
-		if (stat(filepath.c_str(), &statstruct) != -1)
-			return (filepath);
-	}
-	return "";
+bool		Location::checkifMethodAllowed(const e_method& meth) const {
+	for (std::vector<e_method>::const_iterator it = this->_allow_method.begin(); it != this->_allow_method.end(); ++it)
+		if (*it == meth)
+			return true;
+	return false;
 }
 
 void	Location::setup(int fd) {
@@ -83,8 +99,9 @@ void	Location::setup(int fd) {
 	m["autoindex"] = &Location::setautoindex;
 	m["allow_method"] = &Location::setallow_method;
 	m["index"] = &Location::setindex;
-	m["cgi"] = &Location::setcgi;
+	m["cgi"] = &Location::setcgiallowedextensions;
 	m["error_page"] = &Location::seterrorpage;
+	m["maxBody"] = &Location::setmaxbody;
 	std::string str;
 	
 	while (ft::get_next_line(fd, str) > 0) {
@@ -115,13 +132,14 @@ void	Location::addServerInfo(const std::string& root, const std::string& autoind
 
 std::ostream&	operator<<(std::ostream& o, const Location& x) {
 	std::vector<std::string> v;
+	std::vector<e_method>	meths;
 	o	<< "Location block \"" << x.getlocationmatch() << "\":" << std::endl
 		<< "\troot folder: \"" << x.getroot() << "\"" << std::endl
 		<< "\tautoindex is: \"" << x.getautoindex() << "\"" << std::endl;
 	o	<< "\tallowed methods:";
-	v = x.getallowmethods();
-	for (size_t i = 0; i < v.size(); i++)
-		o << " \"" << v[i] << "\"";
+	meths = x.getallowmethods();
+	for (size_t i = 0; i < meths.size(); i++)
+		o << " \"" << meths[i] << "\"";
 	o << std::endl;
 	o	<< "\tindexes:";
 	v = x.getindexes();
@@ -129,7 +147,7 @@ std::ostream&	operator<<(std::ostream& o, const Location& x) {
 		o << " \"" << v[i] << "\"";
 	o << std::endl;
 	o	<< "\tcgi:";
-	v = x.getcgi();
+	v = x.getcgiallowedextensions();
 	for (size_t i = 0; i < v.size(); i++)
 		o << " \"" << v[i] << "\"";
 	o << std::endl;
