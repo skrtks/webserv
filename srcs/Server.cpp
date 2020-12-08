@@ -13,14 +13,14 @@
 #include "Server.hpp"
 #include "libftGnl.hpp"
 
-Server::Server() : _port(80), _client_body_size(1000000),
+Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
 		_root("htmlfiles"),
 		_auth_basic_realm(), _htpasswd_path(),
 		_fd(), _socketFd() {
 }
 
-Server::Server(int fd) : _port(80), _client_body_size(1000000),
+Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
 		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
 		_socketFd() {
@@ -30,7 +30,7 @@ Server::Server(int fd) : _port(80), _client_body_size(1000000),
 Server::~Server() {
 }
 
-Server::Server(const Server& x) : _port(), _client_body_size(), _fd(), _socketFd() {
+Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd() {
 	*this = x;
 }
 
@@ -39,7 +39,7 @@ Server&	Server::operator=(const Server& x) {
 		this->_port = x._port;
 		this->_host = x._host;
 		this->_server_name = x._server_name;
-		this->_client_body_size = x._client_body_size;
+		this->_maxfilesize = x._maxfilesize;
 		this->_error_page = x._error_page;
 		this->_404_page = x._404_page;
 		this->_indexes = x._indexes;
@@ -102,14 +102,14 @@ void	Server::setservername(const std::string& servername) {
 	this->_server_name = servername;
 }
 
-long int	Server::getclientbodysize() const {
-	return this->_client_body_size;
+long int	Server::getmaxfilesize() const {
+	return this->_maxfilesize;
 }
 
-void	Server::setclientbodysize(const std::string& clientbodysize) {
-	this->_client_body_size = ft_atol(clientbodysize.c_str());
+void	Server::setmaxfilesize(const std::string& clientbodysize) {
+	this->_maxfilesize = ft_atol(clientbodysize.c_str());
 	if (clientbodysize[clientbodysize.find_first_not_of("1234567890")] == 'M')
-		this->_client_body_size *= 1000000;
+		this->_maxfilesize *= 1000000;
 }
 
 std::string	Server::geterrorpage() const {
@@ -178,8 +178,8 @@ void	Server::setup(int fd) {
 	m["auth_basic"] = &Server::setauth_basic_realm;
 	m["auth_basic_user_file"] = &Server::sethtpasswdpath;
 	m["server_name"] = &Server::setservername;
-	m["LIMIT_CLIENT_BODY_SIZE"] = &Server::setclientbodysize;
-	m["DEFAULT_ERROR_PAGE"] = &Server::seterrorpage;
+	m["max_filesize"] = &Server::setmaxfilesize;
+	m["error_page"] = &Server::seterrorpage;
 	m["location"] = &Server::configurelocation;
 	std::string str;
 
@@ -193,7 +193,7 @@ void	Server::setup(int fd) {
 //		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
 	}
-	if (_port <= 0 || _host.empty() || _client_body_size <= 0 || _error_page.empty() || _server_name.empty())
+	if (_port <= 0 || _host.empty() || _maxfilesize <= 0 || _error_page.empty() || _server_name.empty())
 		throw std::runtime_error("invalid setting in server block");
 }
 
@@ -244,7 +244,7 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 	Location loca = this->matchlocation(uri);
 	std::string filepath = this->getfilepath(uri);
 
-	if (stat(filepath.c_str(), &statstruct) != -1) {
+	if (stat(filepath.c_str(), &statstruct) != -1) { // or if file too big?
 		if (S_ISDIR(statstruct.st_mode))
 			filepath = loca.getindex();
 		if (!filepath.empty())
@@ -280,7 +280,7 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << "Default root folder: " << x.getroot() << std::endl;
 	o << "Default index page: " << x.getindex() << std::endl;
 	o << "error page: " << x.geterrorpage() << std::endl;
-	o << "client body limit: " << x.getclientbodysize() << std::endl << std::endl;
+	o << "client body limit: " << x.getmaxfilesize() << std::endl << std::endl;
 	std::vector<Location> v = x.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
 		o << v[i];

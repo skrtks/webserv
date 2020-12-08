@@ -33,18 +33,18 @@ class Server {
 		Server& 	operator=(const Server& x);
 
 private:	//setters
-		void		setport(const std::string& port);
-		void		sethost(const std::string& host);
-		void		setindexes(const std::string& index);
-		void		setroot(const std::string& root);
-		void		setservername(const std::string& servername);
-		void		setclientbodysize(const std::string& clientbodysize);
-		void		seterrorpage(const std::string& errorpage);
-		void		set404page(const std::string& page);
-		void		setauth_basic_realm(const std::string& realm);
-		void		sethtpasswdpath(const std::string& path);
-		void		setautoindex(const std::string& ai);
-		void		configurelocation(const std::string& in);
+		void		setport(const std::string& );
+		void		sethost(const std::string& );
+		void		setindexes(const std::string& );
+		void		setroot(const std::string& );
+		void		setservername(const std::string& );
+		void		setmaxfilesize(const std::string& );
+		void		seterrorpage(const std::string& );
+		void		set404page(const std::string& );
+		void		setauth_basic_realm(const std::string& );
+		void		sethtpasswdpath(const std::string& );
+		void		setautoindex(const std::string& );
+		void		configurelocation(const std::string& );
 public:
 		void		setSocketFd(int socketFd);
 
@@ -54,7 +54,7 @@ public:
 		std::string				getindex() const;
 		std::string				getroot() const;
 		std::string				getservername() const;
-		long int				getclientbodysize() const;
+		long int				getmaxfilesize() const;
 		std::string				geterrorpage() const;
 		std::string				get404page() const;
 		std::string 			getauthbasicrealm() const;
@@ -71,7 +71,7 @@ public:
 		bool		isExtensionAllowed(const std::string& uri, const std::string& extension) const;
 private:
 		size_t		_port;
-		long int	_client_body_size;
+		long int	_maxfilesize;
 		std::string _host,
 					_server_name,
 					_error_page,

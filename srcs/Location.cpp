@@ -15,11 +15,11 @@
 #include "libftGnl.hpp"
 #include "Colours.hpp"
 
-Location::Location() {
+Location::Location() : _maxBody(LONG_MAX) {
 	this->_location_match = "";
 }
 
-Location::Location(std::string& location_match) {
+Location::Location(std::string& location_match) : _maxBody(LONG_MAX) {
 	this->_location_match = location_match;
 	this->_autoindex = "off";
 }
@@ -27,7 +27,7 @@ Location::Location(std::string& location_match) {
 Location::~Location() {
 }
 
-Location::Location(const Location& x) {
+Location::Location(const Location& x) : _maxBody(LONG_MAX) {
 	*this = x;
 }
 
@@ -40,6 +40,7 @@ Location&	Location::operator=(const Location& x) {
 		this->_cgi_allowed_extensions = x._cgi_allowed_extensions;
 		this->_location_match = x._location_match;
 		this->_error_page = x._error_page;
+		this->_maxBody = x._maxBody;
 	}
 	return *this;
 }
@@ -50,6 +51,7 @@ void	Location::setallow_method(const std::string& in) { this->_allow_method = ft
 void	Location::setindex(const std::string& in) { this->_indexes = ft::split(in, " \t\r\n\v\f"); }
 void	Location::setcgiallowedextensions(const std::string& in) { this->_cgi_allowed_extensions = ft::split(in, " \t\r\n\v\f"); }
 void	Location::seterrorpage(const std::string& in) { this->_error_page = in; }
+void	Location::setmaxbody(const std::string& in) { this->_maxBody = ft_atoi(in.c_str()); }
 void	Location::setroot(const std::string& in) {
 	struct stat statstruct = {};
 	this->_root = in;
@@ -65,6 +67,7 @@ std::vector<std::string>	Location::getallowmethods() const { return this->_allow
 std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
 std::vector<std::string>	Location::getcgiallowedextensions() const { return this->_cgi_allowed_extensions; }
 std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
+long int					Location::getmaxbody() const { return this->_maxBody; }
 std::string					Location::getindex() const {
 	struct stat statstruct = {};
 	std::string filepath;
@@ -85,6 +88,7 @@ void	Location::setup(int fd) {
 	m["index"] = &Location::setindex;
 	m["cgi"] = &Location::setcgiallowedextensions;
 	m["error_page"] = &Location::seterrorpage;
+	m["maxBody"] = &Location::setmaxbody;
 	std::string str;
 	
 	while (ft::get_next_line(fd, str) > 0) {

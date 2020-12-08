@@ -34,6 +34,7 @@ private:		//setters
 		void	setindex(const std::string& );
 		void	setcgiallowedextensions(const std::string& );
 		void	seterrorpage(const std::string& );
+		void	setmaxbody(const std::string& );
 		
 public:			//getters
 		std::string					getroot() const;
@@ -44,6 +45,7 @@ public:			//getters
 		std::vector<std::string>	getindexes() const;
 		std::vector<std::string>	getcgiallowedextensions() const;
 		std::string					geterrorpage() const;
+		long						getmaxbody() const;
 		
 		void	setup(int );
 		void	addServerInfo(const std::string& root, const std::string& autoindex,
@@ -57,6 +59,7 @@ private:
 	std::vector<std::string>	_allow_method,
 								_indexes,
 								_cgi_allowed_extensions;
+	long						_maxBody;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Location& x);
