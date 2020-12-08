@@ -22,12 +22,13 @@
 #include "Colours.hpp"
 
 ResponseHandler::ResponseHandler() {
-	this->_body_length = -1;
+	this->_body_length = 0;
 	this->_status_code = 200;
-	_header_vals[ACCEPT_CHARSET].clear();
+	_header_vals[ACCEPT_CHARSET].clear(); // TODO ??
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
 	_header_vals[AUTHORIZATION].clear();
+	_header_vals[CONNECTION] = "close";
 	_header_vals[CONTENT_LANGUAGE].clear();
 	_header_vals[CONTENT_LENGTH].clear();
 	_header_vals[CONTENT_LOCATION].clear();
@@ -123,8 +124,11 @@ void ResponseHandler::handleBody(request_s& request) {
 
 std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
-	std::string response;
-	_response.push_back(response);
+	this->_body_length = request.body.length();
+	this->_response.resize(1);
+//	std::string response;
+	_response.front() = "";
+	std::cerr << _RED << "in handleRequest, _response immediately has size " << _response.size() << std::endl << _END;
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -179,10 +183,11 @@ void ResponseHandler::handlePost(request_s& request) {
 		if (*it == "POST")
 			PostIsAllowed = true;
 
-	request.uri = "/cgi-bin" + request.uri;
+	request.uri = "cgi-bin" + request.uri;
+	std::cerr << _CYAN "in handlePost, request.uri is " << request.uri << std::endl << _END;
 
 	if (!PostIsAllowed) {
-		_response[0] += "405 Method Not Allowed\r\n";
+		_status_code = 405;
 	}
 	else {
 		handleBody(request);
@@ -194,6 +199,10 @@ void ResponseHandler::generateResponse(request_s& request) {
 	_response[0] = "HTTP/1.1 ";
 	 if (this->authenticate(request))
 	  	return;
+	 if (this->_body_length > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
+	 	this->_status_code = 413;
+	 	return;
+	 }
 	if (request.status_code)
 		this->_status_code = request.status_code;
 
@@ -202,13 +211,14 @@ void ResponseHandler::generateResponse(request_s& request) {
 	else
 		handleBody(request);
 	handleStatusCode(request);
-	handleCONTENT_TYPE(request); //TODO Do we need to do this before handleBody( )
+	handleCONTENT_TYPE(request); //TODO Do we need to do this before handleBody( ) ?
 	handleALLOW();
 	handleDATE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
 	handleCONTENT_LANGUAGE(); //TODO Do we need to do this before handleBody( )
 	handleSERVER();
+	handleCONNECTION_HEADER();
 	_response[0] += "\r\n";
 	_response[0] += _body;
 	_body.clear();
@@ -234,11 +244,11 @@ int ResponseHandler::authenticate(request_s& request) {
 	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
 	request.headers[REMOTE_USER] = username;
 	if (request.server.getmatch(username, passwd)) {
-		std::cout << _GREEN << "Authorization successful!" << _END << std::endl;
+		std::cout << _GREEN "Authorization successful!" _END << std::endl;
 		return 0;
 	}
 
-	std::cout << _RED << "Authorization failed!" << _END << std::endl;
+	std::cout << _RED "Authorization failed!" _END << std::endl;
 	this->_status_code = 401;
 	_response[0] += "401 Unauthorized\r\n";
 	this->_response[0] +=	"Server: Webserv/0.1\r\n"
@@ -253,6 +263,7 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 	if (request.version.first != 1 && _status_code == 200)
 		_status_code = 505;
 	_response[0] += _status_codes[_status_code];
+	std::cerr << _RED "Status code: " << _response[0] << std::endl << _END;
 }
 
 
@@ -376,6 +387,10 @@ void ResponseHandler::handleRETRY_AFTER() {
 
 void ResponseHandler::handleSERVER() {
 	_response[0] += "Server: Webserv/1.0\r\n";
+}
+
+void ResponseHandler::handleCONNECTION_HEADER() {
+	_response[0] += "Connection: " + _header_vals[CONNECTION] + "\r\n";
 }
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {

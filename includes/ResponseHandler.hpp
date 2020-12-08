@@ -49,6 +49,7 @@ public:
 	void		handleLOCATION( std::string& url ); // Not yet used
 	void		handleRETRY_AFTER( ); // Not yet used
 	void		handleSERVER( );
+	void		handleCONNECTION_HEADER( );
 	void		handleTRANSFER_ENCODING( request_s& request ); // Not yet used
 	void		handleWWW_AUTHENTICATE( ); // Not yet implemented
 

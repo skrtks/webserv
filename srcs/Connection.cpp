@@ -17,7 +17,7 @@
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
 
-#define REQUEST_TIMEOUT 1000
+#define REQUEST_TIMEOUT 100000
 
 Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	FD_ZERO(&_master);
@@ -200,8 +200,8 @@ void Connection::receiveRequest(const int& fd) {
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	std::cout << "\nRESPONSE --------" << std::endl;
-//	for (size_t i = 0; i < msg.size(); i++)
-//		std::cout << msg[i] << std::endl;
+	for (size_t i = 0; i < msg.size(); i++)
+		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
 	std::cout << "\nRESPONSE END ----" << std::endl;
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
@@ -211,7 +211,7 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 	}
 	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1))
 		throw std::runtime_error(strerror(errno));
-	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
+//	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
 }
 

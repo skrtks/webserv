@@ -60,7 +60,6 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 	return *this;
 }
 
-
 request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;
@@ -192,7 +191,7 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 		_method = it->second;
 	}
 	else {
-		std::cout << "BAD REQ 7" << std::endl;
+		std::cerr << "BAD REQ 7: cant find method (" << ret << ") in _methodMap" << std::endl;
 		_status_code = 400;
 		return ;
 	}
@@ -264,7 +263,7 @@ void RequestParser::parseHeaders() {
 		else {
 			eoRequestLine = _rawRequest.find("\r\n", 0);
 			if (eoRequestLine == std::string::npos) {
-				std::cout << "BAD REQ 7" << std::endl;
+				std::cerr << "2. BAD REQ 7: cant find '\\r\\n' in _rawRequest" << std::endl;
 				_status_code = 400;
 				return ;
 			}
