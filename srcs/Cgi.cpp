@@ -108,7 +108,8 @@ int Cgi::run_cgi(request_s &request) {
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(1);
 	}
-	(void)write(secondpipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+	ssize_t dummy = write(secondpipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+	(void)dummy;
 	close(pipefd[1]);
 	close(secondpipe[0]);
 	this->clear_env();
