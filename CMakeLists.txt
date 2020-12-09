@@ -17,6 +17,7 @@ add_executable(webserv srcs/Base64.cpp
 		srcs/Server.cpp
 		srcs/Servermanager.cpp
 		srcs/split.cpp
+		srcs/utils.cpp
 		includes/Base64.hpp
 		includes/Cgi.hpp
 		includes/Colours.hpp
