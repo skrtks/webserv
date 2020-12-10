@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include <ctime>
 #include <sstream>
+#include "Colours.hpp"
 #include "Server.hpp"
 
 struct request_s {
@@ -31,7 +32,11 @@ struct request_s {
 	Server								server;
 	std::string							body;
 	bool								transfer_buffer;
+	std::string		MethodToSTring() const;
+
 };
+
+std::ostream&	operator<<(std::ostream& o, const request_s& r);
 
 class RequestParser {
 	int									_status_code;
@@ -57,8 +62,8 @@ public:
 	void			extractUri(size_t eoRequestLine, size_t pos, size_t pos2);
 	void			extractVersion(size_t eoRequestLine, size_t& pos, size_t &pos2);
 	e_method		getMethod() const;
-	static std::string		getMethod(e_method& x) ;
-	
+//	static std::string		getMethod(e_method& x) ;
+
 	const std::string&							getUri() const;
 	const std::pair<int, int>& 					getVersion() const;
 	const std::map<headerType, std::string>&	getHeaders() const;

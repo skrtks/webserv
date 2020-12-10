@@ -14,7 +14,7 @@
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"
 
-RequestParser::RequestParser() {
+RequestParser::RequestParser() : _method() {
 	_status_code = 0;
 	_methodMap["GET"] = GET;
 	_methodMap["HEAD"] = HEAD;
@@ -43,7 +43,7 @@ RequestParser::RequestParser() {
 RequestParser::~RequestParser() {
 }
 
-RequestParser::RequestParser(const RequestParser &obj) : _status_code() {
+RequestParser::RequestParser(const RequestParser &obj) : _status_code(), _method() {
 	*this = obj;
 }
 
@@ -297,8 +297,8 @@ const std::pair<int, int>& RequestParser::getVersion() const {
 	return _version;
 }
 
-std::string RequestParser::getMethod(e_method &x) {
-	switch (x) {
+std::string request_s::MethodToSTring() const {
+	switch (this->method) {
 		case GET:
 			return "GET";
 		case HEAD:
@@ -310,4 +310,16 @@ std::string RequestParser::getMethod(e_method &x) {
 		default:
 			return "NOMETHOD";
 	}
+}
+
+std::ostream&	operator<<(std::ostream& o, const request_s& r) {
+	o	<< _CYAN
+	<< "uri: " << r.uri << std::endl
+	<< "method: " << r.MethodToSTring() << std::endl
+	<< "status_code: " << r.status_code << std::endl
+	<< "HEADERS:" << std::endl;
+	for (std::map<headerType, std::string>::const_iterator it = r.headers.begin(); it != r.headers.end(); ++it)
+		o << headerTypeAsString(it->first) << ":" << it->second << std::endl;
+	o << _END << std::endl;
+	return o;
 }

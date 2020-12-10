@@ -29,6 +29,6 @@ add_executable(webserv srcs/Base64.cpp
 		includes/Server.hpp
 		includes/Servermanager.hpp
 		getnextline/get_next_line.cpp
-		getnextline/get_next_line.hpp includes/Enums.hpp srcs/Cgi.cpp)
+		getnextline/get_next_line.hpp includes/Enums.hpp srcs/Cgi.cpp srcs/Enums.cpp)
 
 target_link_libraries(webserv PUBLIC libft)

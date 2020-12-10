@@ -4,6 +4,7 @@
 
 #ifndef WEBSERV_ENUMS_HPP
 #define WEBSERV_ENUMS_HPP
+#include <string>
 
 enum headerType {
 	ACCEPT_CHARSET,
@@ -27,6 +28,8 @@ enum headerType {
 	USER_AGENT,
 	WWW_AUTHENTICATE
 };
+
+std::string	headerTypeAsString(const headerType& header);
 
 enum e_method {
 	GET, // These are mandatory according to rfc's

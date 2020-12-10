@@ -91,8 +91,20 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 
-	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
-		fd = this->CGI.run_cgi(request);
+	if (request.server.isExtensionAllowed(request.uri)) {
+		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
+			fd = this->CGI.run_cgi(request);
+		else {
+			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
+			size_t second_slash_index = request.uri.find_first_of('/', 1);
+			if (second_slash_index == std::string::npos)
+				request.uri = '/' + request.server.matchlocation(request.uri).getroot() + request.uri;
+			else
+				request.uri.replace(1, second_slash_index - 1, request.server.matchlocation(request.uri).getroot());
+			std::cerr << _CYAN _BOLD << "new uri is " << request.uri << ", second_slash_index used to be " << second_slash_index << _END << std::endl;
+			fd = this->CGI.run_cgi(request);
+		}
+	}
 	else
 		fd = request.server.getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
@@ -117,14 +129,20 @@ void ResponseHandler::handleBody(request_s& request) {
 //		std::cerr << _CYAN << "generate page: fd is " << fd << std::endl << _END;
 	}
 	while (ret == 1024) {
+		std::cerr << "before ret\n";
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
 			break ;
+		std::cerr << "read loop returned " << ret << std::endl;
 		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	}
-	close(fd);
+	std::cerr << "gonna close fd " << fd << std::endl;
+	if (close(fd) == -1) {
+		std::cerr << "closing fd in ResponseHandler failed: " << strerror(errno) << std::endl;
+		exit(EXIT_FAILURE);
+	}
 }
 
 std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
@@ -194,6 +212,8 @@ void ResponseHandler::handlePut(request_s& request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
+
+	std::cerr << request;
 
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;

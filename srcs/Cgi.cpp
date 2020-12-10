@@ -44,7 +44,7 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["REMOTE_ADDR"] = req.server.gethost();
 	this->_m["REMOTE_IDENT"] = ""; //TODO fill this one
 	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
-	this->_m["REQUEST_METHOD"] = RequestParser::getMethod(req.method);
+	this->_m["REQUEST_METHOD"] = req.MethodToSTring();
 	this->_m["REQUEST_URI"] = req.uri;
 	this->_m["SCRIPT_NAME"] = req.uri.substr(0, split_path - 1 );
 	this->_m["SERVER_NAME"] = req.server.getservername();
@@ -83,39 +83,47 @@ int Cgi::run_cgi(request_s &request) {
 	pid_t			pid;
 	int split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
 	std::string		scriptpath = request.uri.substr(1, split_path - 1);
-	std::string		extension(scriptpath);
 	char*			args[2] = {&scriptpath[0], NULL};
 
-	if (scriptpath.rfind('.') != std::string::npos)
-		extension = scriptpath.substr(scriptpath.rfind('.') );
 
-	if (stat(scriptpath.c_str(), &statstruct) == -1 || !request.server.isExtensionAllowed(request.uri, extension))
+	if (stat(scriptpath.c_str(), &statstruct) == -1)
 		return (open(request.server.geterrorpage().c_str(), O_RDONLY));
 
 	this->populate_map(request);
 	this->map_to_env();
 
-	if (pipe(outgoing_pipe) == -1)
+	if (pipe(outgoing_pipe) == -1 || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK) == -1)
 		exit_fatal();
-	if (request.method == POST && pipe(incoming_pipe) == -1)
-		exit_fatal();
+	if (request.method == POST)
+		if (pipe(incoming_pipe) == -1 || fcntl(incoming_pipe[1], F_SETFL, O_NONBLOCK) == -1)
+			exit_fatal();
+
 	if ((pid = fork()) == -1)
 		exit_fatal();
-	else if (pid == 0) {
-		if (dup2(outgoing_pipe[1], 1) == -1 || close(outgoing_pipe[0]) == -1 || close(outgoing_pipe[1]) == -1)
+	std::cerr << "pid is " << pid << std::endl;
+	if (pid == 0) {
+		std::cerr << "child first\n";
+		std::cerr << "child, in outgoing_pipe are fds [" << outgoing_pipe[0] << ", " << outgoing_pipe[1] << "]." << std::endl;
+		if (dup2(outgoing_pipe[1], 1) == -1 /* || close(outgoing_pipe[0]) == -1*/ /*|| close(outgoing_pipe[1]) == -1*/)
 			exit_fatal();
+		std::cerr << "child second\n";
 		if (request.method == POST) {
+			std::cerr << "child POST\n";
 			if (dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1 || close(incoming_pipe[1]) == -1)
 				exit_fatal();
 		}
+		std::cerr << "child last before execve\n";
 		if (execve(scriptpath.c_str(), args, _env) == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
+	std::cerr << "Main process first\n";
 	if (close(outgoing_pipe[1]) == -1)
 		exit_fatal();
+	std::cerr << "Main process second\n";
 	if (request.method == POST) {
+		std::cerr << "Main process POST\n";
 		if (close(incoming_pipe[0]) == -1)
 			exit_fatal();
 		ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
@@ -124,5 +132,6 @@ int Cgi::run_cgi(request_s &request) {
 			exit_fatal();
 	}
 	this->clear_env();
+	std::cerr << "Main process last\n";
 	return (outgoing_pipe[0]);
 }
