@@ -6,6 +6,7 @@
 #define WEBSERV_CGI_HPP
 #include <map>
 #include <string>
+#include "Colours.hpp"
 #include "Server.hpp"
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"

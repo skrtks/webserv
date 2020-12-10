@@ -4,6 +4,11 @@
 
 #include "Cgi.hpp"
 
+void	exit_fatal() {
+	std::cerr << _RED _BOLD << strerror(errno) << std::endl << _END;
+	exit(EXIT_FAILURE);
+}
+
 Cgi::Cgi() : _env() {
 
 }
@@ -33,12 +38,8 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["CONTENT_LENGTH"] = req.headers[CONTENT_LENGTH];
 	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE]; //TODO fill this one
 	this->_m["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_m["PATH_INFO"] = "";
-	if (split_path >= 0)
-		this->_m["PATH_INFO"] = req.uri.substr(split_path, req.uri.find_first_of('?') - split_path);
-	this->_m["PATH_TRANSLATED"] = "";
-	if (!_m["PATH_INFO"].empty())
-		this->_m["PATH_TRANSLATED"] = realpath + '/' + req.server.getroot() + this->_m["PATH_INFO"];
+	this->_m["PATH_INFO"] = req.uri;
+	this->_m["PATH_TRANSLATED"] = realpath + '/' + this->_m["PATH_INFO"];
 	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
 	this->_m["REMOTE_ADDR"] = req.server.gethost();
 	this->_m["REMOTE_IDENT"] = ""; //TODO fill this one
@@ -56,13 +57,13 @@ void	Cgi::map_to_env() {
 	int i = 0;
 	this->_env = (char**) ft_calloc(this->_m.size() + 1, sizeof(char*));
 	if (!_env)
-		exit(1);
+		exit_fatal();
 
 	for (std::map<std::string, std::string>::const_iterator it = _m.begin(); it != _m.end(); it++) {
 		std::string tmp = it->first + "=" + it->second;
 		this->_env[i] = ft_strdup(tmp.c_str());
 		if (!this->_env[i])
-			exit(1);
+			exit_fatal();
 		++i;
 	}
 }
@@ -77,12 +78,13 @@ void	Cgi::clear_env() {
 }
 
 int Cgi::run_cgi(request_s &request) {
+	int outgoing_pipe[2], incoming_pipe[2];
+	struct stat		statstruct = {};
+	pid_t			pid;
 	int split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
 	std::string		scriptpath = request.uri.substr(1, split_path - 1);
 	std::string		extension(scriptpath);
-	pid_t			pid;
-	struct stat		statstruct = {};
-	char			*args[2] = {&scriptpath[0], NULL};
+	char*			args[2] = {&scriptpath[0], NULL};
 
 	if (scriptpath.rfind('.') != std::string::npos)
 		extension = scriptpath.substr(scriptpath.rfind('.') );
@@ -92,26 +94,35 @@ int Cgi::run_cgi(request_s &request) {
 
 	this->populate_map(request);
 	this->map_to_env();
-	int pipefd[2],
-		secondpipe[2];
 
-	if ( pipe(pipefd) == -1 || pipe(secondpipe) == -1 || (pid = fork()) == -1 ) {
-		strerror(errno);
-		exit(1);
-	}
+	if (pipe(outgoing_pipe) == -1)
+		exit_fatal();
+	if (request.method == POST && pipe(incoming_pipe) == -1)
+		exit_fatal();
+	if ((pid = fork()) == -1)
+		exit_fatal();
 	else if (pid == 0) {
-		dup2(pipefd[1], 1);
-		dup2(secondpipe[0], 0); // Not needed, except for when using POST method
-		close(pipefd[0]); // Close pipes we dont use in our child
-		close(secondpipe[1]);
+		if (dup2(outgoing_pipe[1], 1) == -1 || close(outgoing_pipe[0]) == -1 || close(outgoing_pipe[1]) == -1)
+			exit_fatal();
+		if (request.method == POST) {
+			if (dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1 || close(incoming_pipe[1]) == -1)
+				exit_fatal();
+		}
 		if (execve(scriptpath.c_str(), args, _env) == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
-	ssize_t dummy = write(secondpipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
-	(void)dummy;
-	close(pipefd[1]);
-	close(secondpipe[0]);
+
+	if (close(outgoing_pipe[1]) == -1)
+		exit_fatal();
+	if (request.method == POST) {
+		if (close(incoming_pipe[0]) == -1)
+			exit_fatal();
+		ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+		(void)dummy;
+		if (close(incoming_pipe[1]) == -1)
+			exit_fatal();
+	}
 	this->clear_env();
-	return pipefd[0];
+	return (outgoing_pipe[0]);
 }

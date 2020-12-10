@@ -101,7 +101,7 @@ int ResponseHandler::generatePage(request_s& request) {
 }
 
 void ResponseHandler::handleBody(request_s& request) {
-	int		ret = 0;
+	int		ret = 1024;
 	char	buf[1024];
 	int		fd = 0;
 
@@ -116,14 +116,14 @@ void ResponseHandler::handleBody(request_s& request) {
 		fd = generatePage(request);
 //		std::cerr << _CYAN << "generate page: fd is " << fd << std::endl << _END;
 	}
-	do {
+	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
 			break ;
 		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
-	} while (ret > 0);
+	}
 	close(fd);
 }
 
