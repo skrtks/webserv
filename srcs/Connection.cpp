@@ -138,7 +138,9 @@ void Connection::startListening() {
 					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 				}
 				else { // Handle request & return response
-					receiveRequest(fd);
+					if (receiveRequest(fd) == 0) {
+						FD_CLR(fd, &_master);
+					}
 					FD_SET(fd, &_writeFds); // Add new connection to the set
 				}
 			}
@@ -151,7 +153,7 @@ void Connection::startListening() {
 				_parsedRequest = requestParser.parseRequest(req->second);
 				_parsedRequest.server = serverConnections[fd];
 				findRes = _parsedRequest.headers.find(TRANSFER_ENCODING);
-				if (checkIfEnded(req->second, findRes)) {
+				if (checkIfEnded(req->second, findRes) || receiveRequest(fd) == 0) {
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
 					closeConnection(fd);

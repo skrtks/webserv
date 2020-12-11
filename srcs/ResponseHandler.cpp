@@ -171,9 +171,9 @@ void ResponseHandler::handlePut(request_s& request) {
 		}
 	}
 //	_response[0] += "\r\n"; // This is commented out because it caused an unsollicited response in the tester
-//	handleLOCATION(filePath);
-//	_response[0] += "\r\n";
+	handleLOCATION(filePath);
 	_response[0] += "\r\n";
+//	_response[0] += "\r\n";
 }
 
 //void ResponseHandler::handlePost(request_s& request) {
