@@ -28,6 +28,7 @@ class Connection {
 	struct sockaddr_in _serverAddr; // Will contain info about port and ip
 	fd_set _master;    // master file descriptor list
 	fd_set _readFds;  // temp file descriptor list for select()
+	fd_set _writeFds;
 	std::string _rawRequest;
 	request_s _parsedRequest;
 	std::vector<Server> _servers;

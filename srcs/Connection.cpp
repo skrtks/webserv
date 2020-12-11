@@ -123,7 +123,7 @@ void Connection::startListening() {
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
 		_readFds = _master;
-		if (select(_fdMax + 1, &_readFds, NULL, NULL, NULL) == -1)
+		if (select(_fdMax + 1, &_readFds, &_writeFds, NULL, NULL) == -1)
 			throw std::runtime_error(strerror(errno));
 		// Go through existing connections looking for data to read
 		for (int fd = 0; fd <= _fdMax; fd++) {
@@ -147,6 +147,15 @@ void Connection::startListening() {
 					serverConnections.erase(fd);
 					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 				}
+			}
+			if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
+				_parsedRequest = requestParser.parseRequest(_rawRequest);
+				_parsedRequest.server = serverConnections[fd];
+				response = responseHandler.handleRequest(_parsedRequest);
+				sendReply(response, fd, _parsedRequest);
+				closeConnection(fd);
+				serverConnections.erase(fd);
+				std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 			}
 		}
 	}
