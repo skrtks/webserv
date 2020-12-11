@@ -135,27 +135,31 @@ void Connection::startListening() {
 				}
 				else if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
+					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 				}
 				else { // Handle request & return response
-					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 					receiveRequest(fd);
 					FD_SET(fd, &_writeFds); // Add new connection to the set
 				}
 			}
-			if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
+			else if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
 				std::map<int, std::string>::iterator req;
+				std::map<headerType, std::string>::iterator findRes;
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
 				}
 				_parsedRequest = requestParser.parseRequest(req->second);
 				_parsedRequest.server = serverConnections[fd];
-				response = responseHandler.handleRequest(_parsedRequest);
-				sendReply(response, fd, _parsedRequest);
-				closeConnection(fd);
-				FD_CLR(fd, &_writeFds);
-				serverConnections.erase(fd);
-				_requestStorage.erase(fd);
-				std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
+				findRes = _parsedRequest.headers.find(TRANSFER_ENCODING);
+				if (checkIfEnded(req->second, findRes)) {
+					response = responseHandler.handleRequest(_parsedRequest);
+					sendReply(response, fd, _parsedRequest);
+					closeConnection(fd);
+					FD_CLR(fd, &_writeFds);
+					serverConnections.erase(fd);
+					_requestStorage.erase(fd);
+					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
+				}
 			}
 		}
 	}
@@ -175,7 +179,7 @@ int Connection::addConnection(const int &socketFd) {
 	return _connectionFd;
 }
 
-void Connection::receiveRequest(const int& fd) {
+int Connection::receiveRequest(const int& fd) {
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
@@ -183,14 +187,13 @@ void Connection::receiveRequest(const int& fd) {
 	request.clear();
 	ft_memset(buf, 0, BUFLEN);
 	do {
-		bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
+		bytesReceived = recv(fd, buf, BUFLEN - 1, MSG_DONTWAIT);
 		std::cout << bytesReceived << std::endl;
-		if (bytesReceived == -1)
-			throw std::runtime_error(strerror(errno));
-		std::cout << buf << std::endl;
-		request.append(buf, 0, bytesReceived);
-		ft_memset(buf, 0, BUFLEN);
-	} while (bytesReceived == BUFLEN - 1);
+		if (bytesReceived > 0) {
+			request.append(buf, 0, bytesReceived);
+			ft_memset(buf, 0, BUFLEN);
+		}
+	} while (bytesReceived > 0);
 
 	std::map<int, std::string>::iterator req;
 	if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
@@ -200,6 +203,7 @@ void Connection::receiveRequest(const int& fd) {
 		req->second += request;
 	}
 
+	return bytesReceived;
 //	_rawRequest = request;
 //	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
 }
@@ -287,3 +291,21 @@ void Connection::handleCLI(const std::string& input) {
 	}
 }
 
+bool Connection::checkIfEnded(const std::string& request, std::map<headerType, std::string>::iterator encoding) {
+
+	if (encoding != _parsedRequest.headers.end() && encoding->second.find("chunked") != std::string::npos) {
+		size_t endSequencePos = request.find("\r\n0\r\n\r\n");
+		size_t len = request.length();
+		if (endSequencePos != std::string::npos && endSequencePos + 7 == len) {
+			return true;
+		}
+	}
+	else {
+		size_t endSequencePos = request.find_last_not_of("\r\n\r\n");
+		size_t len = request.length();
+		if (endSequencePos != std::string::npos && endSequencePos + 5 == len) {
+			return true;
+		}
+	}
+	return false;
+}

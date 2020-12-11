@@ -36,7 +36,7 @@ class Connection {
 	Servermanager _manager;
 	char *_configPath;
 	int addConnection(const int &socketFd);
-	void receiveRequest(const int& fd);
+	int receiveRequest(const int& fd);
 	void sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const;
 	void closeConnection(const int& fd);
 public:
@@ -54,6 +54,7 @@ public:
 	void loadConfiguration();
 	void handleCLI(const std::string& input);
 	void stopServer();
+	bool checkIfEnded(const std::string& request, std::map<headerType, std::string>::iterator encoding);
 };
 
 #endif //CONNECTION_HPP
