@@ -170,9 +170,7 @@ void ResponseHandler::handlePut(request_s& request) {
 			std::cerr << _RED "strerror: " << strerror(errno) << std::endl << _END;
 		}
 	}
-	_response[0] += "\r\n";
 	handleLOCATION(filePath);
-	_response[0] += "\r\n";
 	_response[0] += "\r\n";
 }
 
@@ -200,12 +198,12 @@ void ResponseHandler::generateResponse(request_s& request) {
 		_body.clear();
 		_body_length = _body.length();
 	}
-	 if (this->authenticate(request))
-	  	return;
-	 if (this->_body_length > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
-	 	this->_status_code = 413;
-	 	return;
-	 }
+	if (this->authenticate(request))
+		return;
+	if (this->_body_length > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
+		this->_status_code = 413;
+		return;
+	}
 	if (request.status_code)
 		this->_status_code = request.status_code;
 
