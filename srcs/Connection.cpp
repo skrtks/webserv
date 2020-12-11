@@ -139,13 +139,7 @@ void Connection::startListening() {
 				else { // Handle request & return response
 					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 					receiveRequest(fd);
-					_parsedRequest = requestParser.parseRequest(_rawRequest);
-					_parsedRequest.server = serverConnections[fd];
-					response = responseHandler.handleRequest(_parsedRequest);
-					sendReply(response, fd, _parsedRequest);
-					closeConnection(fd);
-					serverConnections.erase(fd);
-					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
+					FD_SET(fd, &_writeFds); // Add new connection to the set
 				}
 			}
 			if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
@@ -154,6 +148,7 @@ void Connection::startListening() {
 				response = responseHandler.handleRequest(_parsedRequest);
 				sendReply(response, fd, _parsedRequest);
 				closeConnection(fd);
+				FD_CLR(fd, &_writeFds);
 				serverConnections.erase(fd);
 				std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 			}
