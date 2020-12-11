@@ -176,33 +176,21 @@ int Connection::addConnection(const int &socketFd) {
 }
 
 void Connection::receiveRequest(const int& fd) {
-	struct timeval timeout = {0, REQUEST_TIMEOUT};
-
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
-	fd_set fdSet;
 	// Loop to receive complete request, even if buffer is smaller
-	FD_SET(fd, &fdSet);
 	request.clear();
 	ft_memset(buf, 0, BUFLEN);
-	bytesReceived = 0;
 	do {
-		if (select(fd + 1, &fdSet, NULL, NULL, &timeout) >= 0) {
-			if (FD_ISSET(fd, &fdSet))
-				bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
-			else
-				bytesReceived = 0;
-		} else {
-			bytesReceived = 0;
-		}
+		bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
 		std::cout << bytesReceived << std::endl;
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
-//		std::cout << buf << std::endl;
+		std::cout << buf << std::endl;
 		request.append(buf, 0, bytesReceived);
 		ft_memset(buf, 0, BUFLEN);
-	} while (bytesReceived > 0);
+	} while (bytesReceived == BUFLEN - 1);
 
 	std::map<int, std::string>::iterator req;
 	if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
