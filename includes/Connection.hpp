@@ -29,7 +29,7 @@ class Connection {
 	fd_set _master;    // master file descriptor list
 	fd_set _readFds;  // temp file descriptor list for select()
 	fd_set _writeFds;
-	std::string _rawRequest;
+	std::map<int, std::string> _requestStorage;
 	request_s _parsedRequest;
 	std::vector<Server> _servers;
 	std::map<int, Server> _serverMap; // key: socketFd; value: Corresponding server object

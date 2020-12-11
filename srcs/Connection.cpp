@@ -54,7 +54,7 @@ Connection& Connection::operator= (const Connection &obj) {
 		this->_serverAddr = obj._serverAddr;
 		this->_master = obj._master;
 		this->_readFds = obj._readFds;
-		this->_rawRequest = obj._rawRequest;
+		this->_requestStorage = obj._requestStorage;
 		this->_parsedRequest = obj._parsedRequest;
 		this->_servers = obj._servers;
 		this->_serverMap = obj._serverMap;
@@ -143,13 +143,18 @@ void Connection::startListening() {
 				}
 			}
 			if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
-				_parsedRequest = requestParser.parseRequest(_rawRequest);
+				std::map<int, std::string>::iterator req;
+				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
+					throw std::runtime_error("Error retrieving request from map");
+				}
+				_parsedRequest = requestParser.parseRequest(req->second);
 				_parsedRequest.server = serverConnections[fd];
 				response = responseHandler.handleRequest(_parsedRequest);
 				sendReply(response, fd, _parsedRequest);
 				closeConnection(fd);
 				FD_CLR(fd, &_writeFds);
 				serverConnections.erase(fd);
+				_requestStorage.erase(fd);
 				std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 			}
 		}
@@ -198,7 +203,16 @@ void Connection::receiveRequest(const int& fd) {
 		request.append(buf, 0, bytesReceived);
 		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived > 0);
-	_rawRequest = request;
+
+	std::map<int, std::string>::iterator req;
+	if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
+		_requestStorage.insert(std::make_pair(fd, request));
+	}
+	else {
+		req->second += request;
+	}
+
+//	_rawRequest = request;
 //	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
 }
 
