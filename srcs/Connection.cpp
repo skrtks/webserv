@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/12/11 10:20:46 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/12/11 10:25:46 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -199,10 +199,10 @@ void Connection::receiveRequest(const int& fd) {
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
-	std::cout << "\nRESPONSE --------" << std::endl;
-	for (size_t i = 0; i < msg.size(); i++)
-		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
-	std::cout << "\nRESPONSE END ----" << std::endl;
+	// std::cout << "\nRESPONSE --------" << std::endl;
+	// for (size_t i = 0; i < msg.size(); i++)
+	// 	std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
+	// std::cout << "\nRESPONSE END ----" << std::endl;
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
