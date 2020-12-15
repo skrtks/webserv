@@ -144,13 +144,12 @@ void Connection::startListening() {
 					FD_SET(fd, &_writeFds); // Add new connection to the set
 				}
 			}
-			else if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
+			else if (FD_ISSET(fd, &_writeFds) && fd > STDERR_FILENO) { // Returns true if fd is active
 				std::map<int, std::string>::iterator req;
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
 				}
-
-				if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
+				else if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
