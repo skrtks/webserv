@@ -54,7 +54,7 @@ public:
 	void loadConfiguration();
 	void handleCLI(const std::string& input);
 	void stopServer();
-	bool checkIfEnded(const std::string& request, std::map<headerType, std::string>::iterator encoding);
+	bool checkIfEnded(const std::string& request, RequestParser requestParser);
 };
 
 #endif //CONNECTION_HPP
