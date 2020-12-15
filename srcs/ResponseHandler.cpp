@@ -104,6 +104,7 @@ int ResponseHandler::generatePage(request_s& request) {
 				request.uri.replace(1, second_slash_index - 1, request.server.matchlocation(request.uri).getroot());
 			std::cerr << _CYAN _BOLD << "new uri is " << request.uri << ", second_slash_index used to be " << second_slash_index << _END << std::endl;
 			fd = this->CGI.run_cgi(request);
+			std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
 		}
 	}
 	else
@@ -117,6 +118,7 @@ void ResponseHandler::handleBody(request_s& request) {
 	int		ret = 1024;
 	char	buf[1024];
 	int		fd = 0;
+	int totalreadsize = 0;
 
 	_body_length = 0;
 	_body.clear();
@@ -130,10 +132,12 @@ void ResponseHandler::handleBody(request_s& request) {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
 			break ;
+		totalreadsize += ret;
 		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	}
+	std::cerr << _CYAN "Total read size is " << totalreadsize << ".\n";
 	if (close(fd) == -1) {
 		exit(EXIT_FAILURE);
 	}

@@ -80,8 +80,8 @@ void	Cgi::clear_env() {
 int Cgi::run_cgi(request_s &request) {
 	pid_t			pid;
 	struct stat		statstruct = {};
-	int				outgoing_pipe[2],
-					incoming_pipe[2];
+	int				incoming_file,
+					outgoing_file;
 	int 			split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
 	std::string		scriptpath = request.uri.substr(1, split_path - 1);
 	char*			args[2] = {&scriptpath[0], NULL};
@@ -92,38 +92,35 @@ int Cgi::run_cgi(request_s &request) {
 
 	this->populate_map(request);
 	this->map_to_env();
-
-	if (pipe(outgoing_pipe) == -1 || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK) == -1)
-		exit_fatal();
-//	if (request.method == POST)
-	if (pipe(incoming_pipe) == -1 || fcntl(incoming_pipe[1], F_SETFL, O_NONBLOCK) == -1)
-		exit_fatal();
-
 	if ((pid = fork()) == -1)
 		exit_fatal();
 	if (pid == 0) {
-		if (close(outgoing_pipe[0]) == -1 || dup2(outgoing_pipe[1], 1) == -1 || (close(outgoing_pipe[1]) == -1))
+		std::cerr << "child truncates and opens webservout\n";
+		if ((outgoing_file = open("/tmp/webservout", O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU)) == -1)
 			exit_fatal();
-//		if (request.method == POST) {
-		if (close(incoming_pipe[1]) == -1 || dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1)
+		if (dup2(outgoing_file, STDOUT_FILENO) == -1)
 			exit_fatal();
-//		}
+		if ((incoming_file = open("/tmp/webservin", O_RDONLY)) == -1)
+			exit_fatal();
+		if (dup2(incoming_file, STDIN_FILENO) == -1)
+			exit_fatal();
+
 		if (execve(scriptpath.c_str(), args, _env) == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	if (close(outgoing_pipe[1]) == -1)
+	if ((incoming_file = open("/tmp/webservin", O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU)) == -1)
 		exit_fatal();
-//	if (request.method == POST) {
-	if (close(incoming_pipe[0]) == -1)
-		exit_fatal();
-	std::cerr << _CYAN "gonna write a body of size " << request.body.length() << " into the execve.\n" _END;
-	ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+	ssize_t dummy = write(incoming_file, request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
 	(void)dummy;
-	if (close(incoming_pipe[1]) == -1)
+	std::cout << _CYAN "just wrote a body of size " << dummy << " into the execve.\n" _END;
+	if (close(incoming_file) == -1)
 		exit_fatal();
-//	}
+	usleep(500);
+	std::cerr << "main process opens webservout in rdonly mode\n";
+	if ((outgoing_file = open("/tmp/webservout", O_RDONLY)) == -1)
+		exit_fatal();
 	this->clear_env();
-	return (outgoing_pipe[0]);
+	return (outgoing_file);
 }
