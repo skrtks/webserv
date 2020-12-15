@@ -149,7 +149,7 @@ void Connection::startListening() {
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
 				}
-				
+
 				if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
 					_parsedRequest.server = serverConnections[fd];

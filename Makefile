@@ -6,7 +6,7 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/11/10 12:12:43 by peerdb        ########   odam.nl          #
+#    Updated: 2020/12/10 14:26:54 by peerdb        ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,6 +42,7 @@ all: $(NAME)
 $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
 	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
+	mkdir -p htmlfiles/Downloads
 
 %.a: %
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
