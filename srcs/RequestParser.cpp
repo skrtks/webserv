@@ -60,6 +60,24 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 	return *this;
 }
 
+request_s RequestParser::parseHeadersOnly(const std::string &req) {
+	request_s request;
+	_rawRequest = req;
+	_headers.clear();
+	_status_code = 0;
+
+	parseRequestLine();
+	if (_status_code == 0)
+		parseHeaders();
+	if (_status_code == 0) {
+		request.headers = _headers;
+		request.method = _method;
+		request.version = _version;
+		request.uri = _uri;
+	}
+	return (request);
+}
+
 request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;

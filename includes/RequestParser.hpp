@@ -50,6 +50,7 @@ public:
 	RequestParser&	operator= (const RequestParser &obj);
 
 	request_s		parseRequest(const std::string &req);
+	request_s		parseHeadersOnly(const std::string &req);
 	void			parseRequestLine();
 	void			parseHeaders();
 	void			setRawRequest(const std::string& rawRequest);
