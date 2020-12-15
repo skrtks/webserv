@@ -209,10 +209,10 @@ int Connection::receiveRequest(const int& fd) {
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
-	std::cout << "\nRESPONSE --------" << std::endl;
-	for (size_t i = 0; i < msg.size(); i++)
-		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
-	std::cout << "\nRESPONSE END ----" << std::endl;
+//	std::cout << "\nRESPONSE --------" << std::endl;
+//	for (size_t i = 0; i < msg.size(); i++)
+//		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
+//	std::cout << "\nRESPONSE END ----" << std::endl;
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))

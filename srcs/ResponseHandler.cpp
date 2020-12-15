@@ -117,7 +117,7 @@ void ResponseHandler::handleBody(request_s& request) {
 	int		ret = 1024;
 	char	buf[1024];
 	int		fd = 0;
-
+	int		totalreadsize = 0;
 	_body_length = 0;
 	_body.clear();
 	if (request.status_code == 400) {
@@ -128,12 +128,16 @@ void ResponseHandler::handleBody(request_s& request) {
 	}
 	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
-		if (ret <= 0)
-			break ;
+		if (ret <= 0) {
+			std::cerr << _RED "read returned " << ret << ", errno gives " << strerror(errno) << std::endl << _END;
+			break;
+		}
+		totalreadsize += ret;
 		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	}
+	std::cerr << _GREEN "Total read size is " << totalreadsize << ".\n" _END;
 	if (close(fd) == -1) {
 		exit(EXIT_FAILURE);
 	}

@@ -93,7 +93,7 @@ int Cgi::run_cgi(request_s &request) {
 	this->populate_map(request);
 	this->map_to_env();
 
-	if (pipe(outgoing_pipe) == -1 || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK) == -1)
+	if (pipe(outgoing_pipe) == -1) // || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK) == -1)
 		exit_fatal();
 //	if (request.method == POST)
 	if (pipe(incoming_pipe) == -1 || fcntl(incoming_pipe[1], F_SETFL, O_NONBLOCK) == -1)
@@ -120,6 +120,7 @@ int Cgi::run_cgi(request_s &request) {
 		exit_fatal();
 	std::cerr << _CYAN "gonna write a body of size " << request.body.length() << " into the execve.\n" _END;
 	ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+	std::cerr << "done writing\n";
 	(void)dummy;
 	if (close(incoming_pipe[1]) == -1)
 		exit_fatal();
