@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/29 13:47:07 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/12/15 13:01:30 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,14 +146,11 @@ void Connection::startListening() {
 			}
 			else if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
 				std::map<int, std::string>::iterator req;
-				std::map<headerType, std::string>::iterator findRes;
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
 				}
-				_parsedRequest = requestParser.parseRequest(req->second);
-				_parsedRequest.server = serverConnections[fd];
-				findRes = _parsedRequest.headers.find(TRANSFER_ENCODING);
-				if (checkIfEnded(req->second, findRes) || receiveRequest(fd) == 0) {
+				
+				if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
@@ -295,9 +292,14 @@ void Connection::handleCLI(const std::string& input) {
 	}
 }
 
-bool Connection::checkIfEnded(const std::string& request, std::map<headerType, std::string>::iterator encoding) {
+bool Connection::checkIfEnded(const std::string& request, RequestParser requestParser) {
+	std::map<headerType, std::string>::iterator encoding;
+	request_s									tmpRequest;
 
-	if (encoding != _parsedRequest.headers.end() && encoding->second.find("chunked") != std::string::npos) {
+	tmpRequest = requestParser.parseHeadersOnly(request);
+	encoding = tmpRequest.headers.find(TRANSFER_ENCODING);
+
+	if (encoding != tmpRequest.headers.end() && encoding->second.find("chunked") != std::string::npos) {
 		size_t endSequencePos = request.find("\r\n0\r\n\r\n");
 		size_t len = request.length();
 		if (endSequencePos != std::string::npos && endSequencePos + 7 == len) {

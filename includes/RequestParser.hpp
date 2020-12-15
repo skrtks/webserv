@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:32 by sam           #+#    #+#                 */
-/*   Updated: 2020/12/15 11:59:53 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/12/15 13:01:05 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ public:
 
 	request_s		parseRequest(const std::string &req);
 	std::string		parseBody();
+	request_s		parseHeadersOnly(const std::string &req);
 	void			parseRequestLine();
 	void			parseHeaders();
 	void			setRawRequest(const std::string& rawRequest);
