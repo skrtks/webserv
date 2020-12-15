@@ -56,7 +56,7 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 
 clean:
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
-	@rm -f $(OBJS)
+	@rm -f $(OBJS) htmlfiles/Downloads/file_should_exist_after
 	@make clean -s -C getnextline
 	@make clean -s -C libft
 

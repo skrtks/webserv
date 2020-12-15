@@ -93,21 +93,21 @@ int Cgi::run_cgi(request_s &request) {
 	this->populate_map(request);
 	this->map_to_env();
 
-	if (pipe(outgoing_pipe) == -1) // || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK))
+	if (pipe(outgoing_pipe) == -1 || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK))
 		exit_fatal();
-	if (request.method == POST)
-		if (pipe(incoming_pipe) == -1) // || fcntl(incoming_pipe[1], F_SETFL, O_NONBLOCK) == -1)
-			exit_fatal();
+//	if (request.method == POST)
+	if (pipe(incoming_pipe) == -1 || fcntl(incoming_pipe[1], F_SETFL, O_NONBLOCK) == -1)
+		exit_fatal();
 
 	if ((pid = fork()) == -1)
 		exit_fatal();
 	if (pid == 0) {
 		if (close(outgoing_pipe[0]) == -1 || dup2(outgoing_pipe[1], 1) == -1 || (close(outgoing_pipe[1]) == -1))
 			exit_fatal();
-		if (request.method == POST) {
-			if (close(incoming_pipe[1]) == -1 || dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1)
-				exit_fatal();
-		}
+//		if (request.method == POST) {
+		if (close(incoming_pipe[1]) == -1 || dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1)
+			exit_fatal();
+//		}
 		if (execve(scriptpath.c_str(), args, _env) == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
@@ -115,14 +115,14 @@ int Cgi::run_cgi(request_s &request) {
 
 	if (close(outgoing_pipe[1]) == -1)
 		exit_fatal();
-	if (request.method == POST) {
-		if (close(incoming_pipe[0]) == -1)
-			exit_fatal();
-		ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
-		(void)dummy;
-		if (close(incoming_pipe[1]) == -1)
-			exit_fatal();
-	}
+//	if (request.method == POST) {
+	if (close(incoming_pipe[0]) == -1)
+		exit_fatal();
+	ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+	(void)dummy;
+	if (close(incoming_pipe[1]) == -1)
+		exit_fatal();
+//	}
 	this->clear_env();
 	return (outgoing_pipe[0]);
 }
