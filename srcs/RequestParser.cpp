@@ -254,12 +254,12 @@ void RequestParser::parseHeaders() {
 				return ;
 			}
 			std::string header = _rawRequest.substr(0, pos);
-			if (header.empty() || header.length() == 0) {
+			if (header.empty() || header.length() == 0) { // TODO Isnt this twice the same?
 				std::cerr << "BAD REQ 10.1" << std::endl;
 				_status_code = 400;
 				return ;
 			}
-			for (size_t i = 0; header[i]; i++) {
+			for (size_t i = 0; header[i]; i++) { // TODO Just check if (header.find(' ') != std::string::npos)
 				if (header[i] == ' ') {
 					std::cerr << "BAD REQ 10" << std::endl;
 					_status_code = 400;
@@ -268,7 +268,7 @@ void RequestParser::parseHeaders() {
 			}
 			pos++;
 			// 'Skip' over OWS at beginning of value string
-			for (int i = pos; _rawRequest[i] == ' '; i++)
+			for (int i = pos; _rawRequest[i] == ' '; i++) // TODO Just do pos = _rawRequest.find_first_not_of(' ', pos)
 				pos++;
 			owsOffset = 0;
 			// Create offset for OWS at end of value string
@@ -356,7 +356,7 @@ std::ostream&	operator<<(std::ostream& o, const request_s& r) {
 	<< "status_code: " << r.status_code << std::endl
 	<< "HEADERS:" << std::endl;
 	for (std::map<headerType, std::string>::const_iterator it = r.headers.begin(); it != r.headers.end(); ++it)
-		o << headerTypeAsString(it->first) << ":" << it->second << std::endl;
+		o << '\t' << headerTypeAsString(it->first) << ": " << it->second << std::endl;
 	o << _END << std::endl;
 	return o;
 }

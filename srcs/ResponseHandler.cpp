@@ -148,6 +148,7 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	this->_body_length = request.body.length();
 	this->_response.resize(1);
 	_response.front() = "";
+	std::cerr << request << std::endl;
 //	std::cerr << _RED << "in handleRequest, _response immediately has size " << _response.size() << std::endl << _END;
 	if (request.method == PUT) {
 		handlePut(request);
@@ -193,8 +194,6 @@ void ResponseHandler::handlePut(request_s& request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
-
-	std::cerr << request;
 
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
