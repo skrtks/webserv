@@ -91,6 +91,7 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 
+
 	if (request.server.isExtensionAllowed(request.uri)) {
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
 			fd = this->CGI.run_cgi(request);
@@ -194,21 +195,6 @@ void ResponseHandler::handlePut(request_s& request) {
 	_response[0] += "\r\n";
 }
 
-//void ResponseHandler::handlePost(request_s& request) {
-//	_response[0] = "HTTP/1.1 ";
-//	request.uri = "cgi-bin" + request.uri;
-//	std::cerr << _CYAN "in handlePost, request.uri is " << request.uri << std::endl << _END;
-//
-//	if (!PostIsAllowed) {
-//		_status_code = 405;
-//		_body_length = 0;
-//		_body.clear();
-//	}
-//	else {
-//		handleBody(request);
-//	}
-//}
-
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
@@ -229,9 +215,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 	if (request.status_code)
 		this->_status_code = request.status_code;
 
-//	if (request.method == POST)
-//		handlePost(request);
-//	else
 	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request); //TODO Do we need to do this before handleBody( ) ?

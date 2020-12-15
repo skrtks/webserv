@@ -187,7 +187,7 @@ void Connection::receiveRequest(const int& fd) {
 		} else {
 			bytesReceived = 0;
 		}
-		std::cout << bytesReceived << std::endl;
+//		std::cout << bytesReceived << std::endl;
 		if (bytesReceived == -1)
 			throw std::runtime_error(strerror(errno));
 //		std::cout << buf << std::endl;
