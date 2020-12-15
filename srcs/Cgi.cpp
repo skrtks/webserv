@@ -78,10 +78,11 @@ void	Cgi::clear_env() {
 }
 
 int Cgi::run_cgi(request_s &request) {
-	int outgoing_pipe[2], incoming_pipe[2];
-	struct stat		statstruct = {};
 	pid_t			pid;
-	int split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
+	struct stat		statstruct = {};
+	int				outgoing_pipe[2],
+					incoming_pipe[2];
+	int 			split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
 	std::string		scriptpath = request.uri.substr(1, split_path - 1);
 	char*			args[2] = {&scriptpath[0], NULL};
 
@@ -100,15 +101,11 @@ int Cgi::run_cgi(request_s &request) {
 
 	if ((pid = fork()) == -1)
 		exit_fatal();
-	std::cerr << "pid is " << pid << std::endl;
 	if (pid == 0) {
-		std::cerr << "child first\n";
-		std::cerr << "child, in outgoing_pipe are fds [" << outgoing_pipe[0] << ", " << outgoing_pipe[1] << "]." << std::endl;
 		if (close(outgoing_pipe[0]) == -1 || dup2(outgoing_pipe[1], 1) == -1 || (close(outgoing_pipe[1]) == -1))
 			exit_fatal();
 		if (request.method == POST) {
-			std::cerr << "child POST\n";
-			if (dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1 || close(incoming_pipe[1]) == -1)
+			if (close(incoming_pipe[1]) == -1 || dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1)
 				exit_fatal();
 		}
 		if (execve(scriptpath.c_str(), args, _env) == -1)
@@ -116,12 +113,9 @@ int Cgi::run_cgi(request_s &request) {
 		exit(EXIT_FAILURE);
 	}
 
-	std::cerr << "Main process first\n";
 	if (close(outgoing_pipe[1]) == -1)
 		exit_fatal();
-	std::cerr << "Main process second\n";
 	if (request.method == POST) {
-		std::cerr << "Main process POST\n";
 		if (close(incoming_pipe[0]) == -1)
 			exit_fatal();
 		ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
@@ -130,6 +124,5 @@ int Cgi::run_cgi(request_s &request) {
 			exit_fatal();
 	}
 	this->clear_env();
-	std::cerr << "Main process last\n";
 	return (outgoing_pipe[0]);
 }

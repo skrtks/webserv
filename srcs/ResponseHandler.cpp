@@ -120,28 +120,21 @@ void ResponseHandler::handleBody(request_s& request) {
 
 	_body_length = 0;
 	_body.clear();
-//	std::cerr << _CYAN "status_code is " << request.status_code << std::endl << _END;
 	if (request.status_code == 400) {
 		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
-//		std::cerr << _CYAN << "fd is " << fd << ", error page is at " << request.server.matchlocation(request.uri).geterrorpage() << std::endl << _END;
 	}
 	else {
 		fd = generatePage(request);
-//		std::cerr << _CYAN << "generate page: fd is " << fd << std::endl << _END;
 	}
 	while (ret == 1024) {
-		std::cerr << "before ret\n";
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
 			break ;
-		std::cerr << "read loop returned " << ret << std::endl;
 		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	}
-	std::cerr << "gonna close fd " << fd << std::endl;
 	if (close(fd) == -1) {
-		std::cerr << "closing fd in ResponseHandler failed: " << strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 }
