@@ -154,6 +154,8 @@ void Connection::startListening() {
 				_parsedRequest.server = serverConnections[fd];
 				findRes = _parsedRequest.headers.find(TRANSFER_ENCODING);
 				if (checkIfEnded(req->second, findRes) || receiveRequest(fd) == 0) {
+					_parsedRequest = requestParser.parseRequest(req->second);
+					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
 					closeConnection(fd);
