@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/29 14:00:32 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/12/15 12:54:36 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,12 +60,38 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 	return *this;
 }
 
+std::string RequestParser::parseBody()
+{
+	std::string ret;
+	std::size_t pos, i = 0;
+
+	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
+	std::cout << ret << std::endl;
+	while (1) {
+		pos = ret.find("\r\n");
+		if (pos == std::string::npos)
+			break ;
+		i = pos + 1;
+		i = ret.find("\r\n", i);
+		if (i == std::string::npos)
+			break ;
+		while (ret[i] != '\n')
+			i++;
+		ret.erase(pos, (i - pos) + 1);
+		if ((pos = ret.find("\r\n")) == ret.find_last_of("\r\n") || ret.find("\r\n", pos+=1) == std::string::npos)
+			break ;
+	}
+	std::cout << ret << std::endl;
+	return ret;
+}
+
 request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request;
 	_rawRequest = req;
 	_headers.clear();
 	_status_code = 0;
 	
+	std::cout << _rawRequest << std::endl;;
 	parseRequestLine();
 	if (_status_code == 0)
 		parseHeaders();
@@ -75,7 +101,12 @@ request_s RequestParser::parseRequest(const std::string &req) {
 		request.version = _version;
 		request.uri = _uri;
 	}
-	request.body = _rawRequest; // Replace this with parseBody()
+	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
+		request.body = parseBody(); // Replace this with parseBody()
+	}
+	else
+		request.body = _rawRequest;
+	
 	std::map<headerType, std::string>::iterator it;
 
 //	if (!_headers[CONTENT_LENGTH].empty()) {
