@@ -219,8 +219,10 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 				throw std::runtime_error(strerror(errno));
 		}
 	}
-	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1))
+	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
+		std::cerr << _BLUE "else send body of size " << msg[0].length() << _END << std::endl;
 		throw std::runtime_error(strerror(errno));
+	}
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
 }

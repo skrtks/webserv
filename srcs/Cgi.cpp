@@ -93,7 +93,7 @@ int Cgi::run_cgi(request_s &request) {
 	this->populate_map(request);
 	this->map_to_env();
 
-	if (pipe(outgoing_pipe) == -1 || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK))
+	if (pipe(outgoing_pipe) == -1 || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK) == -1)
 		exit_fatal();
 //	if (request.method == POST)
 	if (pipe(incoming_pipe) == -1 || fcntl(incoming_pipe[1], F_SETFL, O_NONBLOCK) == -1)
