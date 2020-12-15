@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/06 12:01:35 by sam           #+#    #+#                 */
-/*   Updated: 2020/12/15 13:07:55 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/12/15 13:14:41 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,6 @@ std::string RequestParser::parseBody()
 	std::size_t pos, i = 0;
 
 	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
-	std::cout << ret << std::endl;
 	while (1) {
 		pos = ret.find("\r\n");
 		if (pos == std::string::npos)
@@ -81,7 +80,6 @@ std::string RequestParser::parseBody()
 		if ((pos = ret.find("\r\n")) == ret.find_last_of("\r\n") || ret.find("\r\n", pos+=1) == std::string::npos)
 			break ;
 	}
-	std::cout << ret << std::endl;
 	return ret;
 }
 
@@ -105,9 +103,8 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 }
 
 request_s RequestParser::parseRequest(const std::string &req) {
-	(void)req;
-	request_s request;
-	
+	request_s request = parseHeadersOnly(req);
+
 	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
 		request.body = parseBody(); // Replace this with parseBody()
 	}

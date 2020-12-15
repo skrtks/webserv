@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/12/15 13:01:30 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/12/15 13:13:50 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -204,9 +204,9 @@ int Connection::receiveRequest(const int& fd) {
 		req->second += request;
 	}
 
+	// std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << request << " ----------- END REQUEST ----------- \n" << std::endl;
 	return bytesReceived;
 //	_rawRequest = request;
-//	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
