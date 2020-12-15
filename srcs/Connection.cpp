@@ -6,7 +6,7 @@
 /*   By: sam <sam@student.codam.nl>                   +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/03 15:26:44 by sam           #+#    #+#                 */
-/*   Updated: 2020/11/29 13:47:07 by tuperera      ########   odam.nl         */
+/*   Updated: 2020/12/15 13:13:50 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ Connection& Connection::operator= (const Connection &obj) {
 		this->_serverAddr = obj._serverAddr;
 		this->_master = obj._master;
 		this->_readFds = obj._readFds;
-		this->_rawRequest = obj._rawRequest;
+		this->_requestStorage = obj._requestStorage;
 		this->_parsedRequest = obj._parsedRequest;
 		this->_servers = obj._servers;
 		this->_serverMap = obj._serverMap;
@@ -123,7 +123,7 @@ void Connection::startListening() {
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
 		_readFds = _master;
-		if (select(_fdMax + 1, &_readFds, NULL, NULL, NULL) == -1)
+		if (select(_fdMax + 1, &_readFds, &_writeFds, NULL, NULL) == -1)
 			throw std::runtime_error(strerror(errno));
 		// Go through existing connections looking for data to read
 		for (int fd = 0; fd <= _fdMax; fd++) {
@@ -135,16 +135,30 @@ void Connection::startListening() {
 				}
 				else if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
+					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 				}
 				else { // Handle request & return response
-					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
-					receiveRequest(fd);
-					_parsedRequest = requestParser.parseRequest(_rawRequest);
+					if (receiveRequest(fd) == 0) {
+						FD_CLR(fd, &_master);
+					}
+					FD_SET(fd, &_writeFds); // Add new connection to the set
+				}
+			}
+			else if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
+				std::map<int, std::string>::iterator req;
+				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
+					throw std::runtime_error("Error retrieving request from map");
+				}
+
+				if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
+					_parsedRequest = requestParser.parseRequest(req->second);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
 					closeConnection(fd);
+					FD_CLR(fd, &_writeFds);
 					serverConnections.erase(fd);
+					_requestStorage.erase(fd);
 					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 				}
 			}
@@ -166,36 +180,33 @@ int Connection::addConnection(const int &socketFd) {
 	return _connectionFd;
 }
 
-void Connection::receiveRequest(const int& fd) {
-	struct timeval timeout = {0, REQUEST_TIMEOUT};
-
+int Connection::receiveRequest(const int& fd) {
 	char buf[BUFLEN];
 	std::string request;
 	int bytesReceived;
-	fd_set fdSet;
 	// Loop to receive complete request, even if buffer is smaller
-	FD_SET(fd, &fdSet);
 	request.clear();
 	ft_memset(buf, 0, BUFLEN);
-	bytesReceived = 0;
 	do {
-		if (select(fd + 1, &fdSet, NULL, NULL, &timeout) >= 0) {
-			if (FD_ISSET(fd, &fdSet))
-				bytesReceived = recv(fd, buf, BUFLEN - 1, 0);
-			else
-				bytesReceived = 0;
-		} else {
-			bytesReceived = 0;
+		bytesReceived = recv(fd, buf, BUFLEN - 1, MSG_DONTWAIT);
+		std::cout << bytesReceived << std::endl;
+		if (bytesReceived > 0) {
+			request.append(buf, 0, bytesReceived);
+			ft_memset(buf, 0, BUFLEN);
 		}
-//		std::cout << bytesReceived << std::endl;
-		if (bytesReceived == -1)
-			throw std::runtime_error(strerror(errno));
-//		std::cout << buf << std::endl;
-		request.append(buf, 0, bytesReceived);
-		ft_memset(buf, 0, BUFLEN);
 	} while (bytesReceived > 0);
-	_rawRequest = request;
-//	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << _rawRequest << " ----------- END REQUEST ----------- \n" << std::endl;
+
+	std::map<int, std::string>::iterator req;
+	if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
+		_requestStorage.insert(std::make_pair(fd, request));
+	}
+	else {
+		req->second += request;
+	}
+
+	// std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << request << " ----------- END REQUEST ----------- \n" << std::endl;
+	return bytesReceived;
+//	_rawRequest = request;
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
@@ -281,3 +292,26 @@ void Connection::handleCLI(const std::string& input) {
 	}
 }
 
+bool Connection::checkIfEnded(const std::string& request, RequestParser requestParser) {
+	std::map<headerType, std::string>::iterator encoding;
+	request_s									tmpRequest;
+
+	tmpRequest = requestParser.parseHeadersOnly(request);
+	encoding = tmpRequest.headers.find(TRANSFER_ENCODING);
+
+	if (encoding != tmpRequest.headers.end() && encoding->second.find("chunked") != std::string::npos) {
+		size_t endSequencePos = request.find("\r\n0\r\n\r\n");
+		size_t len = request.length();
+		if (endSequencePos != std::string::npos && endSequencePos + 7 == len) {
+			return true;
+		}
+	}
+	else {
+		size_t endSequencePos = request.find_last_not_of("\r\n\r\n");
+		size_t len = request.length();
+		if (endSequencePos != std::string::npos && endSequencePos + 5 == len) {
+			return true;
+		}
+	}
+	return false;
+}
