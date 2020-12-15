@@ -118,6 +118,7 @@ int Cgi::run_cgi(request_s &request) {
 //	if (request.method == POST) {
 	if (close(incoming_pipe[0]) == -1)
 		exit_fatal();
+	std::cerr << _CYAN "gonna write a body of size " << request.body.length() << " into the execve.\n" _END;
 	ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
 	(void)dummy;
 	if (close(incoming_pipe[1]) == -1)

@@ -65,13 +65,13 @@ std::string RequestParser::parseBody()
 	std::string ret;
 	std::size_t pos, i = 0;
 
+//	std::cerr << _YELLOW "$" << _rawRequest << "$\n" _END;
 	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
-	while (1) {
+	while (true) {
 		pos = ret.find("\r\n");
 		if (pos == std::string::npos)
 			break ;
-		i = pos + 1;
-		i = ret.find("\r\n", i);
+		i = ret.find("\r\n", pos + 1);
 		if (i == std::string::npos)
 			break ;
 		while (ret[i] != '\n')
@@ -80,6 +80,7 @@ std::string RequestParser::parseBody()
 		if ((pos = ret.find("\r\n")) == ret.find_last_of("\r\n") || ret.find("\r\n", pos+=1) == std::string::npos)
 			break ;
 	}
+	ret.erase(ret.length() - 2, 2);
 	return ret;
 }
 
@@ -108,9 +109,10 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
 		request.body = parseBody(); // Replace this with parseBody()
 	}
-	else
-		request.body = _rawRequest;
-	
+	else {
+		request.body = _rawRequest;//.substr(0, _rawRequest.length() - 2);
+	}
+
 	std::map<headerType, std::string>::iterator it;
 
 //	if (!_headers[CONTENT_LENGTH].empty()) {

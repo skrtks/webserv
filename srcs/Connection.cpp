@@ -188,7 +188,7 @@ int Connection::receiveRequest(const int& fd) {
 	ft_memset(buf, 0, BUFLEN);
 	do {
 		bytesReceived = recv(fd, buf, BUFLEN - 1, MSG_DONTWAIT);
-		std::cout << bytesReceived << std::endl;
+//		std::cout << bytesReceived << std::endl;
 		if (bytesReceived > 0) {
 			request.append(buf, 0, bytesReceived);
 			ft_memset(buf, 0, BUFLEN);
