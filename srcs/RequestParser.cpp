@@ -266,8 +266,7 @@ void RequestParser::parseHeaders() {
 			}
 			pos++;
 			// 'Skip' over OWS at beginning of value string
-			for (int i = pos; _rawRequest[i] == ' '; i++) // TODO Just do pos = _rawRequest.find_first_not_of(' ', pos)
-				pos++;
+			pos = _rawRequest.find_first_not_of(' ', pos);
 			owsOffset = 0;
 			// Create offset for OWS at end of value string
 			for (size_t i = eoRequestLine - 1; i != std::string::npos && _rawRequest[i] == ' '; --i) {
