@@ -259,12 +259,10 @@ void RequestParser::parseHeaders() {
 				_status_code = 400;
 				return ;
 			}
-			for (size_t i = 0; header[i]; i++) { // TODO Just check if (header.find(' ') != std::string::npos)
-				if (header[i] == ' ') {
-					std::cerr << "BAD REQ 10" << std::endl;
-					_status_code = 400;
-					return ;
-				}
+			if (header.find(' ') != std::string::npos) {
+				std::cerr << "BAD REQ 10" << std::endl;
+				_status_code = 400;
+				return ;
 			}
 			pos++;
 			// 'Skip' over OWS at beginning of value string
