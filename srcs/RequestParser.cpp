@@ -254,7 +254,7 @@ void RequestParser::parseHeaders() {
 				return ;
 			}
 			std::string header = _rawRequest.substr(0, pos);
-			if (header.empty() || header.length() == 0) { // TODO Isnt this twice the same?
+			if (header.empty()) {
 				std::cerr << "BAD REQ 10.1" << std::endl;
 				_status_code = 400;
 				return ;
