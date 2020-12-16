@@ -28,15 +28,4 @@ namespace ft {
 		return vec;
 	}
 
-	std::string	inttostring(int n) {
-		std::string ss;
-
-		while (n) {
-			char i = '0' + (n % 10);
-			n /= 10;
-			ss = i + ss;
-		}
-		return ss;
-	}
-
 }

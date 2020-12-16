@@ -25,7 +25,8 @@ Servermanager	parse(char *av);
 
 namespace ft {
 	std::vector<std::string>	split(const std::string& s, const std::string& delim);
-	std::string inttostring(int a);
+	std::string					getextension(const std::string &uri);
+	std::string					inttostring(int a);
 }
 
 

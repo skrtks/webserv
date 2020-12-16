@@ -144,13 +144,12 @@ void Connection::startListening() {
 					FD_SET(fd, &_writeFds); // Add new connection to the set
 				}
 			}
-			else if (FD_ISSET(fd, &_writeFds)) { // Returns true if fd is active
+			else if (FD_ISSET(fd, &_writeFds) && fd > STDERR_FILENO) { // Returns true if fd is active
 				std::map<int, std::string>::iterator req;
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
 				}
-
-				if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
+				else if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
@@ -189,7 +188,7 @@ int Connection::receiveRequest(const int& fd) {
 	ft_memset(buf, 0, BUFLEN);
 	do {
 		bytesReceived = recv(fd, buf, BUFLEN - 1, MSG_DONTWAIT);
-		std::cout << bytesReceived << std::endl;
+//		std::cout << bytesReceived << std::endl;
 		if (bytesReceived > 0) {
 			request.append(buf, 0, bytesReceived);
 			ft_memset(buf, 0, BUFLEN);
@@ -220,8 +219,9 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 				throw std::runtime_error(strerror(errno));
 		}
 	}
-	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1))
+	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
 		throw std::runtime_error(strerror(errno));
+	}
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
 }

@@ -14,7 +14,7 @@
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"
 
-RequestParser::RequestParser() {
+RequestParser::RequestParser() : _method() {
 	_status_code = 0;
 	_methodMap["GET"] = GET;
 	_methodMap["HEAD"] = HEAD;
@@ -43,7 +43,7 @@ RequestParser::RequestParser() {
 RequestParser::~RequestParser() {
 }
 
-RequestParser::RequestParser(const RequestParser &obj) : _status_code() {
+RequestParser::RequestParser(const RequestParser &obj) : _status_code(), _method() {
 	*this = obj;
 }
 
@@ -65,13 +65,13 @@ std::string RequestParser::parseBody()
 	std::string ret;
 	std::size_t pos, i = 0;
 
+//	std::cerr << _YELLOW "$" << _rawRequest << "$\n" _END;
 	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
-	while (1) {
+	while (true) {
 		pos = ret.find("\r\n");
 		if (pos == std::string::npos)
 			break ;
-		i = pos + 1;
-		i = ret.find("\r\n", i);
+		i = ret.find("\r\n", pos + 1);
 		if (i == std::string::npos)
 			break ;
 		while (ret[i] != '\n')
@@ -80,6 +80,7 @@ std::string RequestParser::parseBody()
 		if ((pos = ret.find("\r\n")) == ret.find_last_of("\r\n") || ret.find("\r\n", pos+=1) == std::string::npos)
 			break ;
 	}
+	ret.erase(ret.length() - 2, 2);
 	return ret;
 }
 
@@ -108,9 +109,10 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
 		request.body = parseBody(); // Replace this with parseBody()
 	}
-	else
-		request.body = _rawRequest;
-	
+	else {
+		request.body = _rawRequest;//.substr(0, _rawRequest.length() - 2);
+	}
+
 	std::map<headerType, std::string>::iterator it;
 
 //	if (!_headers[CONTENT_LENGTH].empty()) {
@@ -252,12 +254,12 @@ void RequestParser::parseHeaders() {
 				return ;
 			}
 			std::string header = _rawRequest.substr(0, pos);
-			if (header.empty() || header.length() == 0) {
+			if (header.empty() || header.length() == 0) { // TODO Isnt this twice the same?
 				std::cerr << "BAD REQ 10.1" << std::endl;
 				_status_code = 400;
 				return ;
 			}
-			for (size_t i = 0; header[i]; i++) {
+			for (size_t i = 0; header[i]; i++) { // TODO Just check if (header.find(' ') != std::string::npos)
 				if (header[i] == ' ') {
 					std::cerr << "BAD REQ 10" << std::endl;
 					_status_code = 400;
@@ -266,7 +268,7 @@ void RequestParser::parseHeaders() {
 			}
 			pos++;
 			// 'Skip' over OWS at beginning of value string
-			for (int i = pos; _rawRequest[i] == ' '; i++)
+			for (int i = pos; _rawRequest[i] == ' '; i++) // TODO Just do pos = _rawRequest.find_first_not_of(' ', pos)
 				pos++;
 			owsOffset = 0;
 			// Create offset for OWS at end of value string
@@ -332,8 +334,8 @@ const std::pair<int, int>& RequestParser::getVersion() const {
 	return _version;
 }
 
-std::string RequestParser::getMethod(e_method &x) {
-	switch (x) {
+std::string request_s::MethodToSTring() const {
+	switch (this->method) {
 		case GET:
 			return "GET";
 		case HEAD:
@@ -345,4 +347,16 @@ std::string RequestParser::getMethod(e_method &x) {
 		default:
 			return "NOMETHOD";
 	}
+}
+
+std::ostream&	operator<<(std::ostream& o, const request_s& r) {
+	o	<< _CYAN
+	<< "uri: " << r.uri << std::endl
+	<< "method: " << r.MethodToSTring() << std::endl
+	<< "status_code: " << r.status_code << std::endl
+	<< "HEADERS:" << std::endl;
+	for (std::map<headerType, std::string>::const_iterator it = r.headers.begin(); it != r.headers.end(); ++it)
+		o << '\t' << headerTypeAsString(it->first) << ": " << it->second << std::endl;
+	o << _END << std::endl;
+	return o;
 }

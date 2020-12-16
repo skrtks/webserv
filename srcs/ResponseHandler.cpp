@@ -91,8 +91,21 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 
-	if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
-		fd = this->CGI.run_cgi(request);
+
+	if (request.server.isExtensionAllowed(request.uri)) {
+		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
+			fd = this->CGI.run_cgi(request);
+		else {
+			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
+			size_t second_slash_index = request.uri.find_first_of('/', 1);
+			if (second_slash_index == std::string::npos)
+				request.uri = '/' + request.server.matchlocation(request.uri).getroot() + request.uri;
+			else
+				request.uri.replace(1, second_slash_index - 1, request.server.matchlocation(request.uri).getroot());
+			std::cerr << _CYAN _BOLD << "new uri is " << request.uri << ", second_slash_index used to be " << second_slash_index << _END << std::endl;
+			fd = this->CGI.run_cgi(request);
+		}
+	}
 	else
 		fd = request.server.getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
@@ -101,30 +114,33 @@ int ResponseHandler::generatePage(request_s& request) {
 }
 
 void ResponseHandler::handleBody(request_s& request) {
-	int		ret = 0;
+	int		ret = 1024;
 	char	buf[1024];
 	int		fd = 0;
-
+	int		totalreadsize = 0;
 	_body_length = 0;
 	_body.clear();
-//	std::cerr << _CYAN "status_code is " << request.status_code << std::endl << _END;
 	if (request.status_code == 400) {
 		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
-//		std::cerr << _CYAN << "fd is " << fd << ", error page is at " << request.server.matchlocation(request.uri).geterrorpage() << std::endl << _END;
 	}
 	else {
 		fd = generatePage(request);
-//		std::cerr << _CYAN << "generate page: fd is " << fd << std::endl << _END;
 	}
-	do {
+	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
-		if (ret <= 0)
-			break ;
+		if (ret <= 0) {
+			std::cerr << _RED "read returned " << ret << ", errno gives " << strerror(errno) << std::endl << _END;
+			break;
+		}
+		totalreadsize += ret;
 		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
-	} while (ret > 0);
-	close(fd);
+	}
+	std::cerr << _GREEN "Total read size is " << totalreadsize << ".\n" _END;
+	if (close(fd) == -1) {
+		exit(EXIT_FAILURE);
+	}
 }
 
 std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
@@ -132,6 +148,7 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	this->_body_length = request.body.length();
 	this->_response.resize(1);
 	_response.front() = "";
+	std::cerr << request << std::endl;
 //	std::cerr << _RED << "in handleRequest, _response immediately has size " << _response.size() << std::endl << _END;
 	if (request.method == PUT) {
 		handlePut(request);
@@ -174,21 +191,6 @@ void ResponseHandler::handlePut(request_s& request) {
 	_response[0] += "\r\n";
 }
 
-//void ResponseHandler::handlePost(request_s& request) {
-//	_response[0] = "HTTP/1.1 ";
-//	request.uri = "cgi-bin" + request.uri;
-//	std::cerr << _CYAN "in handlePost, request.uri is " << request.uri << std::endl << _END;
-//
-//	if (!PostIsAllowed) {
-//		_status_code = 405;
-//		_body_length = 0;
-//		_body.clear();
-//	}
-//	else {
-//		handleBody(request);
-//	}
-//}
-
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
@@ -207,9 +209,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 	if (request.status_code)
 		this->_status_code = request.status_code;
 
-//	if (request.method == POST)
-//		handlePost(request);
-//	else
 	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request); //TODO Do we need to do this before handleBody( ) ?

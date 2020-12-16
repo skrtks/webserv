@@ -273,10 +273,11 @@ bool Server::getmatch(const std::string& username, const std::string& passwd) {
 	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
 }
 
-bool Server::isExtensionAllowed(const std::string& uri, const std::string& extension) const {
-	std::vector<std::string> extensions = matchlocation(uri).getcgiallowedextensions();
+bool Server::isExtensionAllowed(const std::string& uri) const {
+	std::string extension = ft::getextension(uri);
+	std::vector<std::string> allowed_extensions = matchlocation(uri).getcgiallowedextensions();
 
-	for (std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); ++it) {
+	for (std::vector<std::string>::const_iterator it = allowed_extensions.begin(); it != allowed_extensions.end(); ++it) {
 		if (extension == *it)
 			return (true);
 	}

@@ -6,12 +6,13 @@
 #    By: sam <sam@student.codam.nl>                   +#+                      #
 #                                                    +#+                       #
 #    Created: 2020/10/02 15:16:50 by sam           #+#    #+#                  #
-#    Updated: 2020/12/10 14:26:54 by peerdb        ########   odam.nl          #
+#    Updated: 2020/12/10 14:26:10 by peerdb        ########   odam.nl          #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = webserv
-FILES = main parser split Server Servermanager Location Connection RequestParser ResponseHandler Base64 Cgi
+FILES = main parser split utils Base64 Enums Cgi \
+		Server Servermanager Location Connection RequestParser ResponseHandler
 SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
@@ -55,7 +56,7 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 
 clean:
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
-	@rm -f $(OBJS)
+	@rm -f $(OBJS) htmlfiles/Downloads/file_should_exist_after
 	@make clean -s -C getnextline
 	@make clean -s -C libft
 
