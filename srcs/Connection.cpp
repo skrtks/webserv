@@ -210,10 +210,10 @@ int Connection::receiveRequest(const int& fd) {
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	size_t totalsize = 0;
-	std::cout << "\nRESPONSE --------" << std::endl;
-	for (size_t i = 0; i < msg.size(); i++)
-		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
-	std::cout << "\nRESPONSE END ----" << std::endl;
+//	std::cout << "\nRESPONSE --------" << std::endl;
+//	for (size_t i = 0; i < msg.size(); i++)
+//		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
+//	std::cout << "\nRESPONSE END ----" << std::endl;
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
 			totalsize += msg[i].length();

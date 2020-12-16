@@ -94,39 +94,36 @@ int Cgi::run_cgi(request_s &request) {
 	this->populate_map(request);
 	this->map_to_env();
 
-	char buf[10];
-	if ((outgoing_file = open("/tmp/", O_TMPFILE | O_EXCL | O_RDWR, S_IRWXU)) == -1)
+	if ((incoming_file = open("/tmp/webservin", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 		exit_fatal();
-	if ((incoming_file = open("/tmp/", O_TMPFILE | O_EXCL | O_RDWR, S_IRWXU)) == -1)
+	ssize_t dummy = write(incoming_file, request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+	(void)dummy;
+	std::cout << _CYAN "just wrote a body of size " << dummy << " into the execve.\n" _END;
+	if (close(incoming_file) == -1)
 		exit_fatal();
-	if (read(outgoing_file, buf, 0) == -1)
-		std::cerr << "reading on outgoinf file " << outgoing_file << "returned -1, errno = " << errno << ", strerror: " << strerror(errno) << std::endl;
 
 	if ((pid = fork()) == -1)
 		exit_fatal();
 
-	if (read(outgoing_file, buf, 0) == -1)
-		std::cerr << "pid = " << pid << ", reading on outgoinf file " << outgoing_file << "returned -1, errno = " << errno << ", strerror: " << strerror(errno) << std::endl;
 	if (pid == 0) {
-		if (dup2(outgoing_file, STDOUT_FILENO) == -1)
+		if ((outgoing_file = open("/tmp/webservout", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 			exit_fatal();
-		if (dup2(incoming_file, STDIN_FILENO) == -1)
+		if (dup2(outgoing_file, STDOUT_FILENO) == -1 || close(outgoing_file) == -1)
 			exit_fatal();
-		if (close(outgoing_file) == -1 || close(incoming_file) == -1)
+		if ((incoming_file = open("/tmp/webservin", O_RDONLY, S_IRWXU)) == -1)
+			exit_fatal();
+		if (dup2(incoming_file, STDIN_FILENO) == -1 || close(incoming_file) == -1)
 			exit_fatal();
 		if (execve(scriptpath.c_str(), args, _env) == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	ssize_t dummy = write(incoming_file, request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
-	(void)dummy;
-	std::cout << _CYAN "just wrote a body of size " << dummy << " into the execve.\n" _END;
-	if (close(incoming_file) == -1)
-		exit_fatal();
 	this->clear_env();
 	std::cerr << "waiting for child to close\n";
 	waitpid(0, NULL, 0);
 	std::cerr << "child fucking died lmao\n";
+	if ((outgoing_file = open("/tmp/webservout", O_RDONLY, S_IRWXU)) == -1)
+		exit_fatal();
 	return (outgoing_file);
 }

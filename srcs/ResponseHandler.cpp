@@ -131,9 +131,6 @@ void ResponseHandler::handleBody(request_s& request) {
 	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0) {
-			std::cerr << _RED "read returned " << ret << ", strerror: " << strerror(errno) << ", errno = " << errno << std::endl << _END;
-			ret = read(fd, buf, 0);
-			std::cerr << _RED "read of size 0 returned " << ret << ", strerror: " << strerror(errno) << ", errno = " << errno << std::endl << _END;
 			break;
 		}
 //		else std::cerr << "read retuned " << ret << std::endl;
