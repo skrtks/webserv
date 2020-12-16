@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include "Base64.hpp"
 #include "Colours.hpp"
-
+#include <stdio.h>
 ResponseHandler::ResponseHandler() {
 	this->_body_length = 0;
 	this->_status_code = 200;
@@ -130,8 +130,13 @@ void ResponseHandler::handleBody(request_s& request) {
 	}
 	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
-		if (ret <= 0)
-			break ;
+		if (ret <= 0) {
+			std::cerr << _RED "read returned " << ret << ", strerror: " << strerror(errno) << ", errno = " << errno << std::endl << _END;
+			ret = read(fd, buf, 0);
+			std::cerr << _RED "read of size 0 returned " << ret << ", strerror: " << strerror(errno) << ", errno = " << errno << std::endl << _END;
+			break;
+		}
+//		else std::cerr << "read retuned " << ret << std::endl;
 		totalreadsize += ret;
 		_body_length += ret;
 		_body.append(buf, ret);
