@@ -16,6 +16,7 @@
 #include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
+#include <fstream> // TODO RM
 
 #define REQUEST_TIMEOUT 100000
 
@@ -210,10 +211,14 @@ int Connection::receiveRequest(const int& fd) {
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	size_t totalsize = 0;
-//	std::cout << "\nRESPONSE --------" << std::endl;
-//	for (size_t i = 0; i < msg.size(); i++)
-//		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
-//	std::cout << "\nRESPONSE END ----" << std::endl;
+	std::ofstream responsefile("/tmp/webserv_response.txt", std::ios::out | std::ios::trunc);
+	if (responsefile.is_open()) {
+//		responsefile << "\nRESPONSE --------" << std::endl;
+		for (size_t i = 0; i < msg.size(); i++)
+			responsefile << msg[i];
+//		responsefile << "\nRESPONSE END ----" << std::endl;
+		responsefile.close();
+	}
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
 			totalsize += msg[i].length();
