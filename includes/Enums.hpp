@@ -38,4 +38,6 @@ enum e_method {
 	PUT
 };
 
+std::string methodAsString(const e_method&);
+
 #endif //WEBSERV_ENUMS_HPP

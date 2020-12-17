@@ -50,3 +50,18 @@ std::string	headerTypeAsString(const headerType& header) {
 			return "INVALID HEADER";
 	}
 }
+
+std::string methodAsString(const e_method& in) {
+	switch (in) {
+		case GET:
+			return "GET";
+		case HEAD:
+			return "HEAD";
+		case POST:
+			return "POST";
+		case PUT:
+			return "PUT";
+		default:
+			return "INVALID METHOD";
+	}
+}
