@@ -89,7 +89,7 @@ int Cgi::run_cgi(request_s &request) {
 
 
 	if (stat(scriptpath.c_str(), &statstruct) == -1)
-		return (open(request.server.geterrorpage().c_str(), O_RDONLY));
+		return (-2);
 
 	this->populate_map(request);
 	this->map_to_env();

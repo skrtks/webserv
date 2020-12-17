@@ -111,6 +111,10 @@ int ResponseHandler::generatePage(request_s& request) {
 		fd = request.server.getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
+	if (fd == -2) {
+		fd = open(request.server.geterrorpage().c_str(), O_RDONLY);
+		_status_code = 404;
+	}
 	return (fd);
 }
 
