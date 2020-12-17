@@ -143,8 +143,13 @@ void ResponseHandler::handleBody(request_s& request) {
 	if (close(fd) == -1) {
 		exit(EXIT_FAILURE);
 	}
-}
+	size_t pos = _body.find("\r\n\r\n");;
+	if (request.method == POST && pos != std::string::npos) {
+		_body_length -= pos + 4;
+		_body.erase(0, pos);
+	}
 
+}
 std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
 	this->_body_length = request.body.length();
