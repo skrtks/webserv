@@ -15,11 +15,11 @@
 #include "libftGnl.hpp"
 #include "Colours.hpp"
 
-Location::Location() : _maxBody(LONG_MAX) {
+Location::Location() : _maxBody(LONG_MAX), _default_cgi_path() {
 	this->_location_match = "";
 }
 
-Location::Location(std::string& location_match) : _maxBody(LONG_MAX) {
+Location::Location(std::string& location_match) : _maxBody(LONG_MAX), _default_cgi_path() {
 	this->_location_match = location_match;
 	this->_autoindex = "off";
 }
@@ -41,6 +41,7 @@ Location&	Location::operator=(const Location& x) {
 		this->_location_match = x._location_match;
 		this->_error_page = x._error_page;
 		this->_maxBody = x._maxBody;
+		this->_default_cgi_path = x._default_cgi_path;
 	}
 	return *this;
 }
@@ -68,6 +69,16 @@ void	Location::setindex(const std::string& in) { this->_indexes = ft::split(in, 
 void	Location::setcgiallowedextensions(const std::string& in) { this->_cgi_allowed_extensions = ft::split(in, " \t\r\n\v\f"); }
 void	Location::seterrorpage(const std::string& in) { this->_error_page = in; }
 void	Location::setmaxbody(const std::string& in) { this->_maxBody = ft_atoi(in.c_str()); }
+void	Location::setdefaultcgipath(const std::string& in) {
+	struct stat statstruct = {};
+	std::string	filepath = this->_root + '/' + in;
+//	std::cerr << _RED "default cgi path is " << filepath << std::endl << _END;
+	if (stat(filepath.c_str(), &statstruct) != -1) {
+		this->_default_cgi_path = in;
+//		std::cerr << "our location match is " << this->getlocationmatch() << std::endl;
+//		std::cerr << "and it exists too! defaultcgipath is " << _default_cgi_path << std::endl;
+	}
+}
 void	Location::setroot(const std::string& in) {
 	struct stat statstruct = {};
 	this->_root = in;
@@ -85,6 +96,7 @@ std::vector<std::string>	Location::getcgiallowedextensions() const { return this
 std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
 long int					Location::getmaxbody() const { return this->_maxBody; }
 std::string					Location::getindex() const { return this->_indexes[0]; }
+std::string					Location::getdefaultcgipath() const { return this->_default_cgi_path; }
 
 bool		Location::checkifMethodAllowed(const e_method& meth) const {
 	for (std::vector<e_method>::const_iterator it = this->_allow_method.begin(); it != this->_allow_method.end(); ++it)
@@ -102,6 +114,7 @@ void	Location::setup(int fd) {
 	m["cgi"] = &Location::setcgiallowedextensions;
 	m["error_page"] = &Location::seterrorpage;
 	m["maxBody"] = &Location::setmaxbody;
+	m["default_cgi"] = &Location::setdefaultcgipath;
 	std::string str;
 	
 	while (ft::get_next_line(fd, str) > 0) {
@@ -139,7 +152,7 @@ std::ostream&	operator<<(std::ostream& o, const Location& x) {
 	o	<< "\tallowed methods:";
 	meths = x.getallowmethods();
 	for (size_t i = 0; i < meths.size(); i++)
-		o << " \"" << meths[i] << "\"";
+		o << " \"" << methodAsString(meths[i]) << "\"";
 	o << std::endl;
 	o	<< "\tindexes:";
 	v = x.getindexes();

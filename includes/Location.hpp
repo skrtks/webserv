@@ -36,6 +36,7 @@ private:		//setters
 		void	setcgiallowedextensions(const std::string& );
 		void	seterrorpage(const std::string& );
 		void	setmaxbody(const std::string& );
+		void	setdefaultcgipath(const std::string& );
 		
 public:			//getters
 		std::string					getroot() const;
@@ -46,6 +47,7 @@ public:			//getters
 		std::vector<std::string>	getindexes() const;
 		std::vector<std::string>	getcgiallowedextensions() const;
 		std::string					geterrorpage() const;
+		std::string					getdefaultcgipath() const;
 		long						getmaxbody() const;
 		
 		void	setup(int );
@@ -62,6 +64,7 @@ private:
 								_cgi_allowed_extensions;
 	std::vector<e_method>		_allow_method;
 	long						_maxBody;
+	std::string					_default_cgi_path;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Location& x);
