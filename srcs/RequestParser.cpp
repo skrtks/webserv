@@ -107,19 +107,12 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request = parseHeadersOnly(req);
 
 	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
-		request.body = parseBody(); // Replace this with parseBody()
+		request.body = parseBody();
 	}
 	else {
-		request.body = _rawRequest;//.substr(0, _rawRequest.length() - 2);
+		request.body = _rawRequest.substr(0, _rawRequest.length() - 2);
 	}
 
-	std::map<headerType, std::string>::iterator it;
-
-//	if (!_headers[CONTENT_LENGTH].empty()) {
-//		int length = ft_atoi(_headers[CONTENT_LENGTH].c_str());
-//		if (_headers[CONTENT_LENGTH].find_first_not_of("0123456789") != std::string::npos || length < 0)
-//			_status_code = 400;
-//	}
 	if (_status_code)
 		request.status_code = _status_code;
 	else
@@ -237,11 +230,12 @@ void RequestParser::extractMethod(size_t eoRequestLine, size_t& pos) {
 // Parse headers and store them in _headers (map)
 void RequestParser::parseHeaders() {
 	std::string upperHeader;
+	size_t		eoRequestLine;
 	int owsOffset;
 	while (!_rawRequest.empty()) {
 		upperHeader.clear();
-		size_t eoRequestLine = _rawRequest.find("\r\n", 0);
-		if (eoRequestLine != 0 && std::string::npos != eoRequestLine) {
+		eoRequestLine = _rawRequest.find("\r\n", 0);
+		if (eoRequestLine != 0 && eoRequestLine != std::string::npos) {
 			if (_rawRequest[0] == ' ') {
 				std::cerr << "BAD REQ 8" << std::endl;
 				_status_code = 400;
@@ -254,22 +248,19 @@ void RequestParser::parseHeaders() {
 				return ;
 			}
 			std::string header = _rawRequest.substr(0, pos);
-			if (header.empty() || header.length() == 0) { // TODO Isnt this twice the same?
+			if (header.empty()) {
 				std::cerr << "BAD REQ 10.1" << std::endl;
 				_status_code = 400;
 				return ;
 			}
-			for (size_t i = 0; header[i]; i++) { // TODO Just check if (header.find(' ') != std::string::npos)
-				if (header[i] == ' ') {
-					std::cerr << "BAD REQ 10" << std::endl;
-					_status_code = 400;
-					return ;
-				}
+			if (header.find(' ') != std::string::npos) {
+				std::cerr << "BAD REQ 10" << std::endl;
+				_status_code = 400;
+				return ;
 			}
 			pos++;
 			// 'Skip' over OWS at beginning of value string
-			for (int i = pos; _rawRequest[i] == ' '; i++) // TODO Just do pos = _rawRequest.find_first_not_of(' ', pos)
-				pos++;
+			pos = _rawRequest.find_first_not_of(' ', pos);
 			owsOffset = 0;
 			// Create offset for OWS at end of value string
 			for (size_t i = eoRequestLine - 1; i != std::string::npos && _rawRequest[i] == ' '; --i) {
