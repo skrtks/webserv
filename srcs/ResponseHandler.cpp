@@ -90,21 +90,43 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
-
+	struct stat statstruct = {};
 
 	if (request.server.isExtensionAllowed(request.uri)) {
-		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
-			fd = this->CGI.run_cgi(request);
+		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
+		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
+			fd = this->CGI.run_cgi(request, scriptpath);
+		}
 		else {
-			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
+//			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
+			std::string tmpuri = '/' + request.server.matchlocation(request.uri).getroot();
 			size_t second_slash_index = request.uri.find_first_of('/', 1);
 			if (second_slash_index == std::string::npos)
-				request.uri = '/' + request.server.matchlocation(request.uri).getroot() + request.uri;
+				tmpuri += request.uri;
 			else
-				request.uri.replace(1, second_slash_index - 1, request.server.matchlocation(request.uri).getroot());
-			std::cerr << _CYAN _BOLD << "new uri is " << request.uri << ", second_slash_index used to be " << second_slash_index << _END << std::endl;
-			fd = this->CGI.run_cgi(request);
-			std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
+				tmpuri += request.uri.substr(second_slash_index);
+			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
+			if (stat(scriptpath.c_str(), &statstruct) == -1) {
+				std::cerr << "real uri is " << request.uri << ", its location is " << request.server.matchlocation(request.uri).getlocationmatch() << std::endl;
+				std::string defaultcgipath = request.server.matchlocation(request.uri).getdefaultcgipath();
+				std::cerr << "" << scriptpath << " dont make none sense none, defCgiPath is " << defaultcgipath << "\n";
+				if (defaultcgipath.empty()) {
+					fd = -2;
+					std:: cerr << "FD IS FUCKING -2 LMAO\n";
+				}
+				else {
+					second_slash_index = tmpuri.find_first_of('/', 1);
+					std::cerr << "lets replace a part in tmpuri " << tmpuri << ", seccond_slash_index = " << second_slash_index << std::endl;
+					tmpuri.replace(second_slash_index + 1, tmpuri.find_first_of('/', second_slash_index), defaultcgipath);
+					std::cerr << _RED "replaced tmpuri with defaultgcipath, now looks like " << tmpuri << std::endl;
+				}
+			}
+			if (fd != -2) {
+				request.uri = tmpuri;
+				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
+				fd = this->CGI.run_cgi(request, scriptpath);
+				std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
+			}
 		}
 	}
 	else

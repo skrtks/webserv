@@ -78,18 +78,14 @@ void	Cgi::clear_env() {
 	_env = NULL;
 }
 
-int Cgi::run_cgi(request_s &request) {
-	pid_t			pid;
-	struct stat		statstruct = {};
+int Cgi::run_cgi(request_s &request, std::string& scriptpath) {
 	int				incoming_file,
 					outgoing_file;
-	int 			split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
-	std::string		scriptpath = request.uri.substr(1, split_path - 1);
+	pid_t			pid;
 	char*			args[2] = {&scriptpath[0], NULL};
 
-
-	if (stat(scriptpath.c_str(), &statstruct) == -1)
-		return (-2);
+	std::cerr << _BOLD _CYAN << "running cgi with uri " << request.uri << std::endl
+				<< "and scriptpath " << scriptpath << "." _END << std::endl;
 
 	this->populate_map(request);
 	this->map_to_env();
