@@ -289,18 +289,13 @@ void RequestParser::parseHeaders() {
 				}
 				_headers.insert(std::make_pair(it->second, value));
 			}
-			else if (header.find("X-") == 0) {
-				std::string envStyledString = "HTTP_";
-				for (int i = 0; upperHeader[i]; i++) {
-					if (upperHeader[i] != '-')
-						envStyledString += upperHeader[i];
-					else
-						envStyledString += '_';
-				}
-				if (_env.find(envStyledString) == _env.end()) {
-					_env.insert(std::make_pair(envStyledString, value));
-					std::cerr << _RED << "Inserted: " << envStyledString << " : " << value << _END << std::endl;
-				}
+			else if (header[0] == 'X') { // X_
+				std::string insert("HTTP_");
+				std::cerr << _RED "upperHeader = " << upperHeader << "-->" << value << "$" << std::endl << _END;
+				insert.append(upperHeader);
+				std::replace(insert.begin(), insert.end(), '-', '_');
+				_env[insert] = value;
+				std::cerr << _RED << "Inserted: " << insert << " : " << value << _END << std::endl;
 			}
 		}
 		else {

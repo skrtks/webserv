@@ -152,6 +152,13 @@ void Connection::startListening() {
 				}
 				else if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
+//					static int testnumber = 0;
+//					std::string requestfilename = "/tmp/webserv_request" + ft::inttostring(testnumber) + ".txt";
+//					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
+//					if (requestfile.is_open()) {
+//						requestfile << req->second;
+//						requestfile.close();
+//					}
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
@@ -160,6 +167,7 @@ void Connection::startListening() {
 					serverConnections.erase(fd);
 					_requestStorage.erase(fd);
 					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
+//					testnumber += 1;
 				}
 			}
 		}

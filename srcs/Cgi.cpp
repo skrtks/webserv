@@ -40,7 +40,7 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE]; //TODO fill this one
 	this->_m["GATEWAY_INTERFACE"] = "CGI/1.1";
 	this->_m["PATH_INFO"] = req.uri;
-	this->_m["PATH_TRANSLATED"] = realpath + '/' + this->_m["PATH_INFO"];
+	this->_m["PATH_TRANSLATED"] = realpath + this->_m["PATH_INFO"];
 	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
 	this->_m["REMOTE_ADDR"] = req.server.gethost();
 	this->_m["REMOTE_IDENT"] = ""; //TODO fill this one
@@ -57,6 +57,9 @@ void Cgi::populate_map(request_s &req) {
 void Cgi::map_to_env(request_s& request) {
 	int i = 0;
 	this->_m.insert(request.env.begin(), request.env.end());
+	std::cerr << _YELLOW << "Inserted the following headers:\n";
+	for (std::map<std::string, std::string>::const_iterator it = request.env.begin(); it != request.env.end(); it++)
+		std::cerr << _YELLOW << '\t' << it->first << " --> " << it->second << _END << std::endl;
 	this->_env = (char**) ft_calloc(this->_m.size() + 1, sizeof(char*));
 	if (!_env)
 		exit_fatal();
@@ -68,6 +71,11 @@ void Cgi::map_to_env(request_s& request) {
 			exit_fatal();
 		++i;
 	}
+	std::cerr << std::endl;
+	for (size_t n = 0; _env[n]; n++) {
+		std::cerr << _CYAN << _env[n] << "$" << std::endl;
+	}
+	std::cerr << _END;
 }
 
 void	Cgi::clear_env() {

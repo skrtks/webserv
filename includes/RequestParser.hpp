@@ -13,6 +13,7 @@
 #ifndef REQUESTPARSER_HPP
 #define REQUESTPARSER_HPP
 
+#include <algorithm>
 #include <map>
 #include <stdexcept>
 #include <string>
