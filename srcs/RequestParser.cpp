@@ -56,6 +56,7 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 		this->_methodMap = obj._methodMap;
 		this->_headerMap = obj._headerMap;
 		this->_rawRequest = obj._rawRequest;
+		this->_env = obj._env;
 	}
 	return *this;
 }
@@ -99,6 +100,7 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 		request.method = _method;
 		request.version = _version;
 		request.uri = _uri;
+		request.env = _env;
 	}
 	return (request);
 }
@@ -286,6 +288,19 @@ void RequestParser::parseHeaders() {
 					return ;
 				}
 				_headers.insert(std::make_pair(it->second, value));
+			}
+			else if (header.find("X-") == 0) {
+				std::string envStyledString = "HTTP_";
+				for (int i = 0; header[i]; i++) {
+					if (header[i] != '-')
+						envStyledString += std::toupper(header[i]);
+					else
+						envStyledString += '_';
+				}
+				if (_env.find(envStyledString) == _env.end()) {
+					_env.insert(std::make_pair(envStyledString, value));
+					std::cerr << _RED << "Inserted: " << envStyledString << " : " << value << _END << std::endl;
+				}
 			}
 		}
 		else {

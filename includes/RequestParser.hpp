@@ -32,6 +32,7 @@ struct request_s {
 	Server								server;
 	std::string							body;
 	bool								transfer_buffer;
+	std::map<std::string, std::string>	env;
 	std::string		MethodToSTring() const;
 
 };
@@ -47,6 +48,7 @@ class RequestParser {
 	std::map<std::string, e_method>		_methodMap;
 	std::map<std::string, headerType>	_headerMap;
 	std::string							_rawRequest;
+	std::map<std::string, std::string>	_env;
 
 public:
 	RequestParser();
