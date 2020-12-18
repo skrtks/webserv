@@ -16,6 +16,7 @@
 #include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
+#include <fstream> // TODO RM
 
 #define REQUEST_TIMEOUT 100000
 
@@ -209,12 +210,18 @@ int Connection::receiveRequest(const int& fd) {
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
-//	std::cout << "\nRESPONSE --------" << std::endl;
-//	for (size_t i = 0; i < msg.size(); i++)
-//		std::cout << msg[i] << "$, size = " << msg[i].size() << std::endl;
-//	std::cout << "\nRESPONSE END ----" << std::endl;
+	size_t totalsize = 0;
+	std::ofstream responsefile("/tmp/webserv_response.txt", std::ios::out | std::ios::trunc);
+	if (responsefile.is_open()) {
+//		responsefile << "\nRESPONSE --------" << std::endl;
+		for (size_t i = 0; i < msg.size(); i++)
+			responsefile << msg[i];
+//		responsefile << "\nRESPONSE END ----" << std::endl;
+		responsefile.close();
+	}
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
+			totalsize += msg[i].length();
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
 				throw std::runtime_error(strerror(errno));
 		}
@@ -222,8 +229,13 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
 		throw std::runtime_error(strerror(errno));
 	}
+	else {
+		totalsize += msg[0].length();
+		std::cerr << "had to open different else block for this...\n";
+	}
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
+	std::cerr << _GREEN "sent a total size of " << totalsize << ".\n" _END;
 }
 
 void Connection::closeConnection(const int& fd) {

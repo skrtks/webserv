@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include "Base64.hpp"
 #include "Colours.hpp"
-
+#include <stdio.h>
 ResponseHandler::ResponseHandler() {
 	this->_body_length = 0;
 	this->_status_code = 200;
@@ -90,26 +90,53 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
-
+	struct stat statstruct = {};
 
 	if (request.server.isExtensionAllowed(request.uri)) {
-		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) // Run CGI script that creates an html page
-			fd = this->CGI.run_cgi(request);
+		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
+		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
+			fd = this->CGI.run_cgi(request, scriptpath);
+		}
 		else {
-			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
+//			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
+			std::string tmpuri = '/' + request.server.matchlocation(request.uri).getroot();
 			size_t second_slash_index = request.uri.find_first_of('/', 1);
 			if (second_slash_index == std::string::npos)
-				request.uri = '/' + request.server.matchlocation(request.uri).getroot() + request.uri;
+				tmpuri += request.uri;
 			else
-				request.uri.replace(1, second_slash_index - 1, request.server.matchlocation(request.uri).getroot());
-			std::cerr << _CYAN _BOLD << "new uri is " << request.uri << ", second_slash_index used to be " << second_slash_index << _END << std::endl;
-			fd = this->CGI.run_cgi(request);
+				tmpuri += request.uri.substr(second_slash_index);
+			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
+			if (stat(scriptpath.c_str(), &statstruct) == -1) {
+				std::cerr << "real uri is " << request.uri << ", its location is " << request.server.matchlocation(request.uri).getlocationmatch() << std::endl;
+				std::string defaultcgipath = request.server.matchlocation(request.uri).getdefaultcgipath();
+				std::cerr << "" << scriptpath << " dont make none sense none, defCgiPath is " << defaultcgipath << "\n";
+				if (defaultcgipath.empty()) {
+					fd = -2;
+					std:: cerr << "FD IS FUCKING -2 LMAO\n";
+				}
+				else {
+					second_slash_index = tmpuri.find_first_of('/', 1);
+					std::cerr << "lets replace a part in tmpuri " << tmpuri << ", seccond_slash_index = " << second_slash_index << std::endl;
+					tmpuri.replace(second_slash_index + 1, tmpuri.find_first_of('/', second_slash_index), defaultcgipath);
+					std::cerr << _RED "replaced tmpuri with defaultgcipath, now looks like " << tmpuri << std::endl;
+				}
+			}
+			if (fd != -2) {
+				request.uri = tmpuri;
+				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
+				fd = this->CGI.run_cgi(request, scriptpath);
+				std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
+			}
 		}
 	}
 	else
 		fd = request.server.getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
+	if (fd == -2) {
+		fd = open(request.server.geterrorpage().c_str(), O_RDONLY);
+		_status_code = 404;
+	}
 	return (fd);
 }
 
@@ -117,7 +144,8 @@ void ResponseHandler::handleBody(request_s& request) {
 	int		ret = 1024;
 	char	buf[1024];
 	int		fd = 0;
-	int		totalreadsize = 0;
+	int totalreadsize = 0;
+
 	_body_length = 0;
 	_body.clear();
 	if (request.status_code == 400) {
@@ -129,26 +157,30 @@ void ResponseHandler::handleBody(request_s& request) {
 	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0) {
-			std::cerr << _RED "read returned " << ret << ", errno gives " << strerror(errno) << std::endl << _END;
 			break;
 		}
+//		else std::cerr << "read retuned " << ret << std::endl;
 		totalreadsize += ret;
 		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	}
-	std::cerr << _GREEN "Total read size is " << totalreadsize << ".\n" _END;
+	std::cerr << _CYAN "Total read size is " << totalreadsize << ".\n";
 	if (close(fd) == -1) {
 		exit(EXIT_FAILURE);
 	}
-}
+	size_t pos = _body.find("\r\n\r\n");;
+	if (request.method == POST && pos != std::string::npos) {
+		_body_length -= pos + 4;
+		_body.erase(0, pos);
+	}
 
+}
 std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
 	this->_body_length = request.body.length();
 	this->_response.resize(1);
 	_response.front() = "";
-	std::cerr << request << std::endl;
 //	std::cerr << _RED << "in handleRequest, _response immediately has size " << _response.size() << std::endl << _END;
 	if (request.method == PUT) {
 		handlePut(request);

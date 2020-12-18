@@ -27,8 +27,10 @@ endif
 
 GNL = getnextline.a
 LIBFT = libft.a
+CGI_TESTER = cgi_tester
 ifeq ($(shell uname), Linux)
  ECHO = -e
+ CGI_TESTER = ubuntu_cgi_tester
 endif
 
 # Colours
@@ -44,6 +46,7 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
 	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
 	mkdir -p htmlfiles/Downloads
+	cp test/$(CGI_TESTER) YoupiBanane/youpi.bla
 
 %.a: %
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"

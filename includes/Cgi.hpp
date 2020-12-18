@@ -18,7 +18,7 @@ public:
 	Cgi&	operator=(const Cgi&);
 	~Cgi();
 
-	int		run_cgi(request_s&);
+	int		run_cgi(request_s&, std::string& scriptpath);
 
 private:
 	void	populate_map(request_s&);

@@ -3,6 +3,7 @@
 //
 
 #include "Cgi.hpp"
+#include <sys/wait.h>
 
 void	exit_fatal() {
 	std::cerr << _RED _BOLD << strerror(errno) << std::endl << _END;
@@ -77,49 +78,48 @@ void	Cgi::clear_env() {
 	_env = NULL;
 }
 
-int Cgi::run_cgi(request_s &request) {
+int Cgi::run_cgi(request_s &request, std::string& scriptpath) {
+	int				incoming_file,
+					outgoing_file;
 	pid_t			pid;
-	struct stat		statstruct = {};
-	int				outgoing_pipe[2],
-					incoming_pipe[2];
-	int 			split_path = request.uri.find_first_of('/', request.uri.find_first_of('.') );
-	std::string		scriptpath = request.uri.substr(1, split_path - 1);
 	char*			args[2] = {&scriptpath[0], NULL};
 
-
-	if (stat(scriptpath.c_str(), &statstruct) == -1)
-		return (open(request.server.geterrorpage().c_str(), O_RDONLY));
+	std::cerr << _BOLD _CYAN << "running cgi with uri " << request.uri << std::endl
+				<< "and scriptpath " << scriptpath << "." _END << std::endl;
 
 	this->populate_map(request);
 	this->map_to_env();
 
-	if (pipe(outgoing_pipe) == -1) // || fcntl(outgoing_pipe[0], F_SETFL, O_NONBLOCK) == -1) // This makes the read fail
+	if ((incoming_file = open("/tmp/webservin", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 		exit_fatal();
-	if (pipe(incoming_pipe) == -1 || fcntl(incoming_pipe[1], F_SETFL, O_NONBLOCK) == -1)
+	ssize_t dummy = write(incoming_file, request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
+	(void)dummy;
+	std::cout << _CYAN "just wrote a body of size " << dummy << " into the execve.\n" _END;
+	if (close(incoming_file) == -1)
 		exit_fatal();
 
 	if ((pid = fork()) == -1)
 		exit_fatal();
+
 	if (pid == 0) {
-		if (close(outgoing_pipe[0]) == -1 || dup2(outgoing_pipe[1], 1) == -1 || (close(outgoing_pipe[1]) == -1))
+		if ((outgoing_file = open("/tmp/webservout", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 			exit_fatal();
-		if (close(incoming_pipe[1]) == -1 || dup2(incoming_pipe[0], 0) == -1 || close(incoming_pipe[0]) == -1)
+		if (dup2(outgoing_file, STDOUT_FILENO) == -1 || close(outgoing_file) == -1)
+			exit_fatal();
+		if ((incoming_file = open("/tmp/webservin", O_RDONLY, S_IRWXU)) == -1)
+			exit_fatal();
+		if (dup2(incoming_file, STDIN_FILENO) == -1 || close(incoming_file) == -1)
 			exit_fatal();
 		if (execve(scriptpath.c_str(), args, _env) == -1)
 			std::cerr << "execve: " << strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	if (close(outgoing_pipe[1]) == -1)
-		exit_fatal();
-	if (close(incoming_pipe[0]) == -1)
-		exit_fatal();
-	std::cerr << _CYAN "gonna write a body of size " << request.body.length() << " into the execve.\n" _END;
-	ssize_t dummy = write(incoming_pipe[1], request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
-	std::cerr << "done writing\n";
-	(void)dummy;
-	if (close(incoming_pipe[1]) == -1)
-		exit_fatal();
 	this->clear_env();
-	return (outgoing_pipe[0]);
+	std::cerr << "waiting for child to close\n";
+	waitpid(0, NULL, 0);
+	std::cerr << "child fucking died lmao\n";
+	if ((outgoing_file = open("/tmp/webservout", O_RDONLY, S_IRWXU)) == -1)
+		exit_fatal();
+	return (outgoing_file);
 }
