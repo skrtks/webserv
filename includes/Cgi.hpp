@@ -22,7 +22,7 @@ public:
 
 private:
 	void	populate_map(request_s&);
-	void	map_to_env();
+	void map_to_env(request_s& request);
 	void	clear_env();
 
 	std::map<std::string, std::string>	_m;

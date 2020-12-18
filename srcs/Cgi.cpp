@@ -54,8 +54,9 @@ void Cgi::populate_map(request_s &req) {
 	this->_m["SERVER_SOFTWARE"] = "HTTP 1.1";
 }
 
-void	Cgi::map_to_env() {
+void Cgi::map_to_env(request_s& request) {
 	int i = 0;
+	this->_m.insert(request.env.begin(), request.env.end());
 	this->_env = (char**) ft_calloc(this->_m.size() + 1, sizeof(char*));
 	if (!_env)
 		exit_fatal();
@@ -88,7 +89,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath) {
 				<< "and scriptpath " << scriptpath << "." _END << std::endl;
 
 	this->populate_map(request);
-	this->map_to_env();
+	this->map_to_env(request);
 
 	if ((incoming_file = open("/tmp/webservin", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 		exit_fatal();
