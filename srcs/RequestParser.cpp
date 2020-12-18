@@ -291,9 +291,9 @@ void RequestParser::parseHeaders() {
 			}
 			else if (header.find("X-") == 0) {
 				std::string envStyledString = "HTTP_";
-				for (int i = 0; header[i]; i++) {
-					if (header[i] != '-')
-						envStyledString += std::toupper(header[i]);
+				for (int i = 0; upperHeader[i]; i++) {
+					if (upperHeader[i] != '-')
+						envStyledString += upperHeader[i];
 					else
 						envStyledString += '_';
 				}
