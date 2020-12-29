@@ -152,13 +152,14 @@ void Connection::startListening() {
 				}
 				else if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
-//					static int testnumber = 0;
-//					std::string requestfilename = "/tmp/webserv_request" + ft::inttostring(testnumber) + ".txt";
-//					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
-//					if (requestfile.is_open()) {
-//						requestfile << req->second;
-//						requestfile.close();
-//					}
+
+					static int testnumber = 0;
+					std::string requestfilename = "/tmp/webserv_request" + ft::inttostring(testnumber) + ".txt";
+					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
+					if (requestfile.is_open()) {
+						requestfile << req->second;
+						requestfile.close();
+					}
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
@@ -312,7 +313,7 @@ void Connection::handleCLI(const std::string& input) {
 	}
 }
 
-bool Connection::checkIfEnded(const std::string& request, RequestParser requestParser) {
+bool Connection::checkIfEnded(const std::string& request, RequestParser requestParser) { //TODO shouldnt we pass requestparser by reference?
 	std::map<headerType, std::string>::iterator encoding;
 	request_s									tmpRequest;
 

@@ -106,6 +106,7 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 }
 
 request_s RequestParser::parseRequest(const std::string &req) {
+	this->_env.clear();
 	request_s request = parseHeadersOnly(req);
 
 	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
@@ -289,13 +290,12 @@ void RequestParser::parseHeaders() {
 				}
 				_headers.insert(std::make_pair(it->second, value));
 			}
-			else if (header[0] == 'X') { // X_
-				std::string insert("HTTP_");
-				std::cerr << _RED "upperHeader = " << upperHeader << "-->" << value << "$" << std::endl << _END;
-				insert.append(upperHeader);
-				std::replace(insert.begin(), insert.end(), '-', '_');
+			std::string insert("HTTP_");
+			insert.append(upperHeader);
+			std::replace(insert.begin(), insert.end(), '-', '_');
+			if (_env.find(insert) == _env.end()) { // else if (header[0] == 'X')
 				_env[insert] = value;
-				std::cerr << _RED << "Inserted: " << insert << " : " << value << _END << std::endl;
+				std::cerr << _RED << "Inserted: " << insert << "=" << _env[insert] << _END << std::endl;
 			}
 		}
 		else {
