@@ -334,20 +334,9 @@ void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::st
 	std::string insert("HTTP_");
 	insert.append(upperHeader);
 	std::replace(insert.begin(), insert.end(), '-', '_');
-	if (_env.count(insert) == 0) { // else if (header[0] == 'X')
-//		if (!_env.empty()) {
-//			std::cerr << _GREEN << "_env contains the following " << _env.size() << " things:" << std::endl;
-//			for (std::map<std::string, std::string>::const_iterator it = _env.begin(); it != _env.end(); ++it) {
-//				std::cerr << "\t" << it->first << '=' << it->second << std::endl;
-//			}
-//		}
-		_env[insert] = value;
-		std::cerr << _RED << "Inserted: " << insert << "=" << _env[insert] << _END << std::endl;
-//		std::cerr << _GREEN _BOLD << "_env now contains the following " << _env.size() << " things:" << std::endl;
-//		for (std::map<std::string, std::string>::const_iterator it = _env.begin(); it != _env.end(); ++it) {
-//			std::cerr << "\t" << it->first << '=' << it->second << std::endl;
-//		}
-//		std::cerr << _END;
+	if (this->_env.count(insert) == 0 ) { // else if (upperHeader[0] == 'X')
+		this->_env[insert] = value;
+		std::cerr << _RED << "Inserted: " << insert << "=" << this->_env[insert] << _END << std::endl;
 	}
 }
 
