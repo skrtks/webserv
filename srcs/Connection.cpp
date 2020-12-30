@@ -150,7 +150,7 @@ void Connection::startListening() {
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
 				}
-				else if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
+				else if (checkIfEnded(req->second) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
 
 					static int testnumber = 0;
@@ -313,14 +313,10 @@ void Connection::handleCLI(const std::string& input) {
 	}
 }
 
-bool Connection::checkIfEnded(const std::string& request, RequestParser& requestParser) { //TODO shouldnt we pass requestparser by reference?
-	std::map<headerType, std::string>::iterator encoding;
-	request_s									tmpRequest;
+bool Connection::checkIfEnded(const std::string& request) {
+	size_t enco = request.find("Transfer-Encoding: chunked");
 
-	tmpRequest = requestParser.parseHeadersOnly(request);
-	encoding = tmpRequest.headers.find(TRANSFER_ENCODING);
-
-	if (encoding != tmpRequest.headers.end() && encoding->second.find("chunked") != std::string::npos) {
+	if (enco != std::string::npos) {
 		size_t endSequencePos = request.find("\r\n0\r\n\r\n");
 		size_t len = request.length();
 		if (endSequencePos != std::string::npos && endSequencePos + 7 == len) {
