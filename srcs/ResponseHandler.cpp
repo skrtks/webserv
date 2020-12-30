@@ -172,7 +172,7 @@ void ResponseHandler::handleBody(request_s& request) {
 	size_t pos = _body.find("\r\n\r\n");;
 	if (request.method == POST && pos != std::string::npos) {
 		_body_length -= pos + 4;
-		_body.erase(0, pos);
+		_body.erase(0, pos + 4);
 	}
 
 }
@@ -251,7 +251,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LOCATION();
 	handleCONTENT_LANGUAGE(); //TODO Do we need to do this before handleBody( )
 	handleSERVER();
-//	handleCONNECTION_HEADER();
+	handleCONNECTION_HEADER();
 	_response[0] += "\r\n";
 	if (request.method != HEAD) {
 		_response[0] += _body;
@@ -377,7 +377,7 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 		_header_vals[CONTENT_TYPE] = "image/jpeg";
 	}
 	else {
-		_header_vals[CONTENT_TYPE] = "text/html";
+		_header_vals[CONTENT_TYPE] = "text/html; charset=\"UTF-8\"";
 	}
 	request.headers[CONTENT_TYPE] = this->_header_vals[CONTENT_TYPE];
 	_response[0] += "Content-Type: ";
@@ -424,7 +424,7 @@ void ResponseHandler::handleSERVER() {
 
 void ResponseHandler::handleCONNECTION_HEADER() {
 	_response[0] += "Connection: " + _header_vals[CONNECTION] + "\r\n";
-	_response[0] += "Accept-Encoding: gzip\r\n";
+	// _response[0] += "Accept-Encoding: gzip\r\n";
 }
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
