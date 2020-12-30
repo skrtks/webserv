@@ -30,26 +30,24 @@ Cgi::~Cgi() {
 	this->_m.clear();
 }
 
-void Cgi::populate_map(request_s &req) {
+void Cgi::populate_map(request_s &req, const std::string& OriginalUri) {
 	int split_path = req.uri.find_first_of('/', req.uri.find_first_of('.') );
 	char buf[500];
 	std::string	realpath = getcwd(buf, 500);
 
-//	std::cerr << _GREEN << "body.size() is " << req.body.size() << std::endl;
-	this->_m["AUTH_TYPE"] = req.headers[AUTHORIZATION];
-//	this->_m["CONTENT_LENGTH"] = req.headers[CONTENT_LENGTH];
+//	this->_m["AUTH_TYPE"] = req.headers[AUTHORIZATION];
 	this->_m["CONTENT_LENGTH"] = ft::inttostring(req.body.size());
-	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE]; //TODO fill this one
+//	this->_m["CONTENT_TYPE"] = req.headers[CONTENT_TYPE]; //We already have HTTP_CONTENT_TYPE I guess
 	this->_m["GATEWAY_INTERFACE"] = "CGI/1.1";
-	this->_m["PATH_INFO"] = req.uri;
-	this->_m["PATH_TRANSLATED"] = realpath + this->_m["PATH_INFO"];
-	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
-	this->_m["REMOTE_ADDR"] = req.server.gethost();
-	this->_m["REMOTE_IDENT"] = ""; //TODO fill this one
-	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
+	this->_m["PATH_INFO"] = OriginalUri;
+//	this->_m["PATH_TRANSLATED"] = realpath + this->_m["PATH_INFO"];
+//	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
+//	this->_m["REMOTE_ADDR"] = req.server.gethost();
+//	this->_m["REMOTE_IDENT"] = ""; //TODO fill this one ? idk
+//	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
 	this->_m["REQUEST_METHOD"] = req.MethodToSTring();
-	this->_m["REQUEST_URI"] = req.uri;
-	this->_m["SCRIPT_NAME"] = req.uri.substr(0, split_path - 1 );
+	this->_m["REQUEST_URI"] = OriginalUri;
+	this->_m["SCRIPT_NAME"] = '.' + req.uri.substr(0, split_path - 1 );
 	this->_m["SERVER_NAME"] = req.server.getservername();
 	this->_m["SERVER_PORT"] = std::string(ft::inttostring(req.server.getport()));
 	this->_m["SERVER_PROTOCOL"] = "HTTP/1.1";
@@ -59,9 +57,9 @@ void Cgi::populate_map(request_s &req) {
 void Cgi::map_to_env(request_s& request) {
 	int i = 0;
 	this->_m.insert(request.env.begin(), request.env.end());
-	std::cerr << _YELLOW << "Inserted the following headers:\n";
-	for (std::map<std::string, std::string>::const_iterator it = request.env.begin(); it != request.env.end(); it++)
-		std::cerr << _YELLOW << '\t' << it->first << " --> " << it->second << _END << std::endl;
+//	std::cerr << _YELLOW << "Inserted the following headers:\n";
+//	for (std::map<std::string, std::string>::const_iterator it = request.env.begin(); it != request.env.end(); it++)
+//		std::cerr << _YELLOW << '\t' << it->first << " --> " << it->second << _END << std::endl;
 	this->_env = (char**) ft_calloc(this->_m.size() + 1, sizeof(char*));
 	if (!_env)
 		exit_fatal();
@@ -75,7 +73,7 @@ void Cgi::map_to_env(request_s& request) {
 	}
 	std::cerr << std::endl;
 	for (size_t n = 0; _env[n]; n++) {
-		std::cerr << _CYAN << _env[n] << "$" << std::endl;
+		std::cerr << _CYAN << _env[n] << std::endl;
 	}
 	std::cerr << _END;
 }
@@ -89,7 +87,7 @@ void	Cgi::clear_env() {
 	_env = NULL;
 }
 
-int Cgi::run_cgi(request_s &request, std::string& scriptpath) {
+int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string& OriginalUri) {
 	static int testnb = 0;
 	std::string inputfile("/tmp/webservin" + ft::inttostring(testnb)),
 				outputfile("/tmp/webservout" + ft::inttostring(testnb));
@@ -102,7 +100,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath) {
 	std::cerr << _BOLD _CYAN << "running cgi with uri " << request.uri << std::endl
 				<< "and scriptpath " << scriptpath << "." _END << std::endl;
 
-	this->populate_map(request);
+	this->populate_map(request, OriginalUri);
 	this->map_to_env(request);
 
 	if ((incoming_file = open(inputfile.c_str(), O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
@@ -133,7 +131,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath) {
 	this->clear_env();
 	std::cerr << "waiting for child to close\n";
 	waitpid(0, NULL, 0);
-	std::cerr << "child fucking died lmao\n";
+	std::cerr << "child closed\n";
 	if ((outgoing_file = open(outputfile.c_str(), O_RDONLY, S_IRWXU)) == -1)
 		exit_fatal();
 	return (outgoing_file);

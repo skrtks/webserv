@@ -106,6 +106,7 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 }
 
 request_s RequestParser::parseRequest(const std::string &req) {
+	std::cerr << _RED _BOLD << "Just cleared env. its previous size was " << this->_env.size() << std::endl << _END;
 	this->_env.clear();
 	request_s request = parseHeadersOnly(req);
 
@@ -188,7 +189,7 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 	ret = _rawRequest.substr(pos, pos2 - pos);
 	mainVersion = ft_atoi(ret.c_str());
 	subVersion = ft_atoi(ret.c_str() + 2);
-	_version = std::make_pair(mainVersion, subVersion);
+	_version = std::make_pair(mainVersion, subVersion); // TODO Not sure if we are allowed to use std::pair, I made my own ft::pair for containers which we can use -Peer
 }
 
 void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
@@ -290,13 +291,7 @@ void RequestParser::parseHeaders() {
 				}
 				_headers.insert(std::make_pair(it->second, value));
 			}
-			std::string insert("HTTP_");
-			insert.append(upperHeader);
-			std::replace(insert.begin(), insert.end(), '-', '_');
-			if (_env.find(insert) == _env.end()) { // else if (header[0] == 'X')
-				_env[insert] = value;
-				std::cerr << _RED << "Inserted: " << insert << "=" << _env[insert] << _END << std::endl;
-			}
+			this->AddHeaderToEnv(upperHeader, value);
 		}
 		else {
 			eoRequestLine = _rawRequest.find("\r\n", 0);
@@ -333,6 +328,27 @@ void RequestParser::setRawRequest(const std::string& rawRequest) {
 
 const std::pair<int, int>& RequestParser::getVersion() const {
 	return _version;
+}
+
+void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::string &value) {
+	std::string insert("HTTP_");
+	insert.append(upperHeader);
+	std::replace(insert.begin(), insert.end(), '-', '_');
+	if (_env.count(insert) == 0) { // else if (header[0] == 'X')
+//		if (!_env.empty()) {
+//			std::cerr << _GREEN << "_env contains the following " << _env.size() << " things:" << std::endl;
+//			for (std::map<std::string, std::string>::const_iterator it = _env.begin(); it != _env.end(); ++it) {
+//				std::cerr << "\t" << it->first << '=' << it->second << std::endl;
+//			}
+//		}
+		_env[insert] = value;
+		std::cerr << _RED << "Inserted: " << insert << "=" << _env[insert] << _END << std::endl;
+//		std::cerr << _GREEN _BOLD << "_env now contains the following " << _env.size() << " things:" << std::endl;
+//		for (std::map<std::string, std::string>::const_iterator it = _env.begin(); it != _env.end(); ++it) {
+//			std::cerr << "\t" << it->first << '=' << it->second << std::endl;
+//		}
+//		std::cerr << _END;
+	}
 }
 
 std::string request_s::MethodToSTring() const {

@@ -95,7 +95,7 @@ int ResponseHandler::generatePage(request_s& request) {
 	if (request.server.isExtensionAllowed(request.uri)) {
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
-			fd = this->CGI.run_cgi(request, scriptpath);
+			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
 		}
 		else {
 //			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
@@ -112,7 +112,6 @@ int ResponseHandler::generatePage(request_s& request) {
 				std::cerr << "" << scriptpath << " dont make none sense none, defCgiPath is " << defaultcgipath << "\n";
 				if (defaultcgipath.empty()) {
 					fd = -2;
-					std:: cerr << "FD IS FUCKING -2 LMAO\n";
 				}
 				else {
 					second_slash_index = tmpuri.find_first_of('/', 1);
@@ -122,9 +121,10 @@ int ResponseHandler::generatePage(request_s& request) {
 				}
 			}
 			if (fd != -2) {
+				std::string	OriginalUri(request.uri);
 				request.uri = tmpuri;
 				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
-				fd = this->CGI.run_cgi(request, scriptpath);
+				fd = this->CGI.run_cgi(request, scriptpath, OriginalUri);
 				std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
 			}
 		}

@@ -100,7 +100,7 @@ std::string	Server::getservername() const {
 }
 
 void	Server::setservername(const std::string& servername) {
-	this->_server_name = servername;
+	this->_server_name = servername.substr(servername.find_first_not_of(" \t\r\n\f\v"), servername.find_last_not_of(" \t\r\n\f\v") - servername.find_first_not_of(" \t\r\n\f\v") + 1);
 }
 
 long int	Server::getmaxfilesize() const {

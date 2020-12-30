@@ -313,7 +313,7 @@ void Connection::handleCLI(const std::string& input) {
 	}
 }
 
-bool Connection::checkIfEnded(const std::string& request, RequestParser requestParser) { //TODO shouldnt we pass requestparser by reference?
+bool Connection::checkIfEnded(const std::string& request, RequestParser& requestParser) { //TODO shouldnt we pass requestparser by reference?
 	std::map<headerType, std::string>::iterator encoding;
 	request_s									tmpRequest;
 
