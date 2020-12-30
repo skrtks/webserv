@@ -314,9 +314,12 @@ void Connection::handleCLI(const std::string& input) {
 }
 
 bool Connection::checkIfEnded(const std::string& request) {
-	size_t enco = request.find("Transfer-Encoding: chunked");
-
-	if (enco != std::string::npos) {
+	size_t chunkedPos;
+	size_t encoPos = request.find("Transfer-Encoding:");
+	if (encoPos != std::string::npos) {
+		chunkedPos = request.find("chunked", encoPos);
+	}
+	if (encoPos != std::string::npos && chunkedPos != std::string::npos) {
 		size_t endSequencePos = request.find("\r\n0\r\n\r\n");
 		size_t len = request.length();
 		if (endSequencePos != std::string::npos && endSequencePos + 7 == len) {
