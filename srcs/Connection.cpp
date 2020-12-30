@@ -220,7 +220,10 @@ int Connection::receiveRequest(const int& fd) {
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	size_t totalsize = 0;
-	std::ofstream responsefile("/tmp/webserv_response.txt", std::ios::out | std::ios::trunc);
+	static int testnumber = 0;
+	std::string responsefilename = "/tmp/webserv_request" + ft::inttostring(testnumber) + ".txt";
+	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
+	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
 	if (responsefile.is_open()) {
 //		responsefile << "\nRESPONSE --------" << std::endl;
 		for (size_t i = 0; i < msg.size(); i++)
@@ -245,6 +248,7 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
 	std::cerr << _GREEN "sent a total size of " << totalsize << ".\n" _END;
+	testnumber += 1;
 }
 
 void Connection::closeConnection(const int& fd) {
