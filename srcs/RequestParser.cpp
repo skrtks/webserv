@@ -331,10 +331,12 @@ const std::pair<int, int>& RequestParser::getVersion() const {
 }
 
 void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::string &value) {
-	std::string insert("HTTP_");
+	std::string insert;
+	if (upperHeader[0] == 'X')
+		insert = "HTTP_";
 	insert.append(upperHeader);
 	std::replace(insert.begin(), insert.end(), '-', '_');
-	if (this->_env.count(insert) == 0 ) { // else if (upperHeader[0] == 'X')
+	if (this->_env.count(insert) == 0) { // else if (upperHeader[0] == 'X')
 		this->_env[insert] = value;
 		std::cerr << _RED << "Inserted: " << insert << "=" << this->_env[insert] << _END << std::endl;
 	}
