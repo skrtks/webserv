@@ -251,7 +251,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LOCATION();
 	handleCONTENT_LANGUAGE(); //TODO Do we need to do this before handleBody( )
 	handleSERVER();
-	handleCONNECTION_HEADER();
+//	handleCONNECTION_HEADER();
 	_response[0] += "\r\n";
 	if (request.method != HEAD) {
 		_response[0] += _body;

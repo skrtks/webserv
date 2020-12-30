@@ -109,7 +109,7 @@ void Connection::setUpConnection() {
 void Connection::startListening() {
 	RequestParser					requestParser;
 	ResponseHandler					responseHandler;
-	std::vector<std::string>				response;
+	std::vector<std::string>		response;
 	std::map<int, Server>::iterator	serverMapIt;
 	std::map<int, Server> 			serverConnections;
 
