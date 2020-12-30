@@ -46,7 +46,7 @@ all: $(NAME)
 
 $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
-	$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
+	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
 	mkdir -p htmlfiles/Downloads
 	cp test/$(CGI_TESTER) YoupiBanane/youpi.bla
 
@@ -57,7 +57,7 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 
 %.o: %.cpp
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
-	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
