@@ -17,12 +17,14 @@ SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
 
-CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11 -Ofast
-ifdef DEBUG
+CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++98
+ifneq ($(filter 1, $(DEBUG) $(ASAN)),)
  CXXFLAGS += -g
-endif
-ifdef ASAN
- CXXFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
+ ifdef ASAN
+  CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+ endif
+else
+ CXXFLAGS += -Ofast
 endif
 
 GNL = getnextline.a
@@ -44,7 +46,7 @@ all: $(NAME)
 
 $(NAME): $(OBJS) $(LIBFT) $(GNL)
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Bundling executable... $(END)$(NAME)"
-	@$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
+	$(CXX) $(CXXFLAGS) $(OBJS) $(GNL) $(LIBFT) $(INCLUDE) -o $@
 	mkdir -p htmlfiles/Downloads
 	cp test/$(CGI_TESTER) YoupiBanane/youpi.bla
 
@@ -55,7 +57,7 @@ $(NAME): $(OBJS) $(LIBFT) $(GNL)
 
 %.o: %.cpp
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Compiling file $(END)$< $(GREEN)to $(END)$@"
-	@$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing .o files $(END)$(OUT_DIR)"
