@@ -213,7 +213,7 @@ int Connection::receiveRequest(const int& fd) {
 		req->second += request;
 	}
 
-	// std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << request << " ----------- END REQUEST ----------- \n" << std::endl;
+//	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << request << " ----------- END REQUEST ----------- \n" << std::endl;
 	return bytesReceived;
 //	_rawRequest = request;
 }
