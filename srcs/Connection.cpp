@@ -221,8 +221,8 @@ int Connection::receiveRequest(const int& fd) {
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	size_t totalsize = 0;
 	static int testnumber = 0;
-	std::string responsefilename = "/tmp/webserv_request" + ft::inttostring(testnumber) + ".txt";
-	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
+	std::string responsefilename = "/tmp/webserv_response" + ft::inttostring(testnumber) + ".txt";
+//	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
 	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
 	if (responsefile.is_open()) {
 //		responsefile << "\nRESPONSE --------" << std::endl;
