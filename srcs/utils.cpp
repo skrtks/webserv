@@ -2,8 +2,8 @@
 // Created by peerdb on 09-12-20.
 //
 
+#include "libftGnl.hpp"
 #include <string>
-#include <iostream>
 
 namespace ft {
 
@@ -23,5 +23,18 @@ namespace ft {
 			ss = i + ss;
 		}
 		return ss;
+	}
+	void	stringtoupper(std::string& str) {
+		for (size_t i = 0; i < str.length(); ++i) {
+			str[i] = ft_toupper(str[i]);
+		}
+	}
+
+	void	trimstring(std::string& str, const char* totrim) {
+		size_t	begin = str.find_first_not_of(totrim),
+				end = str.find_last_not_of(totrim);
+		if (begin == std::string::npos || end == 0)
+			return;
+		str = str.substr(begin, end - begin + 1);
 	}
 }

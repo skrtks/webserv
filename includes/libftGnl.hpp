@@ -27,6 +27,8 @@ namespace ft {
 	std::vector<std::string>	split(const std::string& s, const std::string& delim);
 	std::string					getextension(const std::string &uri);
 	std::string					inttostring(int a);
+	void						stringtoupper(std::string& str);
+	void 						trimstring(std::string& str, const char* totrim = " ");
 }
 
 
