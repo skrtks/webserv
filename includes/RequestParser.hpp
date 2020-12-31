@@ -52,6 +52,7 @@ class RequestParser {
 	std::map<std::string, std::string>	_env;
 
 public:
+	friend class ResponseHandler;
 	RequestParser();
 	virtual ~RequestParser();
 	RequestParser(const RequestParser &obj);

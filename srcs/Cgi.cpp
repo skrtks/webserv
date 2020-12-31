@@ -70,10 +70,10 @@ void Cgi::map_to_env(request_s& request) {
 			exit_fatal();
 		++i;
 	}
-	std::cerr << std::endl << _YELLOW "CGI->_env contains:" _END << std::endl;
-	for (size_t n = 0; _env[n]; n++) {
-		std::cerr << _CYAN << _env[n] << _END << std::endl;
-	}
+//	std::cerr << std::endl << _YELLOW "CGI->_env contains:" _END << std::endl;
+//	for (size_t n = 0; _env[n]; n++) {
+//		std::cerr << _CYAN << _env[n] << _END << std::endl;
+//	}
 }
 
 void	Cgi::clear_env() {
@@ -105,7 +105,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 		exit_fatal();
 	ssize_t dummy = write(incoming_file, request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
 	(void)dummy;
-	std::cout << _CYAN "just wrote a body of size " << dummy << " into the execve.\n" _END;
+//	std::cout << _CYAN "just wrote a body of size " << dummy << " into the execve.\n" _END;
 	if (close(incoming_file) == -1)
 		exit_fatal();
 
@@ -127,9 +127,9 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 	}
 
 	this->clear_env();
-	std::cerr << "waiting for child to close\n";
+//	std::cerr << "waiting for child to close\n";
 	waitpid(0, NULL, 0);
-	std::cerr << "child closed\n";
+//	std::cerr << "child closed\n";
 	if ((outgoing_file = open(outputfile.c_str(), O_RDONLY, S_IRWXU)) == -1)
 		exit_fatal();
 	return (outgoing_file);
