@@ -234,8 +234,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	if (this->authenticate(request))
 		return;
 	if (this->_body_length > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
-		this->_status_code = 413;
-		return;
+		request.status_code = 413;
 	}
 	if (request.status_code)
 		this->_status_code = request.status_code;
