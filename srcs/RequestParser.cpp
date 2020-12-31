@@ -66,7 +66,6 @@ std::string RequestParser::parseBody()
 	std::string ret;
 	std::size_t pos, i = 0;
 
-//	std::cerr << _YELLOW "$" << _rawRequest << "$\n" _END;
 	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
 	while (true) {
 		pos = ret.find("\r\n");
@@ -106,7 +105,6 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 }
 
 request_s RequestParser::parseRequest(const std::string &req) {
-	std::cerr << _RED _BOLD << "Just cleared env. its previous size was " << this->_env.size() << std::endl << _END;
 	this->_env.clear();
 	request_s request = parseHeadersOnly(req);
 
@@ -331,14 +329,13 @@ const std::pair<int, int>& RequestParser::getVersion() const {
 }
 
 void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::string &value) {
-	std::string insert;
-	if (upperHeader[0] == 'X')
-		insert = "HTTP_";
+	std::string insert("HTTP_");
+//	if (upperHeader[0] == 'X')
+//		insert = "HTTP_";
 	insert.append(upperHeader);
 	std::replace(insert.begin(), insert.end(), '-', '_');
 	if (this->_env.count(insert) == 0) { // else if (upperHeader[0] == 'X')
 		this->_env[insert] = value;
-		std::cerr << _RED << "Inserted: " << insert << "=" << this->_env[insert] << _END << std::endl;
 	}
 }
 
