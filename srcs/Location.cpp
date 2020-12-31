@@ -94,7 +94,7 @@ std::vector<e_method>		Location::getallowmethods() const { return this->_allow_m
 std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
 std::vector<std::string>	Location::getcgiallowedextensions() const { return this->_cgi_allowed_extensions; }
 std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
-long int					Location::getmaxbody() const { return this->_maxBody; }
+long unsigned int			Location::getmaxbody() const { return this->_maxBody; }
 std::string					Location::getindex() const { return this->_indexes[0]; }
 std::string					Location::getdefaultcgipath() const { return this->_default_cgi_path; }
 
