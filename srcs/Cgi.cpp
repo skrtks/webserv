@@ -86,9 +86,8 @@ void	Cgi::clear_env() {
 }
 
 int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string& OriginalUri) {
-	static int testnb = 0;
-	std::string inputfile("/tmp/webservin" + ft::inttostring(testnb)),
-				outputfile("/tmp/webservout" + ft::inttostring(testnb));
+	static int testnb = 1;
+	std::cerr << _PURPLE _BOLD "POST test #" << testnb << "\n" _END;
 	testnb += 1;
 	int				incoming_file,
 					outgoing_file;
@@ -101,7 +100,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 	this->populate_map(request, OriginalUri);
 	this->map_to_env(request);
 
-	if ((incoming_file = open(inputfile.c_str(), O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
+	if ((incoming_file = open("/tmp/webservin.txt", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 		exit_fatal();
 	ssize_t dummy = write(incoming_file, request.body.c_str(), request.body.length()); // Child can read from the other end of this pipe
 	(void)dummy;
@@ -113,11 +112,11 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 		exit_fatal();
 
 	if (pid == 0) {
-		if ((outgoing_file = open(outputfile.c_str(), O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
+		if ((outgoing_file = open("/tmp/webservout.txt", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 			exit_fatal();
 		if (dup2(outgoing_file, STDOUT_FILENO) == -1 || close(outgoing_file) == -1)
 			exit_fatal();
-		if ((incoming_file = open(inputfile.c_str(), O_RDONLY, S_IRWXU)) == -1)
+		if ((incoming_file = open("/tmp/webservin.txt", O_RDONLY, S_IRWXU)) == -1)
 			exit_fatal();
 		if (dup2(incoming_file, STDIN_FILENO) == -1 || close(incoming_file) == -1)
 			exit_fatal();
@@ -130,7 +129,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 //	std::cerr << "waiting for child to close\n";
 	waitpid(0, NULL, 0);
 //	std::cerr << "child closed\n";
-	if ((outgoing_file = open(outputfile.c_str(), O_RDONLY, S_IRWXU)) == -1)
+	if ((outgoing_file = open("/tmp/webservout.txt", O_RDONLY, S_IRWXU)) == -1)
 		exit_fatal();
 	return (outgoing_file);
 }
