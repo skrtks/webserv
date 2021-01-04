@@ -48,7 +48,7 @@ public:			//getters
 		std::vector<std::string>	getcgiallowedextensions() const;
 		std::string					geterrorpage() const;
 		std::string					getdefaultcgipath() const;
-		long						getmaxbody() const;
+		long unsigned int			getmaxbody() const;
 		
 		void	setup(int );
 		bool	checkifMethodAllowed(const e_method& meth) const;
@@ -63,7 +63,7 @@ private:
 	std::vector<std::string>	_indexes,
 								_cgi_allowed_extensions;
 	std::vector<e_method>		_allow_method;
-	long						_maxBody;
+	long unsigned int			_maxBody;
 	std::string					_default_cgi_path;
 };
 

@@ -21,10 +21,11 @@
 
 class ResponseHandler {
 	std::map<headerType, std::string>	_header_vals;
+	std::map<headerType, std::string>	_cgi_headers;
+	int									_cgi_status_code;
 	std::map<int, std::string>			_status_codes;
 	std::vector<std::string>			_response;
 	std::string							_body;
-	int									_body_length;
 	int									_status_code;
 	Cgi									CGI;
 public:
@@ -53,6 +54,7 @@ public:
 	void		handleTRANSFER_ENCODING( request_s& request ); // Not yet used
 	void		handleWWW_AUTHENTICATE( ); // Not yet implemented
 
+	void		extractCGIheaders(std::string);
 	int			authenticate(request_s& request);
 	void 		generateResponse(request_s& request);
 	int			generatePage(request_s& request);

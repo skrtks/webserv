@@ -100,7 +100,7 @@ std::string	Server::getservername() const {
 }
 
 void	Server::setservername(const std::string& servername) {
-	this->_server_name = servername;
+	this->_server_name = servername.substr(servername.find_first_not_of(" \t\r\n\f\v"), servername.find_last_not_of(" \t\r\n\f\v") - servername.find_first_not_of(" \t\r\n\f\v") + 1);
 }
 
 long int	Server::getmaxfilesize() const {
@@ -251,7 +251,9 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 
 	if (stat(filepath.c_str(), &statstruct) != -1) { // or if file too big?
 		if (S_ISDIR(statstruct.st_mode)) {
-			filepath += '/' + loca.getindex();
+			if (filepath[filepath.length() - 1] != '/')
+				filepath += '/';
+			filepath += loca.getindex();
 //			std::cerr << _CYAN "S_ISDIR, filepath is index is " << filepath << std::endl << _END;
 		}
 		if (!filepath.empty())

@@ -56,6 +56,7 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 		this->_methodMap = obj._methodMap;
 		this->_headerMap = obj._headerMap;
 		this->_rawRequest = obj._rawRequest;
+		this->_env = obj._env;
 	}
 	return *this;
 }
@@ -65,7 +66,6 @@ std::string RequestParser::parseBody()
 	std::string ret;
 	std::size_t pos, i = 0;
 
-//	std::cerr << _YELLOW "$" << _rawRequest << "$\n" _END;
 	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
 	while (true) {
 		pos = ret.find("\r\n");
@@ -99,11 +99,13 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 		request.method = _method;
 		request.version = _version;
 		request.uri = _uri;
+		request.env = _env;
 	}
 	return (request);
 }
 
 request_s RequestParser::parseRequest(const std::string &req) {
+	this->_env.clear();
 	request_s request = parseHeadersOnly(req);
 
 	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
@@ -185,7 +187,7 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 	ret = _rawRequest.substr(pos, pos2 - pos);
 	mainVersion = ft_atoi(ret.c_str());
 	subVersion = ft_atoi(ret.c_str() + 2);
-	_version = std::make_pair(mainVersion, subVersion);
+	_version = std::make_pair(mainVersion, subVersion); // TODO Not sure if we are allowed to use std::pair, I made my own ft::pair for containers which we can use -Peer
 }
 
 void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
@@ -287,6 +289,7 @@ void RequestParser::parseHeaders() {
 				}
 				_headers.insert(std::make_pair(it->second, value));
 			}
+			this->AddHeaderToEnv(upperHeader, value);
 		}
 		else {
 			eoRequestLine = _rawRequest.find("\r\n", 0);
@@ -323,6 +326,17 @@ void RequestParser::setRawRequest(const std::string& rawRequest) {
 
 const std::pair<int, int>& RequestParser::getVersion() const {
 	return _version;
+}
+
+void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::string &value) {
+	std::string insert("HTTP_");
+//	if (upperHeader[0] == 'X')
+//		insert = "HTTP_";
+	insert.append(upperHeader);
+	std::replace(insert.begin(), insert.end(), '-', '_');
+	if (this->_env.count(insert) == 0) { // else if (upperHeader[0] == 'X')
+		this->_env[insert] = value;
+	}
 }
 
 std::string request_s::MethodToSTring() const {

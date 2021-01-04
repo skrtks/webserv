@@ -21,8 +21,7 @@
 #include "Base64.hpp"
 #include "Colours.hpp"
 #include <stdio.h>
-ResponseHandler::ResponseHandler() {
-	this->_body_length = 0;
+ResponseHandler::ResponseHandler() : _cgi_status_code() {
 	this->_status_code = 200;
 	_header_vals[ACCEPT_CHARSET].clear(); // TODO ??
 	_header_vals[ACCEPT_LANGUAGE].clear();
@@ -73,17 +72,27 @@ ResponseHandler::ResponseHandler() {
 }
 
 ResponseHandler::~ResponseHandler() {
+	this->_header_vals.clear();
+	this->_cgi_headers.clear();
+	this->_status_codes.clear();
+	this->_response.clear();
+	this->_body.clear();
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) : _body_length(), _status_code() {
-	this->_header_vals = src._header_vals;
-	this->_response	= src._response;
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _status_code() {
+	*this = src;
 }
 
 ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 	if (this != &rhs) {
 		this->_header_vals = rhs._header_vals;
+		this->_cgi_headers = rhs._cgi_headers;
+		this->_cgi_status_code = rhs._cgi_status_code;
+		this->_status_codes = rhs._status_codes;
 		this->_response	= rhs._response;
+		this->_body = rhs._body;
+		this->_status_code = rhs._status_code;
+		this->CGI = rhs.CGI;
 	}
 	return *this;
 }
@@ -95,7 +104,7 @@ int ResponseHandler::generatePage(request_s& request) {
 	if (request.server.isExtensionAllowed(request.uri)) {
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
-			fd = this->CGI.run_cgi(request, scriptpath);
+			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
 		}
 		else {
 //			std::cerr << _RED _BOLD "uri not cgi-bin but valid cgi extension: " << request.uri << std::endl << _END;
@@ -112,7 +121,6 @@ int ResponseHandler::generatePage(request_s& request) {
 				std::cerr << "" << scriptpath << " dont make none sense none, defCgiPath is " << defaultcgipath << "\n";
 				if (defaultcgipath.empty()) {
 					fd = -2;
-					std:: cerr << "FD IS FUCKING -2 LMAO\n";
 				}
 				else {
 					second_slash_index = tmpuri.find_first_of('/', 1);
@@ -122,9 +130,10 @@ int ResponseHandler::generatePage(request_s& request) {
 				}
 			}
 			if (fd != -2) {
+				std::string	OriginalUri(request.uri);
 				request.uri = tmpuri;
 				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
-				fd = this->CGI.run_cgi(request, scriptpath);
+				fd = this->CGI.run_cgi(request, scriptpath, OriginalUri);
 				std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
 			}
 		}
@@ -140,13 +149,36 @@ int ResponseHandler::generatePage(request_s& request) {
 	return (fd);
 }
 
+void ResponseHandler::extractCGIheaders(std::string incoming) {
+	RequestParser TMP;
+	std::vector<std::string> vec = ft::split(incoming, "\n");
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); ++it) {
+		if ((*it).find(':') == std::string::npos)
+			continue;
+		std::string key, value;
+		get_key_value(*it, key, value, ":");
+		ft::stringtoupper(key);
+		ft::trimstring(value);
+		std::cerr << _PURPLE << "Key = '" << key << "', and value is '" << value << "'\n";
+		std::map<std::string, headerType>::iterator header = TMP._headerMap.find(key);
+		if (header != TMP._headerMap.end()) {
+			_cgi_headers[header->second] = value;
+		}
+		else if (key == "STATUS")
+			_cgi_status_code = ft_atoi(value.c_str());
+	}
+	for (std::map<headerType, std::string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end(); ++it) {
+		std::cerr << _BOLD "_cgi_headers contains: '" << headerTypeAsString(it->first) << "'='" << it->second << "'\n";
+	}
+	std::cerr << _PURPLE "And _cgi_status_code is " << _cgi_status_code << _END << std::endl;
+}
+
 void ResponseHandler::handleBody(request_s& request) {
 	int		ret = 1024;
 	char	buf[1024];
 	int		fd = 0;
 	int totalreadsize = 0;
 
-	_body_length = 0;
 	_body.clear();
 	if (request.status_code == 400) {
 		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
@@ -156,12 +188,10 @@ void ResponseHandler::handleBody(request_s& request) {
 	}
 	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
-		if (ret <= 0) {
+		if (ret <= 0)
 			break;
-		}
-//		else std::cerr << "read retuned " << ret << std::endl;
 		totalreadsize += ret;
-		_body_length += ret;
+//		_body_length += ret;
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	}
@@ -169,19 +199,17 @@ void ResponseHandler::handleBody(request_s& request) {
 	if (close(fd) == -1) {
 		exit(EXIT_FAILURE);
 	}
-	size_t pos = _body.find("\r\n\r\n");;
-	if (request.method == POST && pos != std::string::npos) {
-		_body_length -= pos + 4;
-		_body.erase(0, pos);
+	size_t pos = _body.find("\r\n\r\n");
+	if (request.method == POST) {
+		this->extractCGIheaders(_body.substr(0, pos + 4));
+		if (pos != std::string::npos)
+			_body.erase(0, pos + 4);
 	}
 
 }
 std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
-	std::cout << "Server for above request is: " << request.server.getservername() << std::endl;
-	this->_body_length = request.body.length();
 	this->_response.resize(1);
-	_response.front() = "";
-//	std::cerr << _RED << "in handleRequest, _response immediately has size " << _response.size() << std::endl << _END;
+	_response.front().clear();
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -201,7 +229,6 @@ void ResponseHandler::handlePut(request_s& request) {
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
-		_body_length = _body.length();
 	}
 	else {
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
@@ -226,17 +253,17 @@ void ResponseHandler::handlePut(request_s& request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
+	std::cerr << request;
 
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
-		_body_length = _body.length();
 	}
 	if (this->authenticate(request))
 		return;
-	if (this->_body_length > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
-		this->_status_code = 413;
-		return;
+	std::cerr << _YELLOW "Request body is " << request.body.length() << " long, and maxbody size is " << request.server.matchlocation(request.uri).getmaxbody() << std::endl << _END;
+	if (request.body.length() > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
+		request.status_code = 413;
 	}
 	if (request.status_code)
 		this->_status_code = request.status_code;
@@ -294,6 +321,8 @@ int ResponseHandler::authenticate(request_s& request) {
 }
 
 void	ResponseHandler::handleStatusCode(request_s& request) {
+	if (this->_status_code == 200 && _cgi_status_code)
+		_status_code = _cgi_status_code;
 	if (request.version.first != 1 && _status_code == 200)
 		_status_code = 505;
 	_response[0] += _status_codes[_status_code];
@@ -306,7 +335,7 @@ std::string ResponseHandler::getCurrentDatetime() {
 	char 		datetime[100];
 	std::string dtRet;
 	tm*			curr_time;
-	
+
 	// gettimeofday(&time, NULL);
 	std::time(&time);
 	curr_time = std::localtime(&time);
@@ -328,7 +357,7 @@ void ResponseHandler::handleCONTENT_LANGUAGE() {
 	std::string lang;
 	size_t	found = 0;
 	size_t	lang_idx = 0;
-	
+
 	found = _body.find("<html");
 	lang_idx = _body.find("lang", found + 1);
 	if (lang_idx != std::string::npos)
@@ -350,7 +379,7 @@ void ResponseHandler::handleCONTENT_LENGTH() {
 	std::stringstream	ss;
 	std::string			str;
 
-	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body_length);
+	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
 	_response[0] += "Content-Length: ";
 	_response[0] += _header_vals[CONTENT_LENGTH];
 	_response[0] += "\r\n";
@@ -366,6 +395,9 @@ void ResponseHandler::handleCONTENT_LOCATION() {
 
 void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 	// Defaults to html if no css is found
+	if (_cgi_headers.count(CONTENT_TYPE) == 1) {
+		_header_vals[CONTENT_TYPE] = _cgi_headers[CONTENT_TYPE];
+	}
 	if (request.uri.find(".css") != std::string::npos) {
 		_header_vals[CONTENT_TYPE] = "text/css";
 	}
@@ -376,7 +408,7 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 		_header_vals[CONTENT_TYPE] = "image/jpeg";
 	}
 	else {
-		_header_vals[CONTENT_TYPE] = "text/html";
+		_header_vals[CONTENT_TYPE] = "text/html"; //; charset=\"UTF-8\"";
 	}
 	request.headers[CONTENT_TYPE] = this->_header_vals[CONTENT_TYPE];
 	_response[0] += "Content-Type: ";
@@ -423,7 +455,7 @@ void ResponseHandler::handleSERVER() {
 
 void ResponseHandler::handleCONNECTION_HEADER() {
 	_response[0] += "Connection: " + _header_vals[CONNECTION] + "\r\n";
-	_response[0] += "Accept-Encoding: gzip\r\n";
+	// _response[0] += "Accept-Encoding: gzip\r\n";
 }
 
 void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {

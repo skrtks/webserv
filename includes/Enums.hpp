@@ -6,7 +6,7 @@
 #define WEBSERV_ENUMS_HPP
 #include <string>
 
-enum headerType {
+enum headerType { // TODO No ACCEPT_ENCODING???
 	ACCEPT_CHARSET,
 	ACCEPT_LANGUAGE,
 	ALLOW,

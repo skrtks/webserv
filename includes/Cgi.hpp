@@ -18,11 +18,11 @@ public:
 	Cgi&	operator=(const Cgi&);
 	~Cgi();
 
-	int		run_cgi(request_s&, std::string& scriptpath);
+	int		run_cgi(request_s&, std::string& scriptpath, const std::string& OriginalUri);
 
 private:
-	void	populate_map(request_s&);
-	void	map_to_env();
+	void	populate_map(request_s&, const std::string&);
+	void map_to_env(request_s& request);
 	void	clear_env();
 
 	std::map<std::string, std::string>	_m;

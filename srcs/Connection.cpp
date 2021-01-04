@@ -109,7 +109,7 @@ void Connection::setUpConnection() {
 void Connection::startListening() {
 	RequestParser					requestParser;
 	ResponseHandler					responseHandler;
-	std::vector<std::string>				response;
+	std::vector<std::string>		response;
 	std::map<int, Server>::iterator	serverMapIt;
 	std::map<int, Server> 			serverConnections;
 
@@ -150,8 +150,16 @@ void Connection::startListening() {
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
 				}
-				else if (checkIfEnded(req->second, requestParser) || receiveRequest(fd) == 0) {
+				else if (checkIfEnded(req->second) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
+
+					static int testnumber = 0;
+					std::string requestfilename = "/tmp/webserv_request" + ft::inttostring(testnumber) + ".txt";
+					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
+					if (requestfile.is_open()) {
+						requestfile << req->second;
+						requestfile.close();
+					}
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
@@ -160,6 +168,7 @@ void Connection::startListening() {
 					serverConnections.erase(fd);
 					_requestStorage.erase(fd);
 					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
+//					testnumber += 1;
 				}
 			}
 		}
@@ -204,14 +213,17 @@ int Connection::receiveRequest(const int& fd) {
 		req->second += request;
 	}
 
-	// std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << request << " ----------- END REQUEST ----------- \n" << std::endl;
+//	std::cout << "\n ----------- BEGIN REQUEST ----------- \n" << request << " ----------- END REQUEST ----------- \n" << std::endl;
 	return bytesReceived;
 //	_rawRequest = request;
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	size_t totalsize = 0;
-	std::ofstream responsefile("/tmp/webserv_response.txt", std::ios::out | std::ios::trunc);
+	static int testnumber = 0;
+	std::string responsefilename = "/tmp/webserv_response" + ft::inttostring(testnumber) + ".txt";
+//	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
+	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
 	if (responsefile.is_open()) {
 //		responsefile << "\nRESPONSE --------" << std::endl;
 		for (size_t i = 0; i < msg.size(); i++)
@@ -236,6 +248,7 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
 	std::cerr << _GREEN "sent a total size of " << totalsize << ".\n" _END;
+	testnumber += 1;
 }
 
 void Connection::closeConnection(const int& fd) {
@@ -304,14 +317,13 @@ void Connection::handleCLI(const std::string& input) {
 	}
 }
 
-bool Connection::checkIfEnded(const std::string& request, RequestParser requestParser) {
-	std::map<headerType, std::string>::iterator encoding;
-	request_s									tmpRequest;
-
-	tmpRequest = requestParser.parseHeadersOnly(request);
-	encoding = tmpRequest.headers.find(TRANSFER_ENCODING);
-
-	if (encoding != tmpRequest.headers.end() && encoding->second.find("chunked") != std::string::npos) {
+bool Connection::checkIfEnded(const std::string& request) {
+	size_t chunkedPos;
+	size_t encoPos = request.find("Transfer-Encoding:");
+	if (encoPos != std::string::npos) {
+		chunkedPos = request.find("chunked", encoPos);
+	}
+	if (encoPos != std::string::npos && chunkedPos != std::string::npos) {
 		size_t endSequencePos = request.find("\r\n0\r\n\r\n");
 		size_t len = request.length();
 		if (endSequencePos != std::string::npos && endSequencePos + 7 == len) {

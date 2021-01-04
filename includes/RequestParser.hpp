@@ -13,6 +13,7 @@
 #ifndef REQUESTPARSER_HPP
 #define REQUESTPARSER_HPP
 
+#include <algorithm>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -32,6 +33,7 @@ struct request_s {
 	Server								server;
 	std::string							body;
 	bool								transfer_buffer;
+	std::map<std::string, std::string>	env;
 	std::string		MethodToSTring() const;
 
 };
@@ -47,8 +49,10 @@ class RequestParser {
 	std::map<std::string, e_method>		_methodMap;
 	std::map<std::string, headerType>	_headerMap;
 	std::string							_rawRequest;
+	std::map<std::string, std::string>	_env;
 
 public:
+	friend class ResponseHandler;
 	RequestParser();
 	virtual ~RequestParser();
 	RequestParser(const RequestParser &obj);
@@ -56,6 +60,7 @@ public:
 
 	request_s		parseRequest(const std::string &req);
 	std::string		parseBody();
+	void			AddHeaderToEnv(const std::string& upperHeader, const std::string& value);
 	request_s		parseHeadersOnly(const std::string &req);
 	void			parseRequestLine();
 	void			parseHeaders();
