@@ -76,7 +76,8 @@ void Connection::setUpConnection() {
 		if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
 			throw std::runtime_error(strerror(errno));
 		}
-
+		if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0)
+			throw std::runtime_error(strerror(errno));
 		// Fill struct with info about port and ip
 		_serverAddr.sin_family = AF_INET; // ipv4
 		if (it->gethost() == "localhost") {
