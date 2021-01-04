@@ -96,9 +96,7 @@ void Connection::setUpConnection() {
 			else {
 				break;
 			}
-			usleep(TIMEOUT);
 		}
-
 		// Start listening for connections on port set in sFd, max BACKLOG waiting connections
 		if (listen(socketFd, BACKLOG))
 			throw std::runtime_error(strerror(errno));
@@ -153,8 +151,7 @@ void Connection::startListening() {
 				else if (checkIfEnded(req->second) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
 
-					static int testnumber = 0;
-					std::string requestfilename = "/tmp/webserv_request" + ft::inttostring(testnumber) + ".txt";
+					std::string requestfilename = "/tmp/webserv_request.txt";
 					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
 					if (requestfile.is_open()) {
 						requestfile << req->second;
@@ -168,7 +165,6 @@ void Connection::startListening() {
 					serverConnections.erase(fd);
 					_requestStorage.erase(fd);
 					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
-//					testnumber += 1;
 				}
 			}
 		}
@@ -177,10 +173,9 @@ void Connection::startListening() {
 
 int Connection::addConnection(const int &socketFd) {
 	struct sockaddr_storage their_addr = {}; // Will contain info about connecting client
-	socklen_t addr_size;
+	socklen_t addr_size = sizeof(their_addr);
 
 	// Accept one connection from backlog
-	addr_size = sizeof their_addr;
 	if ((_connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0)
 		throw std::runtime_error(strerror(errno));
 	FD_SET(_connectionFd, &_master); // Add new connection to the set
@@ -220,8 +215,7 @@ int Connection::receiveRequest(const int& fd) {
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	size_t totalsize = 0;
-	static int testnumber = 0;
-	std::string responsefilename = "/tmp/webserv_response" + ft::inttostring(testnumber) + ".txt";
+	std::string responsefilename = "/tmp/webserv_response.txt";
 //	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
 	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
 	if (responsefile.is_open()) {
@@ -248,7 +242,6 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
 	std::cerr << _GREEN "sent a total size of " << totalsize << ".\n" _END;
-	testnumber += 1;
 }
 
 void Connection::closeConnection(const int& fd) {
