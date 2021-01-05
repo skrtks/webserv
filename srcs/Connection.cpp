@@ -250,6 +250,7 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 	msg.clear();
 	static int i = 0;
 	std::cerr << _GREEN "sent response for request #" << i << ".\n" _END;
+	++i;
 }
 
 void Connection::closeConnection(const int& fd) {
