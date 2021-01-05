@@ -144,7 +144,7 @@ void Connection::startListening() {
 				}
 				else if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
-					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
+//					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 				}
 				else { // Handle request & return response
 					if (receiveRequest(fd) == 0) {
@@ -174,7 +174,7 @@ void Connection::startListening() {
 					FD_CLR(fd, &_writeFds);
 					serverConnections.erase(fd);
 					_requestStorage.erase(fd);
-					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
+//					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 				}
 			}
 		}
@@ -248,7 +248,8 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 	totalsize += msg[0].length();
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
-	std::cerr << _GREEN "sent a total size of " << totalsize << ".\n" _END;
+	static int i = 0;
+	std::cerr << _GREEN "sent response for request #" << i << ".\n" _END;
 }
 
 void Connection::closeConnection(const int& fd) {
