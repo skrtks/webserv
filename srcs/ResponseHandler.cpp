@@ -116,17 +116,17 @@ int ResponseHandler::generatePage(request_s& request) {
 				tmpuri += request.uri.substr(second_slash_index);
 			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
 			if (stat(scriptpath.c_str(), &statstruct) == -1) {
-				std::cerr << "real uri is " << request.uri << ", its location is " << request.server.matchlocation(request.uri).getlocationmatch() << std::endl;
+//				std::cerr << "real uri is " << request.uri << ", its location is " << request.server.matchlocation(request.uri).getlocationmatch() << std::endl;
 				std::string defaultcgipath = request.server.matchlocation(request.uri).getdefaultcgipath();
-				std::cerr << "" << scriptpath << " dont make none sense none, defCgiPath is " << defaultcgipath << "\n";
+//				std::cerr << "" << scriptpath << " dont make none sense none, defCgiPath is " << defaultcgipath << "\n";
 				if (defaultcgipath.empty()) {
 					fd = -2;
 				}
 				else {
 					second_slash_index = tmpuri.find_first_of('/', 1);
-					std::cerr << "lets replace a part in tmpuri " << tmpuri << ", seccond_slash_index = " << second_slash_index << std::endl;
+//					std::cerr << "lets replace a part in tmpuri " << tmpuri << ", seccond_slash_index = " << second_slash_index << std::endl;
 					tmpuri.replace(second_slash_index + 1, tmpuri.find_first_of('/', second_slash_index), defaultcgipath);
-					std::cerr << _RED "replaced tmpuri with defaultgcipath, now looks like " << tmpuri << std::endl;
+//					std::cerr << _RED "replaced tmpuri with defaultgcipath, now looks like " << tmpuri << std::endl;
 				}
 			}
 			if (fd != -2) {
@@ -134,7 +134,7 @@ int ResponseHandler::generatePage(request_s& request) {
 				request.uri = tmpuri;
 				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
 				fd = this->CGI.run_cgi(request, scriptpath, OriginalUri);
-				std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
+//				std::cerr << "rewritten cgi returned fd= " << fd << ".\n";
 			}
 		}
 	}
@@ -195,7 +195,7 @@ void ResponseHandler::handleBody(request_s& request) {
 		_body.append(buf, ret);
 		memset(buf, 0, 1024);
 	}
-	std::cerr << _CYAN "Total read size is " << totalreadsize << ".\n";
+//	std::cerr << _CYAN "Total read size is " << totalreadsize << ".\n";
 	if (close(fd) == -1) {
 		exit(EXIT_FAILURE);
 	}
@@ -253,7 +253,7 @@ void ResponseHandler::handlePut(request_s& request) {
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
-	std::cerr << request;
+//	std::cerr << request;
 
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
@@ -261,7 +261,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 	}
 	if (this->authenticate(request))
 		return;
-	std::cerr << _YELLOW "Request body is " << request.body.length() << " long, and maxbody size is " << request.server.matchlocation(request.uri).getmaxbody() << std::endl << _END;
 	if (request.body.length() > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
 		request.status_code = 413;
 	}
@@ -326,7 +325,7 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 	if (request.version.first != 1 && _status_code == 200)
 		_status_code = 505;
 	_response[0] += _status_codes[_status_code];
-	std::cerr << _RED "Status code: " << _response[0] << std::endl << _END;
+//	std::cerr << _RED "Status code: " << _response[0] << std::endl << _END;
 }
 
 
@@ -442,7 +441,7 @@ void ResponseHandler::handleLOCATION( std::string& url ) {
 	_response[0] += "Location: ";
 	_response[0] += url;
 	_response[0] += "\r\n";
-	std::cout << "Location is: " << url << std::endl;
+//	std::cout << "Location is: " << url << std::endl;
 }
 
 void ResponseHandler::handleRETRY_AFTER() {

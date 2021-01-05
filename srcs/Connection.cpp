@@ -161,12 +161,12 @@ void Connection::startListening() {
 				else if (checkIfEnded(req->second) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
 
-					std::string requestfilename = "/tmp/webserv_request.txt";
-					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
-					if (requestfile.is_open()) {
-						requestfile << req->second;
-						requestfile.close();
-					}
+//					std::string requestfilename = "/tmp/webserv_request.txt";
+//					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
+//					if (requestfile.is_open()) {
+//						requestfile << req->second;
+//						requestfile.close();
+//					}
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
@@ -225,16 +225,16 @@ int Connection::receiveRequest(const int& fd) {
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
 	size_t totalsize = 0;
-	std::string responsefilename = "/tmp/webserv_response.txt";
+//	std::string responsefilename = "/tmp/webserv_response.txt";
 //	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
-	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
-	if (responsefile.is_open()) {
+//	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
+//	if (responsefile.is_open()) {
 //		responsefile << "\nRESPONSE --------" << std::endl;
-		for (size_t i = 0; i < msg.size(); i++)
-			responsefile << msg[i];
+//		for (size_t i = 0; i < msg.size(); i++)
+//			responsefile << msg[i];
 //		responsefile << "\nRESPONSE END ----" << std::endl;
-		responsefile.close();
-	}
+//		responsefile.close();
+//	}
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
 			totalsize += msg[i].length();
@@ -245,10 +245,7 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
 		throw std::runtime_error(strerror(errno));
 	}
-	else {
-		totalsize += msg[0].length();
-		std::cerr << "had to open different else block for this...\n";
-	}
+	totalsize += msg[0].length();
 //	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
 	std::cerr << _GREEN "sent a total size of " << totalsize << ".\n" _END;
