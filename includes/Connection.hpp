@@ -23,7 +23,7 @@
 # define MSG_NOSGINAL 0
 #endif
 
-#define BACKLOG 9999
+#define BACKLOG 99999
 #define BUFLEN 8192
 #define TIMEOUT 1000000
 
