@@ -68,9 +68,7 @@ Connection& Connection::operator= (const Connection &obj) {
 void Connection::setUpConnection() {
 	int socketFd;
 	int opt = 1;
-	struct timeval timeout;
-	timeout.tv_sec = 300;
-	timeout.tv_usec = 0;
+
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		ft_memset(&_serverAddr, 0, sizeof(_serverAddr)); // Clear struct from prev setup
 		if (!(socketFd = socket(AF_INET, SOCK_STREAM, 0)))
@@ -79,14 +77,8 @@ void Connection::setUpConnection() {
 		if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
 			throw std::runtime_error(strerror(errno));
 		}
-		if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout)) < 0) {
+		if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0)
 			throw std::runtime_error(strerror(errno));
-		}
-		if (setsockopt(socketFd, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout, sizeof(timeout)) < 0) {
-			throw std::runtime_error(strerror(errno));
-		}
-//		if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0)
-//			throw std::runtime_error(strerror(errno));
 		// Fill struct with info about port and ip
 		_serverAddr.sin_family = AF_INET; // ipv4
 		if (it->gethost() == "localhost") {
@@ -186,8 +178,10 @@ int Connection::addConnection(const int &socketFd) {
 	socklen_t addr_size = sizeof(their_addr);
 
 	// Accept one connection from backlog
-	if ((_connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0)
-		throw std::runtime_error(strerror(errno));
+	if ((_connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0) {
+		if (errno != EWOULDBLOCK)
+			throw std::runtime_error(strerror(errno));
+	}
 	FD_SET(_connectionFd, &_master); // Add new connection to the set
 	if (_connectionFd > _fdMax)
 		_fdMax = _connectionFd;
