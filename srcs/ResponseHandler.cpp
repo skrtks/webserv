@@ -277,7 +277,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LOCATION();
 	handleCONTENT_LANGUAGE(); //TODO Do we need to do this before handleBody( )
 	handleSERVER();
-	handleCONNECTION_HEADER();
+	handleCONNECTION_HEADER(request);
 	_response[0] += "\r\n";
 	if (request.method != HEAD) {
 		_response[0] += _body;
@@ -453,7 +453,9 @@ void ResponseHandler::handleSERVER() {
 	_response[0] += "Server: Webserv/1.0\r\n";
 }
 
-void ResponseHandler::handleCONNECTION_HEADER() {
+void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
+	if (request.headers.count(CONNECTION) == 1)
+		_header_vals[CONNECTION] = request.headers.at(CONNECTION);
 	_response[0] += "Connection: " + _header_vals[CONNECTION] + "\r\n";
 	// _response[0] += "Accept-Encoding: gzip\r\n";
 }

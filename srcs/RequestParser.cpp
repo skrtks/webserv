@@ -24,6 +24,7 @@ RequestParser::RequestParser() : _method() {
 	_headerMap["ACCEPT-LANGUAGE"] = ACCEPT_LANGUAGE;
 	_headerMap["ALLOW"] = ALLOW;
 	_headerMap["AUTHORIZATION"] = AUTHORIZATION;
+	_headerMap["CONNECTION"] = CONNECTION;
 	_headerMap["CONTENT-LANGUAGE"] = CONTENT_LANGUAGE;
 	_headerMap["CONTENT-LENGTH"] = CONTENT_LENGTH;
 	_headerMap["CONTENT-LOCATION"] = CONTENT_LOCATION;
@@ -41,6 +42,12 @@ RequestParser::RequestParser() : _method() {
 }
 
 RequestParser::~RequestParser() {
+	_uri.clear();
+	_headers.clear();
+	_methodMap.clear();
+	_headerMap.clear();
+	_rawRequest.clear();
+	_env.clear();
 }
 
 RequestParser::RequestParser(const RequestParser &obj) : _status_code(), _method() {
