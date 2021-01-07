@@ -68,6 +68,7 @@ clean:
 fclean: clean
 	@echo $(ECHO) "$(PREFIX)$(GREEN) Removing executable $(END)$(OUT_DIR)"
 	@rm -rf webservwebserv.dSYM *.a
+	@rm -rf htmlfiles/Downloads/*
 	@make fclean -s -C getnextline
 	@make fclean -s -C libft
 	@rm -rf $(NAME)

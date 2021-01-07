@@ -136,7 +136,7 @@ void RequestParser::parseRequestLine() {
 
 	// Check if first char is space
 	if (_rawRequest[0] == ' ') {
-		std::cerr << "BAD REQ 1" << std::endl;
+		std::cerr << "BAD REQ 1" << std::endl; //TODO Decide if we want to keep this in 'production'
 		_status_code = 400;
 		return ;
 	}
@@ -194,7 +194,7 @@ void RequestParser::extractVersion(size_t eoRequestLine, size_t &pos, size_t &po
 	ret = _rawRequest.substr(pos, pos2 - pos);
 	mainVersion = ft_atoi(ret.c_str());
 	subVersion = ft_atoi(ret.c_str() + 2);
-	_version = std::make_pair(mainVersion, subVersion); // TODO Not sure if we are allowed to use std::pair, I made my own ft::pair for containers which we can use -Peer
+	_version = std::make_pair(mainVersion, subVersion);
 }
 
 void RequestParser::extractUri(size_t eoRequestLine, size_t pos, size_t pos2) {
@@ -337,13 +337,10 @@ const std::pair<int, int>& RequestParser::getVersion() const {
 
 void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::string &value) {
 	std::string insert("HTTP_");
-//	if (upperHeader[0] == 'X')
-//		insert = "HTTP_";
 	insert.append(upperHeader);
 	std::replace(insert.begin(), insert.end(), '-', '_');
-	if (this->_env.count(insert) == 0) { // else if (upperHeader[0] == 'X')
+	if (this->_env.count(insert) == 0)
 		this->_env[insert] = value;
-	}
 }
 
 std::string request_s::MethodToSTring() const {

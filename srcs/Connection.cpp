@@ -16,11 +16,9 @@
 #include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
-#include <fstream> // TODO RM
+//#include <fstream> // TODO RM
 
-#define REQUEST_TIMEOUT 100000
-
-Connection::Connection() : _serverAddr(), _master(), _readFds() {
+Connection::Connection() : _serverAddr(), _master(), _readFds(), _writeFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
 	_connectionFd = 0;
@@ -28,7 +26,7 @@ Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	_configPath = NULL;
 }
 
-Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds() {
+Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds(), _writeFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
 	_connectionFd = 0;
@@ -43,7 +41,7 @@ Connection::~Connection() {
 	close(_connectionFd);
 }
 
-Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds(), _configPath() {
+Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds(), _writeFds(), _configPath() {
 	*this = obj;
 }
 
@@ -68,15 +66,17 @@ Connection& Connection::operator= (const Connection &obj) {
 void Connection::setUpConnection() {
 	int socketFd;
 	int opt = 1;
+
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		ft_memset(&_serverAddr, 0, sizeof(_serverAddr)); // Clear struct from prev setup
 		if (!(socketFd = socket(AF_INET, SOCK_STREAM, 0)))
 			throw std::runtime_error(strerror(errno));
 
-		if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+		if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
 			throw std::runtime_error(strerror(errno));
 		}
-
+		if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0)
+			throw std::runtime_error(strerror(errno));
 		// Fill struct with info about port and ip
 		_serverAddr.sin_family = AF_INET; // ipv4
 		if (it->gethost() == "localhost") {
@@ -91,7 +91,8 @@ void Connection::setUpConnection() {
 		for (int i = 0; i < 6; ++i) {
 			if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
 				std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
-				if (i == 5) throw std::runtime_error(strerror(errno));
+				if (i == 5)
+					throw std::runtime_error(strerror(errno));
 			}
 			else {
 				break;
@@ -134,7 +135,7 @@ void Connection::startListening() {
 				}
 				else if ((serverMapIt = _serverMap.find(fd)) != _serverMap.end()) { // This means there is a new connection waiting to be accepted
 					serverConnections.insert(std::make_pair(addConnection(serverMapIt->second.getSocketFd()), serverMapIt->second));
-					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
+//					std::cout << _BLUE << "\n vvvvvvvvv CONNECTION OPENED vvvvvvvvv \n" << _END << std::endl;
 				}
 				else { // Handle request & return response
 					if (receiveRequest(fd) == 0) {
@@ -150,13 +151,6 @@ void Connection::startListening() {
 				}
 				else if (checkIfEnded(req->second) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
-
-					std::string requestfilename = "/tmp/webserv_request.txt";
-					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
-					if (requestfile.is_open()) {
-						requestfile << req->second;
-						requestfile.close();
-					}
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
@@ -164,7 +158,7 @@ void Connection::startListening() {
 					FD_CLR(fd, &_writeFds);
 					serverConnections.erase(fd);
 					_requestStorage.erase(fd);
-					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
+//					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 				}
 			}
 		}
@@ -176,8 +170,10 @@ int Connection::addConnection(const int &socketFd) {
 	socklen_t addr_size = sizeof(their_addr);
 
 	// Accept one connection from backlog
-	if ((_connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0)
-		throw std::runtime_error(strerror(errno));
+	if ((_connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0) {
+		if (errno != EWOULDBLOCK)
+			throw std::runtime_error(strerror(errno));
+	}
 	FD_SET(_connectionFd, &_master); // Add new connection to the set
 	if (_connectionFd > _fdMax)
 		_fdMax = _connectionFd;
@@ -214,20 +210,8 @@ int Connection::receiveRequest(const int& fd) {
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
-	size_t totalsize = 0;
-	std::string responsefilename = "/tmp/webserv_response.txt";
-//	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
-	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
-	if (responsefile.is_open()) {
-//		responsefile << "\nRESPONSE --------" << std::endl;
-		for (size_t i = 0; i < msg.size(); i++)
-			responsefile << msg[i];
-//		responsefile << "\nRESPONSE END ----" << std::endl;
-		responsefile.close();
-	}
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
-			totalsize += msg[i].length();
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
 				throw std::runtime_error(strerror(errno));
 		}
@@ -235,13 +219,12 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
 		throw std::runtime_error(strerror(errno));
 	}
-	else {
-		totalsize += msg[0].length();
-		std::cerr << "had to open different else block for this...\n";
-	}
-//	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
 	msg.clear();
-	std::cerr << _GREEN "sent a total size of " << totalsize << ".\n" _END;
+	static int i = 0, post = 0;
+	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
+	if (request.method == POST)
+		std::cerr << " #" << post++;
+	std::cerr << ").\n" _END;
 }
 
 void Connection::closeConnection(const int& fd) {

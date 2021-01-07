@@ -69,7 +69,6 @@ public:
 	void			extractUri(size_t eoRequestLine, size_t pos, size_t pos2);
 	void			extractVersion(size_t eoRequestLine, size_t& pos, size_t &pos2);
 	e_method		getMethod() const;
-//	static std::string		getMethod(e_method& x) ;
 
 	const std::string&							getUri() const;
 	const std::pair<int, int>& 					getVersion() const;
