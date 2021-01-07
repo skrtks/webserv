@@ -214,22 +214,16 @@ void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request
 		for (size_t i = 0; i < msg.size(); i++) {
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
 				throw std::runtime_error(strerror(errno));
-			if (request.method == PUT)
-				std::cerr << msg[i].c_str();
 		}
 	}
 	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
 		throw std::runtime_error(strerror(errno));
 	}
-	else if (request.method == PUT)
-		std::cerr << msg[0].c_str();
-	if (request.method == PUT)
-		std::cerr << "$$$\n";
 	msg.clear();
 	static int i = 0, post = 0;
 	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
 	if (request.method == POST)
-		std::cerr << " #" << post++ << std::endl;
+		std::cerr << " #" << post++;
 	std::cerr << ").\n" _END;
 }
 
