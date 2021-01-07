@@ -13,7 +13,6 @@
 #include "Location.hpp"
 #include <sys/stat.h>
 #include "libftGnl.hpp"
-#include "Colours.hpp"
 
 Location::Location() : _maxBody(LONG_MAX), _default_cgi_path() {
 	this->_location_match = "";
@@ -72,12 +71,8 @@ void	Location::setmaxbody(const std::string& in) { this->_maxBody = ft_atoi(in.c
 void	Location::setdefaultcgipath(const std::string& in) {
 	struct stat statstruct = {};
 	std::string	filepath = this->_root + '/' + in;
-//	std::cerr << _RED "default cgi path is " << filepath << std::endl << _END;
-	if (stat(filepath.c_str(), &statstruct) != -1) {
+	if (stat(filepath.c_str(), &statstruct) != -1)
 		this->_default_cgi_path = in;
-//		std::cerr << "our location match is " << this->getlocationmatch() << std::endl;
-//		std::cerr << "and it exists too! defaultcgipath is " << _default_cgi_path << std::endl;
-	}
 }
 void	Location::setroot(const std::string& in) {
 	struct stat statstruct = {};

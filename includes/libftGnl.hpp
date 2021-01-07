@@ -31,5 +31,4 @@ namespace ft {
 	void 						trimstring(std::string& str, const char* totrim = " ");
 }
 
-
 #endif

@@ -16,11 +16,9 @@
 #include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
-#include <fstream> // TODO RM
+//#include <fstream> // TODO RM
 
-#define REQUEST_TIMEOUT 100000
-
-Connection::Connection() : _serverAddr(), _master(), _readFds() {
+Connection::Connection() : _serverAddr(), _master(), _readFds(), _writeFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
 	_connectionFd = 0;
@@ -28,7 +26,7 @@ Connection::Connection() : _serverAddr(), _master(), _readFds() {
 	_configPath = NULL;
 }
 
-Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds() {
+Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds(), _writeFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
 	_connectionFd = 0;
@@ -43,7 +41,7 @@ Connection::~Connection() {
 	close(_connectionFd);
 }
 
-Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds(), _configPath() {
+Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds(), _writeFds(), _configPath() {
 	*this = obj;
 }
 
@@ -93,7 +91,8 @@ void Connection::setUpConnection() {
 		for (int i = 0; i < 6; ++i) {
 			if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
 				std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
-				if (i == 5) throw std::runtime_error(strerror(errno));
+				if (i == 5)
+					throw std::runtime_error(strerror(errno));
 			}
 			else {
 				break;
@@ -152,13 +151,6 @@ void Connection::startListening() {
 				}
 				else if (checkIfEnded(req->second) || receiveRequest(fd) == 0) {
 					_parsedRequest = requestParser.parseRequest(req->second);
-
-//					std::string requestfilename = "/tmp/webserv_request.txt";
-//					std::ofstream requestfile(requestfilename.c_str(), std::ios::out | std::ios::trunc);
-//					if (requestfile.is_open()) {
-//						requestfile << req->second;
-//						requestfile.close();
-//					}
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
 					sendReply(response, fd, _parsedRequest);
@@ -218,33 +210,27 @@ int Connection::receiveRequest(const int& fd) {
 }
 
 void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
-	size_t totalsize = 0;
-//	std::string responsefilename = "/tmp/webserv_response.txt";
-//	std::cerr << _GREEN "msg vector has size " << msg.size() << _END << std::endl;
-//	std::ofstream responsefile(responsefilename.c_str(), std::ios::out | std::ios::trunc);
-//	if (responsefile.is_open()) {
-//		responsefile << "\nRESPONSE --------" << std::endl;
-//		for (size_t i = 0; i < msg.size(); i++)
-//			responsefile << msg[i];
-//		responsefile << "\nRESPONSE END ----" << std::endl;
-//		responsefile.close();
-//	}
 	if (request.transfer_buffer) {
 		for (size_t i = 0; i < msg.size(); i++) {
-			totalsize += msg[i].length();
 			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
 				throw std::runtime_error(strerror(errno));
+			if (request.method == PUT)
+				std::cerr << msg[i].c_str();
 		}
 	}
 	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
 		throw std::runtime_error(strerror(errno));
 	}
-	totalsize += msg[0].length();
-//	std::cout << _GREEN << "Response send, first line is: " << msg[0].substr(0, msg[0].find('\n')) << _END << std::endl;
+	else if (request.method == PUT)
+		std::cerr << msg[0].c_str();
+	if (request.method == PUT)
+		std::cerr << "$$$\n";
 	msg.clear();
-	static int i = 0;
-	std::cerr << _GREEN "sent response for request #" << i << ".\n" _END;
-	++i;
+	static int i = 0, post = 0;
+	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
+	if (request.method == POST)
+		std::cerr << " #" << post++ << std::endl;
+	std::cerr << ").\n" _END;
 }
 
 void Connection::closeConnection(const int& fd) {

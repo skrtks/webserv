@@ -38,7 +38,6 @@ private:	//setters
 		void		setservername(const std::string& );
 		void		setmaxfilesize(const std::string& );
 		void		seterrorpage(const std::string& );
-		void		set404page(const std::string& );
 		void		setauth_basic_realm(const std::string& );
 		void		sethtpasswdpath(const std::string& );
 		void		setautoindex(const std::string& );
@@ -54,7 +53,6 @@ public:
 		std::string				getservername() const;
 		long int				getmaxfilesize() const;
 		std::string				geterrorpage() const;
-		std::string				get404page() const;
 		std::string 			getauthbasicrealm() const;
 		std::string				gethtpasswdpath() const;
 		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&) const;
@@ -73,7 +71,6 @@ private:
 		std::string _host,
 					_server_name,
 					_error_page,
-					_404_page,
 					_root,
 					_auth_basic_realm,
 					_htpasswd_path,

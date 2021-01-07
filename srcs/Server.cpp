@@ -10,19 +10,18 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Colours.hpp"
 #include "Server.hpp"
 #include "libftGnl.hpp"
 
 Server::Server() : _port(80), _maxfilesize(1000000),
-		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"), 
+		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"),
 		_auth_basic_realm(), _htpasswd_path(),
 		_fd(), _socketFd() {
 }
 
 Server::Server(int fd) : _port(80), _maxfilesize(1000000),
-		_host("0.0.0.0"), _error_page("error.html"), _404_page("404.html"),
+		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
 		_socketFd() {
 	this->_fd = fd;
@@ -42,7 +41,6 @@ Server&	Server::operator=(const Server& x) {
 		this->_server_name = x._server_name;
 		this->_maxfilesize = x._maxfilesize;
 		this->_error_page = x._error_page;
-		this->_404_page = x._404_page;
 		this->_indexes = x._indexes;
 		this->_root = x._root;
 		this->_auth_basic_realm = x._auth_basic_realm;
@@ -121,13 +119,6 @@ void	Server::seterrorpage(const std::string& errorpage) {
 	this->_error_page = errorpage;
 }
 
-std::string	Server::get404page() const {
-	return this->_404_page;
-}
-
-void	Server::set404page(const std::string& page) {
-	this->_404_page = page;
-}
 void	Server::setauth_basic_realm(const std::string &realm) {
 	this->_auth_basic_realm = realm;
 }
@@ -225,7 +216,7 @@ Location Server::matchlocation(const std::string &uri) const {
 		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
-	out.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page); 	// add CGI and _allow_method?
+	out.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page);
 	return (out);
 }
 
@@ -245,23 +236,19 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 	struct stat statstruct = {};
 	int fd = -1;
 	Location loca = this->matchlocation(uri);
-//	std::cerr << _CYAN "Location match is " << loca.getlocationmatch() << std::endl << _END;
 	std::string filepath = this->getfilepath(uri);
-//	std::cerr << _CYAN "filepath is " << filepath << std::endl << _END;
 
-	if (stat(filepath.c_str(), &statstruct) != -1) { // or if file too big?
+	if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (S_ISDIR(statstruct.st_mode)) {
 			if (filepath[filepath.length() - 1] != '/')
 				filepath += '/';
 			filepath += loca.getindex();
-//			std::cerr << _CYAN "S_ISDIR, filepath is index is " << filepath << std::endl << _END;
 		}
 		if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
 	}
 	if (fd == -1) {
 		filepath = loca.geterrorpage();
-//		std::cerr << _RED << "fd = -1, error page is filepath is " << filepath << std::endl << _END;
 		fd = open(filepath.c_str(), O_RDONLY);
 		statuscode = 404;
 	}
