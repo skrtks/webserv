@@ -29,6 +29,7 @@ class Server {
 		~Server();
 		Server(const Server& x);
 		Server& 	operator=(const Server& x);
+		friend class Connection;
 
 private:	//setters
 		void		setport(const std::string& );

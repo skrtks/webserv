@@ -16,22 +16,25 @@
 #include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
-//#include <fstream> // TODO RM
 
-Connection::Connection() : _serverAddr(), _master(), _readFds(), _writeFds() {
+Connection::Connection() : _socketFd(), _serverAddr(), _master(), _readFds(), _writeFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
+	FD_ZERO(&_writeFds);
 	_connectionFd = 0;
 	_fdMax = 0;
 	_configPath = NULL;
+	bzero(&_serverAddr, sizeof(_serverAddr));
 }
 
-Connection::Connection(char *configPath) : _serverAddr(), _master(), _readFds(), _writeFds() {
+Connection::Connection(char *configPath) : _socketFd(), _serverAddr(), _master(), _readFds(), _writeFds() {
 	FD_ZERO(&_master);
 	FD_ZERO(&_readFds);
+	FD_ZERO(&_writeFds);
 	_connectionFd = 0;
 	_fdMax = 0;
 	_configPath = configPath;
+	bzero(&_serverAddr, sizeof(_serverAddr));
 }
 
 Connection::~Connection() {
@@ -41,14 +44,14 @@ Connection::~Connection() {
 	close(_connectionFd);
 }
 
-Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _serverAddr(), _master(), _readFds(), _writeFds(), _configPath() {
+Connection::Connection(const Connection &obj) : _connectionFd(), _fdMax(), _socketFd(), _serverAddr(), _master(), _readFds(), _writeFds(), _configPath() {
 	*this = obj;
 }
 
 Connection& Connection::operator= (const Connection &obj) {
 	if (this != &obj) {
 		this->_connectionFd = obj._connectionFd;
-		this->_connectionFd = obj._connectionFd;
+		this->_socketFd = obj._socketFd;
 		this->_fdMax = obj._fdMax;
 		this->_serverAddr = obj._serverAddr;
 		this->_master = obj._master;
@@ -57,39 +60,31 @@ Connection& Connection::operator= (const Connection &obj) {
 		this->_parsedRequest = obj._parsedRequest;
 		this->_servers = obj._servers;
 		this->_serverMap = obj._serverMap;
-		this->_manager = obj._manager;
 		this->_configPath = obj._configPath;
 	}
 	return *this;
 }
 
 void Connection::setUpConnection() {
-	int socketFd;
-	int opt = 1;
 
 	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); it++) {
 		ft_memset(&_serverAddr, 0, sizeof(_serverAddr)); // Clear struct from prev setup
-		if (!(socketFd = socket(AF_INET, SOCK_STREAM, 0)))
+		if ((it->_socketFd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
 			throw std::runtime_error(strerror(errno));
 
-		if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+		int opt = 1;
+		if (setsockopt(it->_socketFd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
 			throw std::runtime_error(strerror(errno));
 		}
-		if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0)
-			throw std::runtime_error(strerror(errno));
 		// Fill struct with info about port and ip
 		_serverAddr.sin_family = AF_INET; // ipv4
-		if (it->gethost() == "localhost") {
-			_serverAddr.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
-		}
-		else {
-			_serverAddr.sin_addr.s_addr = inet_addr(it->gethost().c_str());
-		}
+		_serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
 		_serverAddr.sin_port = htons(it->getport()); // set port (htons translates host bit order to network order)
 
 		// Associate the socket with a port and ip
 		for (int i = 0; i < 6; ++i) {
-			if (bind(socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr)) < 0) {
+			if ((bind(it->_socketFd, (struct sockaddr*) &_serverAddr, sizeof(_serverAddr))) == -1) {
 				std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
 				if (i == 5)
 					throw std::runtime_error(strerror(errno));
@@ -99,16 +94,18 @@ void Connection::setUpConnection() {
 			}
 		}
 		// Start listening for connections on port set in sFd, max BACKLOG waiting connections
-		if (listen(socketFd, BACKLOG))
+		if (listen(it->_socketFd, 128) == -1)
 			throw std::runtime_error(strerror(errno));
-		it->setSocketFd(socketFd);
+
+		if (fcntl(it->_socketFd, F_SETFL, O_NONBLOCK) == -1)
+			throw std::runtime_error(strerror(errno));
 	}
 }
 
 void Connection::startListening() {
 	RequestParser					requestParser;
 	ResponseHandler					responseHandler;
-	std::vector<std::string>		response;
+	std::string						response;
 	std::map<int, Server>::iterator	serverMapIt;
 	std::map<int, Server> 			serverConnections;
 
@@ -153,7 +150,7 @@ void Connection::startListening() {
 					_parsedRequest = requestParser.parseRequest(req->second);
 					_parsedRequest.server = serverConnections[fd];
 					response = responseHandler.handleRequest(_parsedRequest);
-					sendReply(response, fd, _parsedRequest);
+					sendReply(response.c_str(), fd, _parsedRequest);
 					closeConnection(fd);
 					FD_CLR(fd, &_writeFds);
 					serverConnections.erase(fd);
@@ -171,9 +168,14 @@ int Connection::addConnection(const int &socketFd) {
 
 	// Accept one connection from backlog
 	if ((_connectionFd = accept(socketFd, (struct sockaddr*)&their_addr, &addr_size)) < 0) {
-		if (errno != EWOULDBLOCK)
-			throw std::runtime_error(strerror(errno));
+		throw std::runtime_error(strerror(errno));
 	}
+	if (fcntl(_connectionFd, F_SETFL, O_NONBLOCK) == -1)
+		throw std::runtime_error(strerror(errno));
+	int opt = 1;
+	if (setsockopt(_connectionFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+		throw std::runtime_error(strerror(errno));
+
 	FD_SET(_connectionFd, &_master); // Add new connection to the set
 	if (_connectionFd > _fdMax)
 		_fdMax = _connectionFd;
@@ -209,17 +211,30 @@ int Connection::receiveRequest(const int& fd) {
 //	_rawRequest = request;
 }
 
-void Connection::sendReply(std::vector<std::string>& msg, const int& fd, request_s& request) const {
-	if (request.transfer_buffer) {
-		for (size_t i = 0; i < msg.size(); i++) {
-			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
-				throw std::runtime_error(strerror(errno));
+void Connection::sendReply(const char* msg, const int& fd, request_s& request) const {
+	long	bytesToSend = ft_strlen(msg),
+			bytesSent(0),
+			sendRet;
+	while (bytesToSend > 0) {
+		sendRet = send(fd, msg + bytesSent, bytesToSend, 0);
+		if (sendRet == -1) {
+			if (bytesToSend == 0 || errno == EWOULDBLOCK)
+				continue;
+			throw (std::runtime_error(strerror(errno)));
 		}
+		bytesSent += sendRet;
+		bytesToSend -= sendRet;
 	}
-	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
-		throw std::runtime_error(strerror(errno));
-	}
-	msg.clear();
+//	if (request.transfer_buffer) {
+//		for (size_t i = 0; i < msg.size(); i++) {
+//			if ((send(fd, msg[i].c_str(), msg[i].length(), 0) == -1))
+//				throw std::runtime_error(strerror(errno));
+//		}
+//	}
+//	else if ((send(fd, msg[0].c_str(), msg[0].length(), 0) == -1)) {
+//		throw std::runtime_error(strerror(errno));
+//	}
+//	msg.clear();
 	static int i = 0, post = 0;
 	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
 	if (request.method == POST)
@@ -231,10 +246,6 @@ void Connection::closeConnection(const int& fd) {
 	// Closing connection after response has been send
 	close(fd);
 	FD_CLR(fd, &_master);
-}
-
-void Connection::setServers(const std::vector<Server>& servers) {
-	_servers = servers;
 }
 
 // ------------------ Process Handling ------------------------
@@ -258,16 +269,13 @@ void Connection::stopServer() {
 	_fdMax = 0;
 	_servers.clear();
 	_serverMap.clear();
-	_manager.clear();
 	ft_memset(&_serverAddr, 0, sizeof(_serverAddr)); // Clear struct from prev setup
 }
 
 void Connection::loadConfiguration() {
-	_manager = parse(_configPath);
-	for (size_t i = 0; i < _manager.size(); i++)
-		std::cout << _manager[i];
-
-	setServers(_manager.getServers());
+	this->_servers = parse(_configPath);
+	for (size_t i = 0; i < this->_servers.size(); i++)
+		std::cout << this->_servers[i];
 }
 
 void Connection::handleCLI(const std::string& input) {

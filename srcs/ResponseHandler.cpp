@@ -203,9 +203,8 @@ void ResponseHandler::handleBody(request_s& request) {
 	}
 
 }
-std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
-	this->_response.resize(1);
-	_response.front().clear();
+std::string& ResponseHandler::handleRequest(request_s& request) {
+	this->_response.clear();
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -217,7 +216,7 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 
 void ResponseHandler::handlePut(request_s& request) {
 	struct stat statstruct = {};
-	_response[0] = "HTTP/1.1 ";
+	_response = "HTTP/1.1 ";
 
 	std::string filePath = request.server.getfilepath(request.uri);
 	int statret = stat(filePath.c_str(), &statstruct);
@@ -230,9 +229,9 @@ void ResponseHandler::handlePut(request_s& request) {
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
 		if (fd != -1) {
 			if (statret == -1)
-				this->_response[0] += _status_codes[201];
+				this->_response += _status_codes[201];
 			else
-				this->_response[0] += _status_codes[204];
+				this->_response += _status_codes[204];
 			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
 			close(fd);
 			if (WriteRet != request.body.length())
@@ -240,16 +239,16 @@ void ResponseHandler::handlePut(request_s& request) {
 			handleLOCATION(filePath);
 		}
 		else {
-			this->_response[0] += _status_codes[500];
+			this->_response += _status_codes[500];
 		}
 	}
 	handleCONNECTION_HEADER(request);
-	_response[0] += "\r\n";
+	_response += "\r\n";
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
-	_response[0] = "HTTP/1.1 ";
+	_response = "HTTP/1.1 ";
 
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
@@ -273,10 +272,10 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LANGUAGE();
 	handleSERVER();
 	handleCONNECTION_HEADER(request);
-	_response[0] += "\r\n";
+	_response += "\r\n";
 	if (request.method != HEAD) {
-		_response[0] += _body;
-		_response[0] += "\r\n";
+		_response += _body;
+		_response += "\r\n";
 	}
 	_body.clear();
 }
@@ -306,12 +305,12 @@ int ResponseHandler::authenticate(request_s& request) {
 
 	std::cout << _RED "Authorization failed!" _END << std::endl;
 	this->_status_code = 401;
-	_response[0] += "401 Unauthorized\r\n";
-	this->_response[0] +=	"Server: Webserv/0.1\r\n"
+	_response += "401 Unauthorized\r\n";
+	this->_response +=	"Server: Webserv/0.1\r\n"
 					  	"Content-Type: text/html\r\n"
 	   					"WWW-Authenticate: Basic realm=";
-	this->_response[0] += request.server.getauthbasicrealm();
-	this->_response[0] += ", charset=\"UTF-8\"\r\n";
+	this->_response += request.server.getauthbasicrealm();
+	this->_response += ", charset=\"UTF-8\"\r\n";
 	return 1;
 }
 
@@ -320,14 +319,14 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 		_status_code = _cgi_status_code;
 	if (request.version.first != 1 && _status_code == 200)
 		_status_code = 505;
-	_response[0] += _status_codes[_status_code];
+	_response += _status_codes[_status_code];
 }
 
 void ResponseHandler::handleALLOW() {
 	_header_vals[ALLOW] = "GET, HEAD, POST, PUT";
-	_response[0] += "Allow: ";
-	_response[0] += _header_vals[ALLOW];
-	_response[0] += "\r\n";
+	_response += "Allow: ";
+	_response += _header_vals[ALLOW];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LANGUAGE() {
@@ -345,9 +344,9 @@ void ResponseHandler::handleCONTENT_LANGUAGE() {
 	{
 		_header_vals[CONTENT_LANGUAGE] = "en-US";
 	}
-	_response[0] += "Content-Language: ";
-	_response[0] += _header_vals[CONTENT_LANGUAGE];
-	_response[0] += "\r\n";
+	_response += "Content-Language: ";
+	_response += _header_vals[CONTENT_LANGUAGE];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LENGTH() {
@@ -355,16 +354,16 @@ void ResponseHandler::handleCONTENT_LENGTH() {
 	std::string			str;
 
 	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
-	_response[0] += "Content-Length: ";
-	_response[0] += _header_vals[CONTENT_LENGTH];
-	_response[0] += "\r\n";
+	_response += "Content-Length: ";
+	_response += _header_vals[CONTENT_LENGTH];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LOCATION() {
 	if (!_header_vals[CONTENT_LOCATION].empty()) {
-		_response[0] += "Content-Location: ";
-		_response[0] += _header_vals[CONTENT_LOCATION];
-		_response[0] += "\r\n";
+		_response += "Content-Location: ";
+		_response += _header_vals[CONTENT_LOCATION];
+		_response += "\r\n";
 	}
 }
 
@@ -386,89 +385,32 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 		_header_vals[CONTENT_TYPE] = "text/html";
 	}
 	request.headers[CONTENT_TYPE] = this->_header_vals[CONTENT_TYPE];
-	_response[0] += "Content-Type: ";
-	_response[0] += _header_vals[CONTENT_TYPE];
-	_response[0] += "\r\n";
+	_response += "Content-Type: ";
+	_response += _header_vals[CONTENT_TYPE];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleDATE() {
 	_header_vals[DATE] = getCurrentDatetime();
-	_response[0] += "Date: ";
-	_response[0] += _header_vals[DATE];
-	_response[0] += "\r\n";
+	_response += "Date: ";
+	_response += _header_vals[DATE];
+	_response += "\r\n";
 }
-
-//void ResponseHandler::handleHOST( request_s& request ) {
-//	std::stringstream ss;
-//	ss << request.server.gethost() << ":" << request.server.getport();
-//	_header_vals[HOST] = ss.str();
-//	//std::cout << "HOST: " << _header_vals[HOST] << std::endl;
-//}
-
-//void ResponseHandler::handleLAST_MODIFIED() {
-//	_response[0] += "Last-Modified: ";
-//	_response[0] += getCurrentDatetime();
-//	_header_vals[LAST_MODIFIED] = getCurrentDatetime();
-//	_response[0] += "\r\n";
-//}
 
 void ResponseHandler::handleLOCATION( std::string& url ) {
 	_header_vals[LOCATION] = url;
-	_response[0] += "Location: ";
-	_response[0] += url;
-	_response[0] += "\r\n";
+	_response += "Location: ";
+	_response += url;
+	_response += "\r\n";
 }
 
-//void ResponseHandler::handleRETRY_AFTER() {
-//	_response[0] += "Retry-After: 120\r\n";
-//}
-
 void ResponseHandler::handleSERVER() {
-	_response[0] += "Server: Webserv/1.0\r\n";
+	_response += "Server: Webserv/1.0\r\n";
 }
 
 void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
 	if (request.headers.count(CONNECTION) == 1)
 		_header_vals[CONNECTION] = request.headers.at(CONNECTION);
-	_response[0] += "Connection: " + _header_vals[CONNECTION] + "\r\n";
-	// _response[0] += "Accept-Encoding: gzip\r\n";
+	_response += "Connection: " + _header_vals[CONNECTION] + "\r\n";
 }
 
-//void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
-//	std::stringstream ss;
-//	std::string response;
-//	int i = 0;
-//	_header_vals[TRANSFER_ENCODING] = "chunked";
-//	response += "Transfer-Encoding: chunked\r\n\r\n";
-//	request.transfer_buffer = true;
-//	while (_body.length() > 10000) {
-//		ss << std::hex << 10000;
-//		response += ss.str();
-//		ss.str("");
-//		response += "\r\n";
-//		response.append(_body, 0, 10000);
-//		response += "\r\n";
-//		_body.erase(0, 10000);
-//		if (i == 0)
-//			_response[0] += response;
-//		else
-//			_response.push_back(response);
-//		response.clear();
-//		i++;
-//	}
-//	ss << std::hex << _body.length();
-//	response += ss.str();
-//	ss.str("");
-//	response += "\r\n";
-//	response.append(_body, 0, _body.length());
-//	_body.clear();
-//	response += "\r\n";
-//	if (i == 0)
-//		_response[0] += response;
-//	else
-//		_response.push_back(response);
-//	response.clear();
-//	i++;
-//	response += "0\r\n\r\n";
-//	_response.push_back(response);
-//}
