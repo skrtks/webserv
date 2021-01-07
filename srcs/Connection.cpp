@@ -119,12 +119,15 @@ void Connection::startListening() {
 	}
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
+		std::cerr << _CYAN "Before select call\n" _END;
 		_readFds = _master;
 		if (select(_fdMax + 1, &_readFds, &_writeFds, NULL, NULL) == -1)
 			throw std::runtime_error(strerror(errno));
+		std::cerr << _BLUE "After select call\n" _END;
 		// Go through existing connections looking for data to read
 		for (int fd = 0; fd <= _fdMax; fd++) {
 			if (FD_ISSET(fd, &_readFds)) { // Returns true if fd is active
+				std::cerr << _GREEN "Before FD_ISSET(" << fd << ", &_readFds)\n" _END;
 				if (fd == 0) {
 					std::string clInput;
 					std::getline(std::cin, clInput);
@@ -140,8 +143,10 @@ void Connection::startListening() {
 					}
 					FD_SET(fd, &_writeFds); // Add new connection to the set
 				}
+				std::cerr << _GREEN "After FD_ISSET(" << fd << ", &_readFds)\n" _END;
 			}
 			else if (FD_ISSET(fd, &_writeFds) && fd > STDERR_FILENO) { // Returns true if fd is active
+				std::cerr << _GREEN "Before FD_ISSET(" << fd << ", &_writeFds)\n" _END;
 				std::map<int, std::string>::iterator req;
 				if ((req = _requestStorage.find(fd)) == _requestStorage.end()) {
 					throw std::runtime_error("Error retrieving request from map");
@@ -157,6 +162,7 @@ void Connection::startListening() {
 					_requestStorage.erase(fd);
 //					std::cout << _BLUE << "\n ^^^^^^^^^ CONNECTION CLOSED ^^^^^^^^^ \n" << _END << std::endl;
 				}
+				std::cerr << _GREEN "After FD_ISSET(" << fd << ", &_writeFds)\n" _END;
 			}
 		}
 	}
