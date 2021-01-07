@@ -94,7 +94,7 @@ void Connection::setUpConnection() {
 			}
 		}
 		// Start listening for connections on port set in sFd, max BACKLOG waiting connections
-		if (listen(it->_socketFd, 128) == -1)
+		if (listen(it->_socketFd, BACKLOG) == -1)
 			throw std::runtime_error(strerror(errno));
 
 		if (fcntl(it->_socketFd, F_SETFL, O_NONBLOCK) == -1)
