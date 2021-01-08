@@ -12,10 +12,18 @@
 
 #include "Connection.hpp"
 #include <iostream>
+#include <signal.h>
+
+void shutdown(int n) {
+	std::cout << std::endl << "Shutting down..." << std::endl;
+	exit(n);
+}
 
 int main(int argc, char **argv) {
 	Connection serverProcess(argv[1]);
 	(void)argc;
+
+	signal(SIGINT, shutdown);
 
 	try {
 		serverProcess.startServer();
