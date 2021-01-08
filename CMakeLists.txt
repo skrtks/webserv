@@ -15,7 +15,6 @@ add_executable(webserv srcs/Base64.cpp
 		srcs/RequestParser.cpp
 		srcs/ResponseHandler.cpp
 		srcs/Server.cpp
-		srcs/Servermanager.cpp
 		srcs/split.cpp
 		srcs/utils.cpp
 		includes/Base64.hpp
@@ -27,7 +26,6 @@ add_executable(webserv srcs/Base64.cpp
 		includes/RequestParser.hpp
 		includes/ResponseHandler.hpp
 		includes/Server.hpp
-		includes/Servermanager.hpp
 		getnextline/get_next_line.cpp
 		getnextline/get_next_line.hpp includes/Enums.hpp srcs/Cgi.cpp srcs/Enums.cpp)
 
