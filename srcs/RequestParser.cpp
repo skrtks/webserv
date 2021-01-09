@@ -343,6 +343,35 @@ void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::st
 		this->_env[insert] = value;
 }
 
+request_s::request_s() : status_code(), server(), transfer_buffer() {
+
+}
+
+request_s::request_s(const request_s &x) : status_code(), server(), transfer_buffer() {
+	*this = x;
+}
+
+request_s &request_s::operator=(const request_s &x) {
+	if (this != &x) {
+		status_code = x.status_code;
+		method = x.method;
+		uri = x.uri;
+		version = x.version;
+		headers = x.headers;
+		server = x.server;
+		body = x.body;
+		transfer_buffer = x.transfer_buffer;
+		env = x.env;
+	}
+	return *this;
+}
+
+request_s::~request_s() {
+	this->headers.clear();
+	this->body.clear();
+	this->env.clear();
+}
+
 std::string request_s::MethodToSTring() const {
 	switch (this->method) {
 		case GET:
@@ -356,6 +385,17 @@ std::string request_s::MethodToSTring() const {
 		default:
 			return "NOMETHOD";
 	}
+}
+
+void request_s::clear() {
+	this->status_code = 200;
+	this->method = ERROR;
+	this->uri.clear();
+	this->headers.clear();
+	this->server = NULL;
+	this->body.clear();
+	this->transfer_buffer = false;
+	this->env.clear();
 }
 
 std::ostream&	operator<<(std::ostream& o, const request_s& r) {

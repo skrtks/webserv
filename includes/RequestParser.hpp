@@ -22,8 +22,9 @@
 #include <ctime>
 #include <sstream>
 #include "Colours.hpp"
-#include "Server.hpp"
+#include "Enums.hpp"
 
+class Server;
 struct request_s {
 	int									status_code;
 	e_method							method;
@@ -34,8 +35,13 @@ struct request_s {
 	std::string							body;
 	bool								transfer_buffer;
 	std::map<std::string, std::string>	env;
-	std::string		MethodToSTring() const;
 
+	request_s();
+	request_s(const request_s& x);
+	request_s& operator=(const request_s& x);
+	~request_s();
+	std::string		MethodToSTring() const;
+	void			clear();
 };
 
 std::ostream&	operator<<(std::ostream& o, const request_s& r);

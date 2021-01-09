@@ -48,7 +48,6 @@ Connection& Connection::operator= (const Connection &obj) {
 		this->_writeFds = obj._writeFds;
 		this->_readFdsBak = obj._readFdsBak;
 		this->_writeFdsBak = obj._writeFdsBak;
-		this->_parsedRequest = obj._parsedRequest;
 		this->_servers = obj._servers;
 		this->_configPath = obj._configPath;
 		this->_allConnections = obj._allConnections;
@@ -65,15 +64,13 @@ void Connection::startListening() {
 	while (true) {
 		_readFds = _readFdsBak;
 		_writeFds = _writeFdsBak;
-//		std::cerr << _PURPLE "Before select( ), maxfd is " << this->getMaxFD() << _END << std::endl;
-		int selectret = select(this->getMaxFD(), &_readFds, &_writeFds, 0, 0);
-		if (selectret == -1)
+		std::cerr << "b4 select\n";
+		if (select(this->getMaxFD(), &_readFds, &_writeFds, 0, 0) == -1)
 			throw std::runtime_error(strerror(errno));
-//		std::cerr << _GREEN "After select call, returned " << selectret << _END << std::endl;
-		// Go through existing connections looking for data to read
-		if (FD_ISSET(0, &_readFds)) {
+		std::cerr << "after select\n";
+		if (FD_ISSET(0, &_readFds))
 			this->handleCLI();
-		}
+		// Go through existing connections looking for data to read
 		for (std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it) {
 			Server*	s = *it;
 			if (FD_ISSET(s->getSocketFd(), &_readFds)) {
@@ -81,53 +78,42 @@ void Connection::startListening() {
 				this->_allConnections.insert(clientfd);
 				FD_SET(clientfd, &_readFdsBak);
 			}
+			s->showclients();
 			for (std::vector<Client*>::iterator itc = s->_connections.begin(); !s->_connections.empty() && itc != s->_connections.end(); itc++) {
 				Client* c = *itc;
 				if (FD_ISSET(c->fd, &_readFds)) {
 					c->receiveRequest();
-					FD_CLR(c->fd, &_readFdsBak);
-					FD_SET(c->fd, &_writeFdsBak);
+					if (checkIfEnded(c->req))
+						FD_SET(c->fd, &_writeFdsBak);
 				}
-				else if (FD_ISSET(c->fd, &_writeFds)) {
-					if (checkIfEnded(c->req) || c->receiveRequest() == 0) {
-						_parsedRequest = requestParser.parseRequest(c->req);
-						_parsedRequest.server = c->parent;
-						response = responseHandler.handleRequest(_parsedRequest);
-						sendReply(response.c_str(), c->fd, _parsedRequest);
-						response.clear();
-						FD_CLR(c->fd, &_writeFdsBak);
-						FD_CLR(c->fd, &_readFdsBak);
-						this->_allConnections.erase(c->fd);
-						delete *itc;
-						itc = s->_connections.erase(itc);
-						if (itc == s->_connections.end())
-							break;
-					}
+				if (FD_ISSET(c->fd, &_writeFds)) {
+					std::cerr << "sending a response to " << c->port << std::endl;
+					c->parsedRequest = requestParser.parseRequest(c->req);
+					c->parsedRequest.server = c->parent;
+					response = responseHandler.handleRequest(c->parsedRequest);
+					c->sendReply(response.c_str(), c->parsedRequest);
+					std::cerr << _WHITE _BOLD "Request was " << c->req << "EOF" << std::endl << _END;
+					std::cerr << _PURPLE _BOLD "Response was:\n" << response.c_str() << "EOF" << std::endl << _END;
+					response.clear();
+					std::cerr << _YELLOW "The client connection status is " << (c->open ? "open" : "closed") << _END << std::endl;
+//					FD_CLR(c->fd, &_writeFds);
+					FD_CLR(c->fd, &_writeFdsBak);
+					c->reset();
+				}
+				c->checkTimeout();
+				if (!c->open) {
+					std::cerr << c->fd << " at " << c->ip << ':' << c->port << " is closing\n";
+					FD_CLR(c->fd, &_readFdsBak);
+					FD_CLR(c->fd, &_writeFdsBak);
+					this->_allConnections.erase(c->fd);
+					delete *itc;
+					itc = s->_connections.erase(itc);
+					if (itc == s->_connections.end())
+						break;
 				}
 			}
 		}
 	}
-}
-
-void Connection::sendReply(const char* msg, const int& fd, request_s& request) const {
-	long	bytesToSend = ft_strlen(msg),
-			bytesSent(0),
-			sendRet;
-	while (bytesToSend > 0) {
-		sendRet = send(fd, msg + bytesSent, bytesToSend, 0);
-		if (sendRet == -1) {
-			if (bytesToSend == 0 || errno == EWOULDBLOCK)
-				continue;
-			throw (std::runtime_error(strerror(errno)));
-		}
-		bytesSent += sendRet;
-		bytesToSend -= sendRet;
-	}
-	static int i = 0, post = 0;
-	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
-	if (request.method == POST)
-		std::cerr << " #" << post++;
-	std::cerr << ").\n" _END;
 }
 
 // ------------------ Process Handling ------------------------
@@ -138,7 +124,6 @@ void Connection::startServer() {
 
 void Connection::stopServer() {
 	// Go through existing connections and close them
-	std::cout << "stopping server bro\n";
 	std::vector<Server*>::iterator	sit;
 	std::vector<Client*>::iterator	cit;
 	for (sit = _servers.begin(); sit != _servers.end(); ++sit) {
@@ -148,10 +133,13 @@ void Connection::stopServer() {
 		(*sit)->_connections.clear();
 		delete *sit;
 		sit = _servers.erase(sit);
+		if (_servers.empty())
+			break;
 	}
 	_servers.clear();
 	FD_ZERO(&_readFds);
 	FD_ZERO(&_writeFds);
+	std::cerr << _GREEN "Server stopped gracefully.\n";
 }
 
 void Connection::loadConfiguration() {

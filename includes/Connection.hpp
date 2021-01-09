@@ -28,11 +28,10 @@ class Connection {
 			_readFdsBak, // temp file descriptor list for select()
 			_writeFdsBak;
 	std::set<int>	_allConnections;
-	request_s _parsedRequest;
+//	request_s _parsedRequest;
 	std::vector<Server*> _servers;
 	char* _configPath;
 
-	void sendReply(const char* msg, const int& fd, request_s& request) const;
 public:
 	Connection();
 	explicit Connection(char* configPath);

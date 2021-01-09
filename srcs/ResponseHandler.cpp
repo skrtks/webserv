@@ -36,7 +36,7 @@ ResponseHandler::ResponseHandler() : _cgi_status_code() {
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
 	_header_vals[AUTHORIZATION].clear();
-	_header_vals[CONNECTION] = "close";
+	_header_vals[CONNECTION] = "keep-alive";
 	_header_vals[CONTENT_LANGUAGE].clear();
 	_header_vals[CONTENT_LENGTH].clear();
 	_header_vals[CONTENT_LOCATION].clear();

@@ -25,6 +25,7 @@
 #include <string.h>
 # include <sys/stat.h>
 #include "Colours.hpp"
+#include "RequestParser.hpp"
 
 #define BUFLEN 8192
 #define BACKLOG 128
@@ -32,15 +33,27 @@
 class Server;
 struct Client {
 	Server* parent;
-	int fd;
+	int fd,
+		port;
 	bool open;
-	struct sockaddr_storage addr;
+	struct sockaddr_in addr;
 	socklen_t size;
-	std::string req;
+	std::string req,
+				ip;
+	std::string ipaddress;
+	time_t	lastRequest;
+	request_s	parsedRequest;
 
 	explicit Client(Server* x);
 	~Client();
 	int		receiveRequest();
+	void	resetTimeout();
+	void 	sendReply(const char* msg, request_s& request);
+	void	checkTimeout();
+	void	reset();
+
+private:
+	Client();
 };
 
 class Server {
@@ -68,6 +81,7 @@ private:	//setters
 public:
 		void		startListening();
 		int			addConnection();
+		void		showclients();
 		std::vector<Client*> _connections;
 
 		//getters

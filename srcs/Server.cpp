@@ -12,6 +12,7 @@
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
+#include "RequestParser.hpp"
 
 Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
@@ -286,14 +287,10 @@ void Server::startListening() {
 	// Fill struct with info about port and ip
 	addr.sin_family = AF_INET; // ipv4
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-//	addr.sin_port = htons(this->getport()); // set port (htons translates host bit order to network order)
-	int i = 0x00000001;
-	if (((char *)&i)[0] ) /* Little */ addr.sin_port = ((__uint16_t) ((((this->getport()) >> 8) & 0xff) | (((this->getport()) & 0xff) << 8)));
-	else /* Big */ addr.sin_port = static_cast<__uint16_t>(this->getport());
+	addr.sin_port = htons(this->getport()); // set port (htons translates host bit order to network order)
 
 	// Associate the socket with a port and ip
-	for (i = 0; i < 6; ++i) {
+	for (int i = 0; i < 6; ++i) {
 		if ((bind(this->_socketFd, (struct sockaddr *) &addr, sizeof(addr))) == -1) {
 			std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
 			if (i == 5)
@@ -320,6 +317,13 @@ int Server::addConnection() {
 	return newClient->fd;
 }
 
+void Server::showclients() {
+	for (std::vector<Client*>::const_iterator it = this->_connections.begin(); it != this->_connections.end(); ++it) {
+		std::cerr << " -- We have a client with fd " << (*it)->fd << " at " << (*it)->ipaddress << ".\n";
+//		std::cerr << "its at memory address " << *it << std::endl;
+	}
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "Default root folder: " << x.getroot() << std::endl;
@@ -334,10 +338,15 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	return (o);
 }
 
-Client::Client(Server* S) : parent(S), fd(), open(true), addr(), size(sizeof(addr)), req() {
+Client::Client(Server* S) : parent(S), fd(), port(), open(true), addr(), size(sizeof(addr)), req(), lastRequest(0), parsedRequest() {
+	bzero(&addr, size);
 	this->fd = accept(S->getSocketFd(), (struct sockaddr*)&addr, &size);
 	if (this->fd == -1) {
 		std::cerr << _RED _BOLD "Error accepting connection\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << _RED _BOLD "Error setting connection fd to be nonblocking\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
 	int opt = 1;
@@ -345,35 +354,87 @@ Client::Client(Server* S) : parent(S), fd(), open(true), addr(), size(sizeof(add
 		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-		std::cerr << _RED _BOLD "Error setting connection fd to be nonblocking\n" _END;
-		throw std::runtime_error(strerror(errno));
-	}
+	this->ip = inet_ntoa(addr.sin_addr);
+	this->port = htons(addr.sin_port);
+	this->ipaddress = ip + ':' + ft::inttostring(port);
+	std::cerr << "Opened a new client at " << ipaddress << std::endl;
 }
 
 Client::~Client() {
 	close(fd);
 	fd = -1;
 	req.clear();
+	this->parsedRequest.clear();
 }
 
 int Client::receiveRequest() {
-	char buf[BUFLEN];
-	int bytesReceived;
+	char buf[BUFLEN + 1];
+	int recvRet = -1;
+	int bytesReceived(0);
+	bool recvCheck(false);
+	(void)recvCheck;
 
 	// Loop to receive complete request, even if buffer is smaller
 	ft_memset(buf, 0, BUFLEN);
-	do {
-		bytesReceived = recv(this->fd, buf, BUFLEN - 1, 0);
-		if (bytesReceived == -1 and errno == EWOULDBLOCK) {
-			continue;
-		}
-		if (bytesReceived > 0) {
-			this->req.append(buf, 0, bytesReceived);
-			ft_memset(buf, 0, BUFLEN);
-		}
-	} while (bytesReceived > 0);
-	if (bytesReceived == 0)
+	this->resetTimeout();
+	while ((recvRet = recv(this->fd, buf, BUFLEN, 0)) > 0) {
+		buf[recvRet] = '\0';
+		this->req.append(buf);
+		bytesReceived += recvRet;
+		recvCheck = true;
+	}
+	std::cerr << _CYAN "recvRet was " << recvRet << std::endl << _END;
+//	std::cerr << _BLUE "total read is\n" << this->req << std::endl;
+//	std::cerr << "received " << bytesReceived << "bytes, last ret was " << recvRet << std::endl;
+	if (recvRet == 0) {
+//		std::cerr << "recvCheck is " << std::boolalpha << recvCheck << ", received " << bytesReceived << " bytes\n";
 		this->open = false;
+		return 0;
+	}
 	return bytesReceived;
+}
+
+void Client::sendReply(const char* msg, request_s& request) {
+	long	bytesToSend = ft_strlen(msg),
+			bytesSent(0),
+			sendRet;
+	while (bytesToSend > 0) {
+		sendRet = send(this->fd, msg + bytesSent, bytesToSend, 0);
+		if (sendRet == -1) {
+			if (bytesToSend == 0 || errno == EWOULDBLOCK)
+				continue;
+			throw (std::runtime_error(strerror(errno)));
+		}
+		bytesSent += sendRet;
+		bytesToSend -= sendRet;
+	}
+	send(fd, "0", 1, 0);
+	static int i = 0, post = 0;
+	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
+	if (request.method == POST)
+		std::cerr << " #" << post++;
+	std::cerr << ").\n" _END;
+	this->checkTimeout();
+}
+
+void Client::resetTimeout() {
+	this->lastRequest = ft::getTime();
+}
+
+void Client::checkTimeout() {
+	if (this->lastRequest) {
+		time_t diff = ft::getTime() - this->lastRequest;
+		if (diff > 5000) {
+			std::cerr << "connection was " << (this->open ? "open" : "closed") << ", and now it times out, cus difference was " << diff << std::endl;
+			this->open = false;
+		}
+	}
+}
+
+void Client::reset() {
+	std::cerr << "Resetting client!\n";
+	this->open = true;
+	req.clear();
+	lastRequest = 0;
+	this->parsedRequest.clear();
 }

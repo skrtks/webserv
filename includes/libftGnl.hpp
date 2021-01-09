@@ -30,6 +30,7 @@ namespace ft {
 	std::string					inttostring(int a);
 	void						stringtoupper(std::string& str);
 	void 						trimstring(std::string& str, const char* totrim = " ");
+	time_t						getTime();
 }
 
 #endif
