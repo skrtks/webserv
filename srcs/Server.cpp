@@ -350,6 +350,11 @@ Client::Client(Server* S) : parent(S), fd(), addr(), size(sizeof(addr)), req() {
 		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
+	opt = 1;
+	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&opt, sizeof(opt))) {
+		std::cerr << _RED _BOLD "Error setsockopt TCP_NODELAY failed\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
 }
 
 Client::~Client() {

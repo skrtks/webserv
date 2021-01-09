@@ -65,11 +65,11 @@ void Connection::startListening() {
 	while (true) {
 		_readFds = _readFdsBak;
 		_writeFds = _writeFdsBak;
-		std::cerr << _PURPLE "Before select( ), maxfd is " << this->getMaxFD() << _END << std::endl;
+//		std::cerr << _PURPLE "Before select( ), maxfd is " << this->getMaxFD() << _END << std::endl;
 		int selectret = select(this->getMaxFD(), &_readFds, &_writeFds, 0, 0);
 		if (selectret == -1)
 			throw std::runtime_error(strerror(errno));
-		std::cerr << _PURPLE "After select call, returned " << selectret << _END << std::endl;
+		std::cerr << _GREEN "After select call, returned " << selectret << _END << std::endl;
 		// Go through existing connections looking for data to read
 		for (std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it) {
 			Server*	s = *it;

@@ -21,6 +21,7 @@
 # include <iostream>
 # include <zconf.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include <string.h>
 # include <sys/stat.h>
 #include "Colours.hpp"
