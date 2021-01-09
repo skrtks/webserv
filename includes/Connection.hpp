@@ -44,7 +44,7 @@ public:
 
 	void startServer();
 	void loadConfiguration();
-	void handleCLI(const std::string& input);
+	void handleCLI();
 	void stopServer();
 	bool	checkIfEnded(const std::string& request);
 	int		getMaxFD();

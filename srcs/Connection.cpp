@@ -71,6 +71,9 @@ void Connection::startListening() {
 			throw std::runtime_error(strerror(errno));
 //		std::cerr << _GREEN "After select call, returned " << selectret << _END << std::endl;
 		// Go through existing connections looking for data to read
+		if (FD_ISSET(0, &_readFds)) {
+			this->handleCLI();
+		}
 		for (std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it) {
 			Server*	s = *it;
 			if (FD_ISSET(s->getSocketFd(), &_readFds)) {
@@ -135,7 +138,7 @@ void Connection::startServer() {
 
 void Connection::stopServer() {
 	// Go through existing connections and close them
-	std::cout << "stopping server br\n";
+	std::cout << "stopping server bro\n";
 	std::vector<Server*>::iterator	sit;
 	std::vector<Client*>::iterator	cit;
 	for (sit = _servers.begin(); sit != _servers.end(); ++sit) {
@@ -147,12 +150,12 @@ void Connection::stopServer() {
 		sit = _servers.erase(sit);
 	}
 	_servers.clear();
-//	ft_memset(&_serverAddr, 0, sizeof(_serverAddr)); // Clear struct from prev setup
 	FD_ZERO(&_readFds);
 	FD_ZERO(&_writeFds);
 }
 
 void Connection::loadConfiguration() {
+	FD_SET(0, &_readFdsBak);
 	this->_servers = parse(_configPath);
 	for (std::vector<Server*>::const_iterator it = _servers.begin(); it != _servers.end(); ++it) {
 		std::cout << *(*it);
@@ -162,7 +165,10 @@ void Connection::loadConfiguration() {
 	}
 }
 
-void Connection::handleCLI(const std::string& input) {
+void Connection::handleCLI() {
+	std::string input;
+	std::getline(std::cin, input);
+
 	if (input == "exit") {
 		std::cout << "Shutting down..." << std::endl;
 		stopServer();

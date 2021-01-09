@@ -33,6 +33,7 @@ class Server;
 struct Client {
 	Server* parent;
 	int fd;
+	bool open;
 	struct sockaddr_storage addr;
 	socklen_t size;
 	std::string req;

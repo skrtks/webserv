@@ -334,7 +334,7 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	return (o);
 }
 
-Client::Client(Server* S) : parent(S), fd(), addr(), size(sizeof(addr)), req() {
+Client::Client(Server* S) : parent(S), fd(), open(true), addr(), size(sizeof(addr)), req() {
 	this->fd = accept(S->getSocketFd(), (struct sockaddr*)&addr, &size);
 	if (this->fd == -1) {
 		std::cerr << _RED _BOLD "Error accepting connection\n" _END;
@@ -349,11 +349,6 @@ Client::Client(Server* S) : parent(S), fd(), addr(), size(sizeof(addr)), req() {
 		std::cerr << _RED _BOLD "Error setting connection fd to be nonblocking\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
-//	opt = 1;
-//	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&opt, sizeof(opt))) {
-//		std::cerr << _RED _BOLD "Error setsockopt TCP_NODELAY failed\n" _END;
-//		throw std::runtime_error(strerror(errno));
-//	}
 }
 
 Client::~Client() {
@@ -378,5 +373,7 @@ int Client::receiveRequest() {
 			ft_memset(buf, 0, BUFLEN);
 		}
 	} while (bytesReceived > 0);
+	if (bytesReceived == 0)
+		this->open = false;
 	return bytesReceived;
 }
