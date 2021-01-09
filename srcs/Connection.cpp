@@ -65,7 +65,9 @@ void Connection::startListening() {
 	while (true) {
 		_readFds = _readFdsBak;
 		_writeFds = _writeFdsBak;
-		if (select(this->getMaxFD(), &_readFds, &_writeFds, NULL, NULL) == -1)
+		std::cerr << _PURPLE "Before select( ), maxfd is " << this->getMaxFD() << _END << std::endl;
+		int selectret = select(this->getMaxFD(), &_readFds, &_writeFds, 0, 0);
+		if (selectret == -1)
 			throw std::runtime_error(strerror(errno));
 		// Go through existing connections looking for data to read
 		for (std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it) {

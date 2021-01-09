@@ -14,6 +14,7 @@
 #define CONNECTION_HPP
 
 #include <arpa/inet.h>
+#include <sys/select.h>
 #include <cerrno>
 #include "RequestParser.hpp"
 #include "Server.hpp"
