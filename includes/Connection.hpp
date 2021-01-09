@@ -19,7 +19,6 @@
 #include "RequestParser.hpp"
 #include "Server.hpp"
 
-#define BACKLOG 99999
 #define BUFLEN 8192
 
 class Connection {
