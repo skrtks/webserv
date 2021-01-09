@@ -37,4 +37,18 @@ namespace ft {
 			return;
 		str = str.substr(begin, end - begin + 1);
 	}
+
+	int findNthOccur(std::string str, char ch, int N)
+	{
+		int occur = 0;
+
+		for (int i = (str.length()); i >= 0; i--) {
+			if (str[i] == ch) {
+				occur += 1;
+			}
+			if (occur == N)
+				return i;
+		}
+		return -1;
+	}
 }

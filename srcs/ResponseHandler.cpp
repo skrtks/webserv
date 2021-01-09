@@ -113,7 +113,6 @@ int ResponseHandler::generatePage(request_s& request) {
 	std::cout << this->_autoindex << std::endl;
 
 	if (request.server.isExtensionAllowed(request.uri)) {
-		
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
 			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
@@ -178,23 +177,6 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 	}
 }
 
-int findNthOccur(std::string str, char ch, int N)
-{
-    int occur = 0; 
-  
-    // Loop to find the Nth 
-    // occurence of the character 
-    for (int i = (str.length()); i >= 0; i--) { 
-        if (str[i] == ch) { 
-            occur += 1; 
-        } 
-		std::cout << occur << " " << i << std::endl;
-        if (occur == N) 
-            return i; 
-    } 
-    return -1; 
-}
-
 void ResponseHandler::handleAutoIndex(request_s& request) {
 	DIR							*dir;
 	char						cwd[2048];
@@ -221,7 +203,7 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 
 	ss << request.server.getport();
 	url += request.server.gethost() + ":" + ss.str();
-	s = s.substr(0, findNthOccur(s, '/', 2) + 1);
+	s = s.substr(0, ft::findNthOccur(s, '/', 2) + 1);
 
 	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + s + "\">../</a><br>";
 	while ((entry = readdir(dir)) != NULL) {
@@ -346,13 +328,11 @@ void ResponseHandler::generateResponse(request_s& request) {
 
 	std::vector<Location> v = request.server.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
-		std::cout << "Root = " << v[i].getroot() << " Autoindex = " << v[i].getautoindex() << std::endl;
 		if (v[i].getautoindex() == "on") {
 			this->_autoindex = true;
 			this->_autoindex_root = v[i].getroot();
 		}
 	}
-	std::cout << "URI = " << request.uri << " Autoindex = " << request.server.getautoindex() << std::endl;
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();

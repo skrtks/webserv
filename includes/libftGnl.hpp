@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 15:37:16 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/11/10 12:03:45 by peerdb        ########   odam.nl         */
+/*   Updated: 2021/01/09 16:42:09 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ namespace ft {
 	std::string					inttostring(int a);
 	void						stringtoupper(std::string& str);
 	void 						trimstring(std::string& str, const char* totrim = " ");
+	int						 	findNthOccur(std::string str, char ch, int N);
 }
 
 #endif
