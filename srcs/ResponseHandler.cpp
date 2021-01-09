@@ -221,9 +221,8 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 	ss << request.server.getport();
 	url += request.server.gethost() + ":" + ss.str();
 	s = s.substr(0, findNthOccur(s, '/', 2) + 1);
-	url += s;
 
-	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + "\">../</a><br>";
+	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + s + "\">../</a><br>";
 	while ((entry = readdir(dir)) != NULL) {
 		ss.str("");
 		if (ft_strncmp(entry->d_name, ".", 1) != 0 && ft_strncmp(entry->d_name, "..", 2) != 0) {
