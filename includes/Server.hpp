@@ -65,7 +65,6 @@ private:	//setters
 		void		setautoindex(const std::string& );
 		void		configurelocation(const std::string& );
 public:
-		void		setSocketFd(int socketFd);
 		void		startListening();
 		int			addConnection();
 		std::vector<Client*> _connections;

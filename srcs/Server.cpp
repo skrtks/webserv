@@ -195,10 +195,6 @@ int Server::getSocketFd() const {
 	return _socketFd;
 }
 
-void Server::setSocketFd(int socketFd) {
-	_socketFd = socketFd;
-}
-
 void Server::setautoindex(const std::string& ai) {
 	this->_autoindex = ai;
 }
@@ -287,11 +283,7 @@ void Server::startListening() {
 		std::cerr << _RED _BOLD "Error setting server socket options\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
-	x = 1;
-	if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x)) == -1) {
-		std::cerr << _RED _BOLD "Error setting server socket options\n" _END;
-		throw std::runtime_error(strerror(errno));
-	}	// Fill struct with info about port and ip
+	// Fill struct with info about port and ip
 	addr.sin_family = AF_INET; // ipv4
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
@@ -348,18 +340,13 @@ Client::Client(Server* S) : parent(S), fd(), addr(), size(sizeof(addr)), req() {
 		std::cerr << _RED _BOLD "Error accepting connection\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-		std::cerr << _RED _BOLD "Error setting connection fd to be nonblocking\n" _END;
-		throw std::runtime_error(strerror(errno));
-	}
 	int opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
 		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
-	opt = 1;
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
-		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << _RED _BOLD "Error setting connection fd to be nonblocking\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
 //	opt = 1;
