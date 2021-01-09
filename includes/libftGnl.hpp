@@ -22,7 +22,7 @@ extern "C" {
 
 int					is_first_char(std::string str, char find = '#');
 void				get_key_value(std::string &str, std::string &key, std::string& value, const char* delim = " \t\n", const char* end = "\n\r#;");
-std::vector<Server>	parse(char *av);
+std::vector<Server*>	parse(char *av);
 
 namespace ft {
 	std::vector<std::string>	split(const std::string& s, const std::string& delim);

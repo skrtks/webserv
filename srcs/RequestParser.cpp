@@ -71,7 +71,7 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 std::string RequestParser::parseBody()
 {
 	std::string ret;
-	std::size_t pos, i = 0;
+	std::size_t pos, i;
 
 	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
 	while (true) {

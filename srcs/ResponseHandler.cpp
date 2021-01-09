@@ -110,13 +110,13 @@ int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
 
-	if (request.server.isExtensionAllowed(request.uri)) {
+	if (request.server->isExtensionAllowed(request.uri)) {
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
 			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
 		}
 		else {
-			std::string tmpuri = '/' + request.server.matchlocation(request.uri).getroot();
+			std::string tmpuri = '/' + request.server->matchlocation(request.uri).getroot();
 			size_t second_slash_index = request.uri.find_first_of('/', 1);
 			if (second_slash_index == std::string::npos)
 				tmpuri += request.uri;
@@ -124,7 +124,7 @@ int ResponseHandler::generatePage(request_s& request) {
 				tmpuri += request.uri.substr(second_slash_index);
 			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
 			if (stat(scriptpath.c_str(), &statstruct) == -1) {
-				std::string defaultcgipath = request.server.matchlocation(request.uri).getdefaultcgipath();
+				std::string defaultcgipath = request.server->matchlocation(request.uri).getdefaultcgipath();
 				if (defaultcgipath.empty()) {
 					fd = -2;
 				}
@@ -142,11 +142,11 @@ int ResponseHandler::generatePage(request_s& request) {
 		}
 	}
 	else
-		fd = request.server.getpage(request.uri, _header_vals, _status_code);
+		fd = request.server->getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
 	if (fd == -2) {
-		fd = open(request.server.geterrorpage().c_str(), O_RDONLY);
+		fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
 		_status_code = 404;
 	}
 	return (fd);
@@ -179,7 +179,7 @@ void ResponseHandler::handleBody(request_s& request) {
 
 	_body.clear();
 	if (request.status_code == 400) {
-		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
+		fd = open(request.server->matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
 	}
 	else {
 		fd = generatePage(request);
@@ -218,10 +218,10 @@ void ResponseHandler::handlePut(request_s& request) {
 	struct stat statstruct = {};
 	_response = "HTTP/1.1 ";
 
-	std::string filePath = request.server.getfilepath(request.uri);
+	std::string filePath = request.server->getfilepath(request.uri);
 	int statret = stat(filePath.c_str(), &statstruct);
 
-	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
 	}
@@ -250,13 +250,13 @@ void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response = "HTTP/1.1 ";
 
-	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
 	}
 	if (this->authenticate(request))
 		return;
-	if (request.body.length() > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
+	if (request.body.length() > request.server->matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
 		request.status_code = 413;
 	}
 	if (request.status_code)
@@ -281,7 +281,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 }
 
 int ResponseHandler::authenticate(request_s& request) {
-	if (request.server.gethtpasswdpath().empty()) {
+	if (request.server->gethtpasswdpath().empty()) {
 		request.headers[AUTHORIZATION].clear();
 		return 0;
 	}
@@ -298,7 +298,7 @@ int ResponseHandler::authenticate(request_s& request) {
 	}
 	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
 	request.headers[REMOTE_USER] = username;
-	if (request.server.getmatch(username, passwd)) {
+	if (request.server->getmatch(username, passwd)) {
 		std::cout << _GREEN "Authorization successful!" _END << std::endl;
 		return 0;
 	}
@@ -309,7 +309,7 @@ int ResponseHandler::authenticate(request_s& request) {
 	this->_response +=	"Server: Webserv/0.1\r\n"
 					  	"Content-Type: text/html\r\n"
 	   					"WWW-Authenticate: Basic realm=";
-	this->_response += request.server.getauthbasicrealm();
+	this->_response += request.server->getauthbasicrealm();
 	this->_response += ", charset=\"UTF-8\"\r\n";
 	return 1;
 }

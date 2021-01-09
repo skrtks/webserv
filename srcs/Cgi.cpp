@@ -41,14 +41,14 @@ void Cgi::populate_map(request_s &req, const std::string& OriginalUri) {
 	this->_m["PATH_INFO"] = OriginalUri;
 	this->_m["PATH_TRANSLATED"] = realpath + this->_m["PATH_INFO"];
 	this->_m["QUERY_STRING"] = req.uri.substr(req.uri.find_first_of('?') + 1);
-	this->_m["REMOTE_ADDR"] = req.server.gethost();
+	this->_m["REMOTE_ADDR"] = req.server->gethost();
 	this->_m["REMOTE_IDENT"] = "";
 	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
 	this->_m["REQUEST_METHOD"] = req.MethodToSTring();
 	this->_m["REQUEST_URI"] = OriginalUri;
 	this->_m["SCRIPT_NAME"] = '.' + req.uri.substr(0, split_path - 1 );
-	this->_m["SERVER_NAME"] = req.server.getservername();
-	this->_m["SERVER_PORT"] = std::string(ft::inttostring(req.server.getport()));
+	this->_m["SERVER_NAME"] = req.server->getservername();
+	this->_m["SERVER_PORT"] = std::string(ft::inttostring(req.server->getport()));
 	this->_m["SERVER_PROTOCOL"] = "HTTP/1.1";
 	this->_m["SERVER_SOFTWARE"] = "HTTP 1.1";
 }

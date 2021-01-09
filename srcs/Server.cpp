@@ -17,20 +17,20 @@ Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"),
 		_auth_basic_realm(), _htpasswd_path(),
-		_fd(), _socketFd() {
+		_fd(), _socketFd(), addr() {
 }
 
 Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
-		_socketFd() {
+		_socketFd(), addr() {
 	this->_fd = fd;
 }
 
 Server::~Server() {
 }
 
-Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd() {
+Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd(), addr() {
 	*this = x;
 }
 
@@ -47,9 +47,11 @@ Server&	Server::operator=(const Server& x) {
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
+		this->addr = x.addr;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_loginfo = x._loginfo;
+		this->_connections = x._connections;
 	}
 	return *this;
 }
@@ -273,6 +275,52 @@ bool Server::isExtensionAllowed(const std::string& uri) const {
 	return (false);
 }
 
+void Server::startListening() {
+	bzero(&addr, sizeof(addr));
+
+	if ((_socketFd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	int x = 1;
+	if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x)) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket options\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	// Fill struct with info about port and ip
+	addr.sin_family = AF_INET; // ipv4
+	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	addr.sin_port = htons(this->getport()); // set port (htons translates host bit order to network order)
+
+	// Associate the socket with a port and ip
+	for (int i = 0; i < 6; ++i) {
+		if ((bind(this->_socketFd, (struct sockaddr *) &addr, sizeof(addr))) == -1) {
+			std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
+			if (i == 5)
+				throw std::runtime_error(strerror(errno));
+		} else {
+			break;
+		}
+	}
+	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
+	if (listen(this->_socketFd, 128) == -1) {
+		std::cerr << _RED _BOLD "Error listening to server socket\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+
+	if (fcntl(this->_socketFd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket to be nonblocking\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+}
+
+int Server::addConnection() {
+	Client* newClient = new Client(this);
+	this->_connections.push_back(newClient);
+	return newClient->fd;
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "Default root folder: " << x.getroot() << std::endl;
@@ -285,4 +333,46 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	}
 	o << std::endl;
 	return (o);
+}
+
+Client::Client(Server* S) : parent(S), fd(), addr(), size(sizeof(addr)), req() {
+	this->fd = accept(S->getSocketFd(), (struct sockaddr*)&addr, &size);
+	if (this->fd == -1) {
+		std::cerr << _RED _BOLD "Error accepting connection\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << _RED _BOLD "Error setting connection fd to be nonblocking\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	int opt = 1;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+}
+
+Client::~Client() {
+	close(fd);
+	fd = -1;
+	req.clear();
+}
+
+int Client::receiveRequest() {
+	char buf[BUFLEN];
+	int bytesReceived;
+
+	// Loop to receive complete request, even if buffer is smaller
+	ft_memset(buf, 0, BUFLEN);
+	do {
+		bytesReceived = recv(this->fd, buf, BUFLEN - 1, 0);
+		if (bytesReceived == -1 and errno == EWOULDBLOCK) {
+			continue;
+		}
+		if (bytesReceived > 0) {
+			this->req.append(buf, 0, bytesReceived);
+			ft_memset(buf, 0, BUFLEN);
+		}
+	} while (bytesReceived > 0);
+	return bytesReceived;
 }

@@ -15,11 +15,30 @@
 
 # include "Base64.hpp"
 # include "Location.hpp"
+# include <set>
 # include <cerrno>
 # include <fcntl.h>
 # include <iostream>
 # include <zconf.h>
+#include <arpa/inet.h>
+#include <string.h>
 # include <sys/stat.h>
+#include "Colours.hpp"
+
+#define BUFLEN 8192
+
+class Server;
+struct Client {
+	Server* parent;
+	int fd;
+	struct sockaddr_storage addr;
+	socklen_t size;
+	std::string req;
+
+	explicit Client(Server* x);
+	~Client();
+	int		receiveRequest();
+};
 
 class Server {
 	public:
@@ -45,6 +64,9 @@ private:	//setters
 		void		configurelocation(const std::string& );
 public:
 		void		setSocketFd(int socketFd);
+		void		startListening();
+		int			addConnection();
+		std::vector<Client*> _connections;
 
 		//getters
 		size_t					getport() const;
@@ -76,7 +98,9 @@ private:
 					_auth_basic_realm,
 					_htpasswd_path,
 					_autoindex;
-		int			_fd, _socketFd;
+		int			_fd,
+					_socketFd;
+		struct sockaddr_in	addr;
 		std::vector<std::string> _indexes;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_loginfo;

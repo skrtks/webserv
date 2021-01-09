@@ -22,21 +22,17 @@
 #define BUFLEN 8192
 
 class Connection {
-	int _connectionFd, _fdMax;
 	int _socketFd;
-	struct sockaddr_in _serverAddr; // Will contain info about port and ip
-	fd_set _master;    // master file descriptor list
-	fd_set _readFds;  // temp file descriptor list for select()
-	fd_set _writeFds;
-	std::map<int, std::string> _requestStorage;
+	fd_set	_readFds, // temp file descriptor list for select()
+			_writeFds,
+			_readFdsBak, // temp file descriptor list for select()
+			_writeFdsBak;
+	std::set<int>	_allConnections;
 	request_s _parsedRequest;
-	std::vector<Server> _servers;
-	std::map<int, Server> _serverMap; // key: socketFd; value: Corresponding server object
-	char *_configPath;
-	int addConnection(const int &socketFd);
-	int receiveRequest(const int& fd);
+	std::vector<Server*> _servers;
+	char* _configPath;
+
 	void sendReply(const char* msg, const int& fd, request_s& request) const;
-	void closeConnection(const int& fd);
 public:
 	Connection();
 	explicit Connection(char* configPath);
@@ -44,14 +40,14 @@ public:
 	Connection& operator= (const Connection &obj);
 	virtual ~Connection();
 
-	void setUpConnection();
 	void startListening();
 
 	void startServer();
 	void loadConfiguration();
 	void handleCLI(const std::string& input);
 	void stopServer();
-	bool checkIfEnded(const std::string& request);
+	bool	checkIfEnded(const std::string& request);
+	int		getMaxFD();
 };
 
 #endif //CONNECTION_HPP

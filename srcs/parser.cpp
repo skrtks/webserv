@@ -33,8 +33,8 @@ void	get_key_value(std::string &str, std::string &key, std::string& value, const
 	value = str.substr(vbegin, vend - vbegin);
 }
 
-std::vector<Server>	parse(char *av) {
-	std::vector<Server>	skrtks;
+std::vector<Server*>	parse(char *av) {
+	std::vector<Server*>	skrtks;
 	std::string		str;
 	struct stat statstruct = {};
 	int fd;
@@ -49,9 +49,9 @@ std::vector<Server>	parse(char *av) {
 		if (is_first_char(str) || str.empty())
 			continue ;
 		try {
-			Server	tmp;
+			Server*	tmp = new Server();
 			if (!str.empty() && str.compare(str.find_first_not_of(" \t\n"), ft_strlen("server {"), "server {") == 0) {
-				tmp.setup(fd);
+				tmp->setup(fd);
 				skrtks.push_back(tmp);
 			}
 		}
