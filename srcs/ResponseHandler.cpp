@@ -14,6 +14,7 @@
 #include "libftGnl.hpp"
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include "Base64.hpp"
