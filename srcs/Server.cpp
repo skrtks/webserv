@@ -291,7 +291,10 @@ void Server::startListening() {
 	addr.sin_family = AF_INET; // ipv4
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-	addr.sin_port = htons(this->getport()); // set port (htons translates host bit order to network order)
+//	addr.sin_port = htons(this->getport()); // set port (htons translates host bit order to network order)
+	int i = 0x00000001;
+	if (((char *)&i)[0] ) /* Little */ addr.sin_port = ((__uint16_t) ((((this->getport()) >> 8) & 0xff) | (((this->getport()) & 0xff) << 8)));
+	else /* Big */ addr.sin_port = static_cast<__uint16_t>(this->getport());
 
 	// Associate the socket with a port and ip
 	for (int i = 0; i < 6; ++i) {
@@ -304,7 +307,7 @@ void Server::startListening() {
 		}
 	}
 	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
-	if (listen(this->_socketFd, 99999) == -1) {
+	if (listen(this->_socketFd, BACKLOG) == -1) {
 		std::cerr << _RED _BOLD "Error listening to server socket\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
@@ -350,11 +353,11 @@ Client::Client(Server* S) : parent(S), fd(), addr(), size(sizeof(addr)), req() {
 		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
-	opt = 1;
-	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&opt, sizeof(opt))) {
-		std::cerr << _RED _BOLD "Error setsockopt TCP_NODELAY failed\n" _END;
-		throw std::runtime_error(strerror(errno));
-	}
+//	opt = 1;
+//	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&opt, sizeof(opt))) {
+//		std::cerr << _RED _BOLD "Error setsockopt TCP_NODELAY failed\n" _END;
+//		throw std::runtime_error(strerror(errno));
+//	}
 }
 
 Client::~Client() {

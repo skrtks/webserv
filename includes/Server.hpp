@@ -27,6 +27,7 @@
 #include "Colours.hpp"
 
 #define BUFLEN 8192
+#define BACKLOG 128
 
 class Server;
 struct Client {
