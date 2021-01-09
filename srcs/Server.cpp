@@ -304,7 +304,7 @@ void Server::startListening() {
 		}
 	}
 	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
-	if (listen(this->_socketFd, 128) == -1) {
+	if (listen(this->_socketFd, 99999) == -1) {
 		std::cerr << _RED _BOLD "Error listening to server socket\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
