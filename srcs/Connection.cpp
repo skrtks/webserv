@@ -69,7 +69,7 @@ void Connection::startListening() {
 		int selectret = select(this->getMaxFD(), &_readFds, &_writeFds, 0, 0);
 		if (selectret == -1)
 			throw std::runtime_error(strerror(errno));
-		std::cerr << _GREEN "After select call, returned " << selectret << _END << std::endl;
+//		std::cerr << _GREEN "After select call, returned " << selectret << _END << std::endl;
 		// Go through existing connections looking for data to read
 		for (std::vector<Server*>::iterator it = _servers.begin(); it != _servers.end(); ++it) {
 			Server*	s = *it;
@@ -85,7 +85,7 @@ void Connection::startListening() {
 					FD_CLR(c->fd, &_readFdsBak);
 					FD_SET(c->fd, &_writeFdsBak);
 				}
-				if (FD_ISSET(c->fd, &_writeFds)) {
+				else if (FD_ISSET(c->fd, &_writeFds)) {
 					if (checkIfEnded(c->req) || c->receiveRequest() == 0) {
 						_parsedRequest = requestParser.parseRequest(c->req);
 						_parsedRequest.server = c->parent;

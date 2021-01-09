@@ -287,7 +287,11 @@ void Server::startListening() {
 		std::cerr << _RED _BOLD "Error setting server socket options\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
-	// Fill struct with info about port and ip
+	x = 1;
+	if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x)) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket options\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}	// Fill struct with info about port and ip
 	addr.sin_family = AF_INET; // ipv4
 	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
@@ -297,7 +301,7 @@ void Server::startListening() {
 	else /* Big */ addr.sin_port = static_cast<__uint16_t>(this->getport());
 
 	// Associate the socket with a port and ip
-	for (int i = 0; i < 6; ++i) {
+	for (i = 0; i < 6; ++i) {
 		if ((bind(this->_socketFd, (struct sockaddr *) &addr, sizeof(addr))) == -1) {
 			std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
 			if (i == 5)
@@ -350,6 +354,11 @@ Client::Client(Server* S) : parent(S), fd(), addr(), size(sizeof(addr)), req() {
 	}
 	int opt = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	opt = 1;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
 		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
 		throw std::runtime_error(strerror(errno));
 	}
