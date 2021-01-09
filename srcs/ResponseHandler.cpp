@@ -109,8 +109,10 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
+	std::cout << this->_autoindex << std::endl;
 
 	if (request.server.isExtensionAllowed(request.uri)) {
+		
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
 			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
@@ -141,8 +143,12 @@ int ResponseHandler::generatePage(request_s& request) {
 			}
 		}
 	}
-	else
-		fd = request.server.getpage(request.uri, _header_vals, _status_code);
+	else {
+		if (this->_autoindex)
+			fd = request.server.getpage(request.uri, _header_vals, _status_code, true);
+		else
+			fd = request.server.getpage(request.uri, _header_vals, _status_code, false);
+	}
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
 	if (fd == -2) {
@@ -171,12 +177,93 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 	}
 }
 
+int findNthOccur(std::string str, char ch, int N)
+{
+    int occur = 0; 
+  
+    // Loop to find the Nth 
+    // occurence of the character 
+    for (int i = (str.length()); i >= 0; i--) { 
+        if (str[i] == ch) { 
+            occur += 1; 
+        } 
+		std::cout << occur << " " << i << std::endl;
+        if (occur == N) 
+            return i; 
+    } 
+    return -1; 
+}
+
+void ResponseHandler::handleAutoIndex(request_s& request) {
+	DIR							*dir;
+	char						cwd[2048];
+	struct dirent				*entry;
+	struct stat 				stats;
+	struct tm					dt;
+	std::stringstream 			ss;
+	std::string 				path;
+	std::string					months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	std::string 				url = "http://";
+	std::string					s;
+
+	if (request.uri[request.uri.length() - 1] != '/')
+		request.uri += "/";
+	s = request.uri;
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+    	perror("getcwd() error");
+	else {
+		path += cwd;
+		path += "/";
+	}
+	path += request.server.getroot() + request.uri;
+	dir = opendir(path.c_str());
+
+	ss << request.server.getport();
+	url += request.server.gethost() + ":" + ss.str();
+	s = s.substr(0, findNthOccur(s, '/', 2) + 1);
+	url += s;
+
+	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + "\">../</a><br>";
+	while ((entry = readdir(dir)) != NULL) {
+		ss.str("");
+		if (ft_strncmp(entry->d_name, ".", 1) != 0 && ft_strncmp(entry->d_name, "..", 2) != 0) {
+			if (url[url.length()-1] == '/')
+				url = url.substr(0, url.length()-1);
+			_body += "<a href=\"" + url + request.uri + entry->d_name + "\">" + entry->d_name + "</a>";
+			for (int i = std::string(entry->d_name).length(); i < 51; i++) {
+				_body += " ";
+			}
+			if (stat((path + entry->d_name).c_str(), &stats) == 0) {
+				dt = *(gmtime(&stats.st_ctime));
+				if (dt.tm_mday < 10)
+					ss << "0" << dt.tm_mday << "-";
+				else
+					ss << dt.tm_mday << "-";
+				
+				ss	<< months[dt.tm_mon] << "-"
+					<< dt.tm_year + 1900 << " "
+					<< dt.tm_hour << ":"
+					<< dt.tm_min << ":"
+					<< dt.tm_sec << "\t\t\t";
+				
+				if (S_ISDIR(stats.st_mode))
+					ss << "-" << "<br>";
+				else
+					ss << stats.st_size << "<br>";
+				_body += ss.str();
+
+			}
+		}
+	}
+	_body += "</pre><hr>";
+}
+
 void ResponseHandler::handleBody(request_s& request) {
 	int		ret = 1024;
 	char	buf[1024];
 	int		fd;
 	int totalreadsize = 0;
-
+	
 	_body.clear();
 	if (request.status_code == 400) {
 		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
@@ -184,16 +271,22 @@ void ResponseHandler::handleBody(request_s& request) {
 	else {
 		fd = generatePage(request);
 	}
-	while (ret == 1024) {
-		ret = read(fd, buf, 1024);
-		if (ret <= 0)
-			break;
-		totalreadsize += ret;
-		_body.append(buf, ret);
-		memset(buf, 0, 1024);
+	if (fd == -3) {
+		this->handleAutoIndex(request);		
 	}
-	if (close(fd) == -1) {
-		exit(EXIT_FAILURE);
+	else
+	{
+		while (ret == 1024) {
+			ret = read(fd, buf, 1024);
+			if (ret <= 0)
+				break;
+			totalreadsize += ret;
+			_body.append(buf, ret);
+			memset(buf, 0, 1024);
+		}
+		if (close(fd) == -1) {
+			exit(EXIT_FAILURE);
+		}
 	}
 	size_t pos = _body.find("\r\n\r\n");
 	if (request.method == POST) {
@@ -251,6 +344,15 @@ void ResponseHandler::generateResponse(request_s& request) {
 	this->_status_code = 200;
 	_response[0] = "HTTP/1.1 ";
 
+	std::vector<Location> v = request.server.getlocations();
+	for (size_t i = 0; i < v.size(); i++) {
+		std::cout << "Root = " << v[i].getroot() << " Autoindex = " << v[i].getautoindex() << std::endl;
+		if (v[i].getautoindex() == "on") {
+			this->_autoindex = true;
+			this->_autoindex_root = v[i].getroot();
+		}
+	}
+	std::cout << "URI = " << request.uri << " Autoindex = " << request.server.getautoindex() << std::endl;
 	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();

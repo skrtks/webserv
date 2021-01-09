@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:14 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/11/28 21:01:34 by tuperera      ########   odam.nl         */
+/*   Updated: 2021/01/08 17:36:38 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #include "RequestParser.hpp"
 #include "Cgi.hpp"
+#include <dirent.h>
 //#define SEC_PER_DAY   86400
 //#define SEC_PER_HOUR  3600
 //#define SEC_PER_MIN   60
@@ -26,6 +27,8 @@ class ResponseHandler {
 	std::map<int, std::string>			_status_codes;
 	std::vector<std::string>			_response;
 	std::string							_body;
+	bool								_autoindex;
+	std::string							_autoindex_root;
 	int									_status_code;
 	Cgi									CGI;
 public:
@@ -36,6 +39,7 @@ public:
 
 	std::vector<std::string>	handleRequest(request_s& request);
 	void		handleBody(request_s& request);
+	void		handleAutoIndex(request_s& request);
 	void		handleStatusCode(request_s& request);
 //	std::string getCurrentDatetime( );
 	void		handleALLOW( );

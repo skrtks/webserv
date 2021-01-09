@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/11/23 17:18:05 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2021/01/08 17:07:22 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ public:
 		std::string				geterrorpage() const;
 		std::string 			getauthbasicrealm() const;
 		std::string				gethtpasswdpath() const;
-		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&) const;
+		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&, bool autoindex) const;
 		std::vector<Location> 	getlocations() const;
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
