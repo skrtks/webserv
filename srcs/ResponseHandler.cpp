@@ -275,7 +275,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 	_response += "\r\n";
 	if (request.method != HEAD && !_body.empty()) {
 		_response += _body;
-		_response += "\r\n";
 	}
 	_body.clear();
 }
