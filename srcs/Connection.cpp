@@ -64,10 +64,9 @@ void Connection::startListening() {
 	while (true) {
 		_readFds = _readFdsBak;
 		_writeFds = _writeFdsBak;
-		std::cerr << "b4 select\n";
+		this->_servers.front()->showclients(_readFds, _writeFds);
 		if (select(this->getMaxFD(), &_readFds, &_writeFds, 0, 0) == -1)
 			throw std::runtime_error(strerror(errno));
-		std::cerr << "after select\n";
 		if (FD_ISSET(0, &_readFds))
 			this->handleCLI();
 		// Go through existing connections looking for data to read
@@ -78,27 +77,21 @@ void Connection::startListening() {
 				this->_allConnections.insert(clientfd);
 				FD_SET(clientfd, &_readFdsBak);
 			}
-			s->showclients();
-			for (std::vector<Client*>::iterator itc = s->_connections.begin(); !s->_connections.empty() && itc != s->_connections.end(); itc++) {
+			std::vector<Client*>::iterator itc = s->_connections.begin();
+			while (itc != s->_connections.end()) {
 				Client* c = *itc;
 				if (FD_ISSET(c->fd, &_readFds)) {
-					c->receiveRequest();
-					if (checkIfEnded(c->req))
+					if (c->receiveRequest() == 1 and checkIfEnded(c->req))
 						FD_SET(c->fd, &_writeFdsBak);
 				}
 				if (FD_ISSET(c->fd, &_writeFds)) {
-					std::cerr << "sending a response to " << c->port << std::endl;
 					c->parsedRequest = requestParser.parseRequest(c->req);
 					c->parsedRequest.server = c->parent;
 					response = responseHandler.handleRequest(c->parsedRequest);
 					c->sendReply(response.c_str(), c->parsedRequest);
-					std::cerr << _WHITE _BOLD "Request was " << c->req << "EOF" << std::endl << _END;
-					std::cerr << _PURPLE _BOLD "Response was:\n" << response.c_str() << "EOF" << std::endl << _END;
 					response.clear();
-					std::cerr << _YELLOW "The client connection status is " << (c->open ? "open" : "closed") << _END << std::endl;
-//					FD_CLR(c->fd, &_writeFds);
-					FD_CLR(c->fd, &_writeFdsBak);
 					c->reset();
+					FD_CLR(c->fd, &_writeFdsBak);
 				}
 				c->checkTimeout();
 				if (!c->open) {
@@ -107,10 +100,15 @@ void Connection::startListening() {
 					FD_CLR(c->fd, &_writeFdsBak);
 					this->_allConnections.erase(c->fd);
 					delete *itc;
-					itc = s->_connections.erase(itc);
-					if (itc == s->_connections.end())
+					s->_connections.erase(itc);
+					if (s->_connections.empty())
 						break;
+					else {
+						itc = s->_connections.begin();
+						continue;
+					}
 				}
+				++itc;
 			}
 		}
 	}
@@ -139,6 +137,8 @@ void Connection::stopServer() {
 	_servers.clear();
 	FD_ZERO(&_readFds);
 	FD_ZERO(&_writeFds);
+	FD_ZERO(&_readFdsBak);
+	FD_ZERO(&_writeFdsBak);
 	std::cerr << _GREEN "Server stopped gracefully.\n";
 }
 

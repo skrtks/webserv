@@ -12,13 +12,7 @@
 
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
-
-#include <arpa/inet.h>
-#include <sys/select.h>
-#include <cerrno>
-#include "RequestParser.hpp"
 #include "Server.hpp"
-
 #define BUFLEN 8192
 
 class Connection {
@@ -28,7 +22,6 @@ class Connection {
 			_readFdsBak, // temp file descriptor list for select()
 			_writeFdsBak;
 	std::set<int>	_allConnections;
-//	request_s _parsedRequest;
 	std::vector<Server*> _servers;
 	char* _configPath;
 

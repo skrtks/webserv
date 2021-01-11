@@ -317,10 +317,11 @@ int Server::addConnection() {
 	return newClient->fd;
 }
 
-void Server::showclients() {
+void Server::showclients(const fd_set& readfds, const fd_set& writefds) {
 	for (std::vector<Client*>::const_iterator it = this->_connections.begin(); it != this->_connections.end(); ++it) {
-		std::cerr << " -- We have a client with fd " << (*it)->fd << " at " << (*it)->ipaddress << ".\n";
-//		std::cerr << "its at memory address " << *it << std::endl;
+		std::cerr << _CYAN " -- We have a client with fd " << (*it)->fd << " at " << (*it)->ipaddress << ".\n";
+		std::cerr << "It is " << (FD_ISSET((*it)->fd, &readfds) ? "" : "not") << " readable.\n";
+		std::cerr << "It is " << (FD_ISSET((*it)->fd, &writefds) ? "" : "not") << " writeable.\n";
 	}
 }
 
@@ -357,7 +358,8 @@ Client::Client(Server* S) : parent(S), fd(), port(), open(true), addr(), size(si
 	this->ip = inet_ntoa(addr.sin_addr);
 	this->port = htons(addr.sin_port);
 	this->ipaddress = ip + ':' + ft::inttostring(port);
-	std::cerr << "Opened a new client at " << ipaddress << std::endl;
+
+	std::cerr << _YELLOW "Opened a new client for " << fd << " at " << ipaddress << std::endl << _END;
 }
 
 Client::~Client() {
@@ -370,9 +372,7 @@ Client::~Client() {
 int Client::receiveRequest() {
 	char buf[BUFLEN + 1];
 	int recvRet = -1;
-	int bytesReceived(0);
 	bool recvCheck(false);
-	(void)recvCheck;
 
 	// Loop to receive complete request, even if buffer is smaller
 	ft_memset(buf, 0, BUFLEN);
@@ -380,18 +380,17 @@ int Client::receiveRequest() {
 	while ((recvRet = recv(this->fd, buf, BUFLEN, 0)) > 0) {
 		buf[recvRet] = '\0';
 		this->req.append(buf);
-		bytesReceived += recvRet;
 		recvCheck = true;
 	}
-	std::cerr << _CYAN "recvRet was " << recvRet << std::endl << _END;
-//	std::cerr << _BLUE "total read is\n" << this->req << std::endl;
-//	std::cerr << "received " << bytesReceived << "bytes, last ret was " << recvRet << std::endl;
-	if (recvRet == 0) {
-//		std::cerr << "recvCheck is " << std::boolalpha << recvCheck << ", received " << bytesReceived << " bytes\n";
+	if (!recvCheck or recvRet == 0) { // Not possible to read from the socket (done reading or socket closed)
 		this->open = false;
-		return 0;
+		if (recvRet == 0)
+			std::cerr << this->fd << " closed, ip was " << this->ipaddress << std::endl;
+		else if (!recvCheck)
+			std::cerr << "recvCheck is false. " << (recvRet == -1 ? strerror(errno) : "") << std::endl;
+		return (0);
 	}
-	return bytesReceived;
+	return (1);
 }
 
 void Client::sendReply(const char* msg, request_s& request) {
@@ -408,13 +407,11 @@ void Client::sendReply(const char* msg, request_s& request) {
 		bytesSent += sendRet;
 		bytesToSend -= sendRet;
 	}
-	send(fd, "0", 1, 0);
 	static int i = 0, post = 0;
 	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
 	if (request.method == POST)
 		std::cerr << " #" << post++;
 	std::cerr << ").\n" _END;
-	this->checkTimeout();
 }
 
 void Client::resetTimeout() {
@@ -424,8 +421,9 @@ void Client::resetTimeout() {
 void Client::checkTimeout() {
 	if (this->lastRequest) {
 		time_t diff = ft::getTime() - this->lastRequest;
+		std::cerr << "timediff is " << diff << std::endl;
 		if (diff > 5000) {
-			std::cerr << "connection was " << (this->open ? "open" : "closed") << ", and now it times out, cus difference was " << diff << std::endl;
+//			std::cerr << "connection was " << (this->open ? "open" : "closed") << ", and now it times out, cus difference was " << diff << std::endl;
 			this->open = false;
 		}
 	}

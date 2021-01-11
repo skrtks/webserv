@@ -21,6 +21,7 @@
 # include <iostream>
 # include <zconf.h>
 #include <arpa/inet.h>
+#include <sys/select.h>
 #include <netinet/tcp.h>
 #include <string.h>
 # include <sys/stat.h>
@@ -81,7 +82,7 @@ private:	//setters
 public:
 		void		startListening();
 		int			addConnection();
-		void		showclients();
+		void		showclients(const fd_set& readfds, const fd_set& writefds);
 		std::vector<Client*> _connections;
 
 		//getters
