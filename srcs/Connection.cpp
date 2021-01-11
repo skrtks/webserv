@@ -81,7 +81,7 @@ void Connection::startListening() {
 			while (itc != s->_connections.end()) {
 				Client* c = *itc;
 				if (FD_ISSET(c->fd, &_readFds)) {
-					if (c->receiveRequest() == 1 and checkIfEnded(c->req))
+					if (c->receiveRequest() == 1 && checkIfEnded(c->req))
 						FD_SET(c->fd, &_writeFdsBak);
 				}
 				if (FD_ISSET(c->fd, &_writeFds)) {
