@@ -177,6 +177,23 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 	}
 }
 
+void ResponseHandler::handle404(request_s& request) {
+	int 	fd = open(request.server.geterrorpage().c_str(), O_RDONLY);
+	int		ret = 1024;
+	char	buf[1024];
+	_status_code = 404;
+	while (ret == 1024) {
+		ret = read(fd, buf, 1024);
+		if (ret <= 0)
+			break ;
+		_body.append(buf, ret);
+		memset(buf, 0, 1024);
+	}
+	if (close(fd) == -1) {
+		exit(EXIT_FAILURE);
+	}
+}
+
 void ResponseHandler::handleAutoIndex(request_s& request) {
 	DIR							*dir;
 	char						cwd[2048];
@@ -198,14 +215,18 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 		path += cwd;
 		path += "/";
 	}
-	path += request.server.getroot() + request.uri;
-	dir = opendir(path.c_str());
 
+	path += request.server.getfilepath(request.uri);
+	if ((dir = opendir(path.c_str())) == NULL) {
+		handle404(request);
+		return ;
+	}
 	ss << request.server.getport();
 	url += request.server.gethost() + ":" + ss.str();
 	s = s.substr(0, ft::findNthOccur(s, '/', 2) + 1);
 
 	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + s + "\">../</a><br>";
+
 	while ((entry = readdir(dir)) != NULL) {
 		ss.str("");
 		if (ft_strncmp(entry->d_name, ".", 1) != 0 && ft_strncmp(entry->d_name, "..", 2) != 0) {

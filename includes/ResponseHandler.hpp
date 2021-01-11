@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:14 by skorteka      #+#    #+#                 */
-/*   Updated: 2021/01/08 17:36:38 by tuperera      ########   odam.nl         */
+/*   Updated: 2021/01/11 16:37:42 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ public:
 
 	std::vector<std::string>	handleRequest(request_s& request);
 	void		handleBody(request_s& request);
+	void 		handle404(request_s& request);
 	void		handleAutoIndex(request_s& request);
 	void		handleStatusCode(request_s& request);
 //	std::string getCurrentDatetime( );
