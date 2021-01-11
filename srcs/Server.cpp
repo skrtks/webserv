@@ -421,8 +421,8 @@ void Client::resetTimeout() {
 void Client::checkTimeout() {
 	if (this->lastRequest) {
 		time_t diff = ft::getTime() - this->lastRequest;
-//		std::cerr << "timediff is " << diff << std::endl;
-		if (diff > 1000) {
+		std::cerr << "timediff is " << diff << std::endl;
+		if (diff > 10000000) {
 //			std::cerr << "connection was " << (this->open ? "open" : "closed") << ", and now it times out, cus difference was " << diff << std::endl;
 			this->open = false;
 		}
