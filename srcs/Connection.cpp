@@ -64,7 +64,7 @@ void Connection::startListening() {
 	while (true) {
 		_readFds = _readFdsBak;
 		_writeFds = _writeFdsBak;
-		this->_servers.front()->showclients(_readFds, _writeFds);
+//		this->_servers.front()->showclients(_readFds, _writeFds);
 		if (select(this->getMaxFD(), &_readFds, &_writeFds, 0, 0) == -1)
 			throw std::runtime_error(strerror(errno));
 		if (FD_ISSET(0, &_readFds))
