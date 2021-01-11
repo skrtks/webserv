@@ -238,6 +238,7 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 		}
 	}
 	_body += "</pre><hr>";
+	_autoindex = false;
 }
 
 void ResponseHandler::handleBody(request_s& request) {
