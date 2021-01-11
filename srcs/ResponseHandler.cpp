@@ -228,10 +228,7 @@ void ResponseHandler::handlePut(request_s& request) {
 	else {
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
 		if (fd != -1) {
-			if (statret == -1)
-				this->_response += _status_codes[201];
-			else
-				this->_response += _status_codes[204];
+			this->_response += _status_codes[204];
 			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
 			close(fd);
 			if (WriteRet != request.body.length())
