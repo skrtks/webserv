@@ -242,7 +242,7 @@ void ResponseHandler::handlePut(request_s& request) {
 			this->_response += _status_codes[500];
 		}
 	}
-	handleCONNECTION_HEADER(request);
+//	handleCONNECTION_HEADER(request);
 	_response += "\r\n";
 }
 
@@ -271,9 +271,9 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LOCATION();
 	handleCONTENT_LANGUAGE();
 	handleSERVER();
-	handleCONNECTION_HEADER(request);
+//	handleCONNECTION_HEADER(request);
 	_response += "\r\n";
-	if (request.method != HEAD) {
+	if (request.method != HEAD && !_body.empty()) {
 		_response += _body;
 		_response += "\r\n";
 	}
@@ -353,7 +353,10 @@ void ResponseHandler::handleCONTENT_LENGTH() {
 	std::stringstream	ss;
 	std::string			str;
 
-	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
+	if (!_body.empty())
+		_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
+	else
+		_header_vals[CONTENT_LENGTH] = "0";
 	_response += "Content-Length: ";
 	_response += _header_vals[CONTENT_LENGTH];
 	_response += "\r\n";
@@ -405,7 +408,7 @@ void ResponseHandler::handleLOCATION( std::string& url ) {
 }
 
 void ResponseHandler::handleSERVER() {
-	_response += "Server: Webserv/1.0\r\n";
+	_response += "Host: Webserv/1.0\r\n";
 }
 
 void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
