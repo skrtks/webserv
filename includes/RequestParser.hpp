@@ -65,7 +65,7 @@ public:
 	RequestParser&	operator= (const RequestParser &obj);
 
 	request_s		parseRequest(const std::string &req);
-	std::string		parseBody();
+	void			parseBody(request_s& req);
 	void			AddHeaderToEnv(const std::string& upperHeader, const std::string& value);
 	request_s		parseHeadersOnly(const std::string &req);
 	void			parseRequestLine();

@@ -13,6 +13,8 @@
 #include "Colours.hpp"
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"
+#include <chrono>
+#include <fstream>
 
 RequestParser::RequestParser() : _method() {
 	_status_code = 0;
@@ -68,27 +70,23 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 	return *this;
 }
 
-std::string RequestParser::parseBody()
-{
-	std::string ret;
-	std::size_t pos, i;
 
-	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
-	while (true) {
-		pos = ret.find("\r\n");
-		if (pos == std::string::npos)
-			break ;
-		i = ret.find("\r\n", pos + 1);
-		if (i == std::string::npos)
-			break ;
-		while (ret[i] != '\n')
-			i++;
-		ret.erase(pos, (i - pos) + 1);
-		if ((pos = ret.find("\r\n")) == ret.find_last_of("\r\n") || ret.find("\r\n", pos+=1) == std::string::npos)
-			break ;
+void RequestParser::parseBody(request_s& req)
+{
+	size_t startpos = 0 , endpos;
+	size_t lastrn = _rawRequest.rfind("\r\n");
+
+	while (startpos < lastrn) {
+		startpos = _rawRequest.find("\r\n", startpos) + 2;
+		endpos = _rawRequest.find("\r\n", startpos);
+		if (startpos == std::string::npos || endpos == std::string::npos || startpos > endpos) {
+			std::cerr << "breaking because " << (startpos == std::string::npos ? "startpos is npos" : "endpos is npos") << std::endl;
+			break;
+		}
+		req.body.append(_rawRequest, startpos, endpos - startpos);
+		startpos = endpos + 1;
 	}
-	ret.erase(ret.length() - 2, 2);
-	return ret;
+	std::cerr << "end product has size: " << req.body.length() << std::endl;
 }
 
 request_s RequestParser::parseHeadersOnly(const std::string &req)
@@ -116,7 +114,13 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	request_s request = parseHeadersOnly(req);
 
 	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
-		request.body = parseBody();
+		std::cerr << "before parseBody" << std::endl;
+		auto begin = std::chrono::steady_clock::now();
+		parseBody(request);
+		auto totaltime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin).count();
+		auto seconds = static_cast<int>(totaltime / 1000);
+		std::cerr << "parseBody took " << seconds << '.' << (totaltime - seconds) << 's' << std::endl;
+		std::cerr << "transfer encoding, so parsebody was called\n";
 	}
 	else {
 		request.body = _rawRequest.substr(0, _rawRequest.length() - 2);
