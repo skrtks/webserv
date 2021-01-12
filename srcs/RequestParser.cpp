@@ -120,7 +120,6 @@ request_s RequestParser::parseRequest(const std::string &req) {
 		auto totaltime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin).count();
 		auto seconds = static_cast<int>(totaltime / 1000);
 		std::cerr << "parseBody took " << seconds << '.' << (totaltime - seconds) << 's' << std::endl;
-		std::cerr << "transfer encoding, so parsebody was called\n";
 	}
 	else {
 		request.body = _rawRequest.substr(0, _rawRequest.length() - 2);
