@@ -17,7 +17,7 @@ SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
 
-CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++11
+CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++98
 ifneq ($(filter 1, $(DEBUG) $(ASAN)),)
  CXXFLAGS += -g
  ifdef ASAN

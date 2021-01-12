@@ -13,7 +13,6 @@
 #include "Colours.hpp"
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"
-#include <chrono>
 #include <fstream>
 
 RequestParser::RequestParser() : _method() {
@@ -113,17 +112,10 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	this->_env.clear();
 	request_s request = parseHeadersOnly(req);
 
-	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
-		std::cerr << "before parseBody" << std::endl;
-		auto begin = std::chrono::steady_clock::now();
+	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end())
 		parseBody(request);
-		auto totaltime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - begin).count();
-		auto seconds = static_cast<int>(totaltime / 1000);
-		std::cerr << "parseBody took " << seconds << '.' << (totaltime - seconds) << 's' << std::endl;
-	}
-	else {
+	else
 		request.body = _rawRequest.substr(0, _rawRequest.length() - 2);
-	}
 
 	if (_status_code)
 		request.status_code = _status_code;
