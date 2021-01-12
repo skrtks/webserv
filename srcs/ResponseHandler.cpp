@@ -220,6 +220,7 @@ void ResponseHandler::handlePut(request_s& request) {
 
 	std::string filePath = request.server->getfilepath(request.uri);
 	int statret = stat(filePath.c_str(), &statstruct);
+	(void)statret;
 
 	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
