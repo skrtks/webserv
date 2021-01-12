@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 project(webserv)
 
-add_subdirectory(test)
 add_subdirectory(libft)
 include_directories(includes srcs getnextline libft)
 set(CMAKE_CXX_STANDARD 98)
