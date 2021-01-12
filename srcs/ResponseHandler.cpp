@@ -144,7 +144,7 @@ int ResponseHandler::generatePage(request_s& request) {
 	else
 		fd = request.server->getpage(request.uri, _header_vals, _status_code);
 	if (fd == -1)
-		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
+		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error TODO should this be changed?
 	if (fd == -2) {
 		fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
 		_status_code = 404;
@@ -215,12 +215,8 @@ std::string& ResponseHandler::handleRequest(request_s& request) {
 }
 
 void ResponseHandler::handlePut(request_s& request) {
-	struct stat statstruct = {};
 	_response = "HTTP/1.1 ";
-
 	std::string filePath = request.server->getfilepath(request.uri);
-	int statret = stat(filePath.c_str(), &statstruct);
-	(void)statret;
 
 	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
@@ -231,7 +227,8 @@ void ResponseHandler::handlePut(request_s& request) {
 		if (fd != -1) {
 			this->_response += _status_codes[204];
 			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
-			close(fd);
+			if (close(fd) == -1)
+				throw std::runtime_error("error closing putfile");
 			if (WriteRet != request.body.length())
 				throw std::runtime_error(_RED _BOLD "Write return in ResponseHandler::handlePut is not equal to request.body.length()");
 			handleLOCATION(filePath);
@@ -240,7 +237,6 @@ void ResponseHandler::handlePut(request_s& request) {
 			this->_response += _status_codes[500];
 		}
 	}
-//	handleCONNECTION_HEADER(request);
 	_response += "\r\n";
 }
 
