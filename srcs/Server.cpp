@@ -400,7 +400,7 @@ void Client::sendReply(const char* msg, request_s& request) {
 	while (bytesToSend > 0) {
 		sendRet = send(this->fd, msg + bytesSent, bytesToSend, 0);
 		if (sendRet == -1) {
-			if (bytesToSend == 0 || errno == EWOULDBLOCK)
+			if (bytesToSend != 0)
 				continue;
 			throw (std::runtime_error(strerror(errno)));
 		}
