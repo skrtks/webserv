@@ -54,12 +54,8 @@ Connection& Connection::operator= (const Connection &obj) {
 	}
 	return *this;
 }
-
+#include <chrono>
 void Connection::startListening() {
-	RequestParser					requestParser;
-	ResponseHandler					responseHandler;
-	std::string						response;
-
 	std::cout << "Waiting for connections..." << std::endl;
 	while (true) {
 		_readFds = _readFdsBak;
@@ -85,10 +81,15 @@ void Connection::startListening() {
 						FD_SET(c->fd, &_writeFdsBak);
 				}
 				if (FD_ISSET(c->fd, &_writeFds)) {
+					RequestParser					requestParser;
+					ResponseHandler					responseHandler;
+					std::string						response;
+
 					c->parsedRequest = requestParser.parseRequest(c->req);
 					c->parsedRequest.server = c->parent;
 					response = responseHandler.handleRequest(c->parsedRequest);
 					c->sendReply(response.c_str(), c->parsedRequest);
+
 					response.clear();
 					c->reset();
 					FD_CLR(c->fd, &_writeFdsBak);
