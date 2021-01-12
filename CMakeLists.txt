@@ -4,7 +4,7 @@ project(webserv)
 add_subdirectory(test)
 add_subdirectory(libft)
 include_directories(includes srcs getnextline libft)
-set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra")
 
 add_executable(webserv srcs/Base64.cpp
