@@ -140,7 +140,7 @@ void Connection::stopServer() {
 	FD_ZERO(&_writeFds);
 	FD_ZERO(&_readFdsBak);
 	FD_ZERO(&_writeFdsBak);
-	std::cerr << _GREEN "Server stopped gracefully.\n";
+	std::cerr << _GREEN "Server stopped gracefully.\n" << _END;
 }
 
 void Connection::loadConfiguration() {
