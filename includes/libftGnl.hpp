@@ -19,7 +19,6 @@ extern "C" {
 	# include "../libft/libft.h"
 }
 
-
 int					is_first_char(std::string str, char find = '#');
 void				get_key_value(std::string &str, std::string &key, std::string& value, const char* delim = " \t\n", const char* end = "\n\r#;");
 std::vector<Server*>	parse(char *av);

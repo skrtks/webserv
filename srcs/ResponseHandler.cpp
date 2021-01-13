@@ -11,12 +11,16 @@
 /* ************************************************************************** */
 
 #include "ResponseHandler.hpp"
+#include "Server.hpp"
 #include "libftGnl.hpp"
+#include "Base64.hpp"
+#include <ctime>
+#include <sys/stat.h>
+#include <sstream>
+#include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include "Base64.hpp"
 #include "Colours.hpp"
 
 std::string getCurrentDatetime() {

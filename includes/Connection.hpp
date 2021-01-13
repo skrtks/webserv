@@ -12,8 +12,8 @@
 
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
-#include "Server.hpp"
-#define BUFLEN 8192
+#include	"Server.hpp"
+#include	<set>
 
 class Connection {
 	int _socketFd;

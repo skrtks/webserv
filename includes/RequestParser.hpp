@@ -13,15 +13,8 @@
 #ifndef REQUESTPARSER_HPP
 #define REQUESTPARSER_HPP
 
-#include <algorithm>
 #include <map>
-#include <stdexcept>
 #include <string>
-#include <cstring>
-#include <sys/time.h>
-#include <ctime>
-#include <sstream>
-#include "Colours.hpp"
 #include "Enums.hpp"
 
 class Server;

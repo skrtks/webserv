@@ -13,6 +13,7 @@
 #include "Location.hpp"
 #include <sys/stat.h>
 #include "libftGnl.hpp"
+#include <climits>
 
 Location::Location() : _maxBody(LONG_MAX), _default_cgi_path() {
 	this->_location_match = "";
