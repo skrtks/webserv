@@ -13,7 +13,9 @@
 #include "Colours.hpp"
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"
-#include <fstream>
+#include <algorithm>
+#include <stdexcept>
+#include <cstring>
 
 RequestParser::RequestParser() : _method() {
 	_status_code = 0;
