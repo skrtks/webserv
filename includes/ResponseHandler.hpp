@@ -34,7 +34,7 @@ public:
 	std::string&	handleRequest(request_s& request);
 	void		handleBody(request_s& request);
 	void		handleStatusCode(request_s& request);
-	void		handleALLOW( );
+	void		handleALLOW(request_s& request);
 	void		handleCONTENT_LANGUAGE( );
 	void		handleCONTENT_LENGTH( );
 	void		handleCONTENT_LOCATION( );
