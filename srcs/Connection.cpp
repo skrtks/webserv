@@ -91,9 +91,10 @@ void Connection::startListening() {
 
 					c->parsedRequest = requestParser.parseRequest(c->req);
 					c->parsedRequest.server = c->parent;
-					response = responseHandler.handleRequest(c->parsedRequest);
-					c->sendReply(response.c_str(), c->parsedRequest);
-
+					if (requestParser._status_code != 400) {
+						response = responseHandler.handleRequest(c->parsedRequest);
+						c->sendReply(response.c_str(), c->parsedRequest);
+					}
 					response.clear();
 					c->reset(responseHandler._header_vals[CONNECTION]);
 					FD_CLR(c->fd, &_writeFdsBak);
