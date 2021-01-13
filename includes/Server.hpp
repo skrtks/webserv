@@ -15,11 +15,47 @@
 
 # include "Base64.hpp"
 # include "Location.hpp"
+# include <set>
 # include <cerrno>
 # include <fcntl.h>
 # include <iostream>
 # include <zconf.h>
+#include <arpa/inet.h>
+#include <sys/select.h>
+#include <netinet/tcp.h>
+#include <string.h>
 # include <sys/stat.h>
+#include "Colours.hpp"
+#include "RequestParser.hpp"
+
+#define BUFLEN 8192
+#define BACKLOG 128
+
+class Server;
+struct Client {
+	Server* parent;
+	int fd,
+		port;
+	bool open;
+	struct sockaddr_in addr;
+	socklen_t size;
+	std::string req,
+				ip;
+	std::string ipaddress;
+	time_t	lastRequest;
+	request_s	parsedRequest;
+
+	explicit Client(Server* x);
+	~Client();
+	int		receiveRequest();
+	void	resetTimeout();
+	void 	sendReply(const char* msg, request_s& request);
+	void	checkTimeout();
+	void	reset();
+
+private:
+	Client();
+};
 
 class Server {
 	public:
@@ -29,6 +65,7 @@ class Server {
 		~Server();
 		Server(const Server& x);
 		Server& 	operator=(const Server& x);
+		friend class Connection;
 
 private:	//setters
 		void		setport(const std::string& );
@@ -43,7 +80,10 @@ private:	//setters
 		void		setautoindex(const std::string& );
 		void		configurelocation(const std::string& );
 public:
-		void		setSocketFd(int socketFd);
+		void		startListening();
+		int			addConnection();
+		void		showclients(const fd_set& readfds, const fd_set& writefds);
+		std::vector<Client*> _connections;
 
 		//getters
 		size_t					getport() const;
@@ -75,7 +115,9 @@ private:
 					_auth_basic_realm,
 					_htpasswd_path,
 					_autoindex;
-		int			_fd, _socketFd;
+		int			_fd,
+					_socketFd;
+		struct sockaddr_in	addr;
 		std::vector<std::string> _indexes;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_loginfo;

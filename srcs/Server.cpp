@@ -12,25 +12,26 @@
 
 #include "Server.hpp"
 #include "libftGnl.hpp"
+#include "RequestParser.hpp"
 
 Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"),
 		_auth_basic_realm(), _htpasswd_path(),
-		_fd(), _socketFd() {
+		_fd(), _socketFd(), addr() {
 }
 
 Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
-		_socketFd() {
+		_socketFd(), addr() {
 	this->_fd = fd;
 }
 
 Server::~Server() {
 }
 
-Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd() {
+Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd(), addr() {
 	*this = x;
 }
 
@@ -47,9 +48,11 @@ Server&	Server::operator=(const Server& x) {
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
+		this->addr = x.addr;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_loginfo = x._loginfo;
+		this->_connections = x._connections;
 	}
 	return *this;
 }
@@ -193,10 +196,6 @@ int Server::getSocketFd() const {
 	return _socketFd;
 }
 
-void Server::setSocketFd(int socketFd) {
-	_socketFd = socketFd;
-}
-
 void Server::setautoindex(const std::string& ai) {
 	this->_autoindex = ai;
 }
@@ -273,6 +272,64 @@ bool Server::isExtensionAllowed(const std::string& uri) const {
 	return (false);
 }
 
+void Server::startListening() {
+	bzero(&addr, sizeof(addr));
+
+	if ((_socketFd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	int x = 1;
+	if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x)) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket options\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	// Fill struct with info about port and ip
+	addr.sin_family = AF_INET; // ipv4
+	if (gethost() == "localhost") {
+		addr.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
+	}
+	else {
+		addr.sin_addr.s_addr = inet_addr(gethost().c_str());
+	}
+	addr.sin_port = htons(getport());
+
+	// Associate the socket with a port and ip
+	for (int i = 0; i < 6; ++i) {
+		if ((bind(this->_socketFd, (struct sockaddr *) &addr, sizeof(addr))) == -1) {
+			std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
+			if (i == 5)
+				throw std::runtime_error(strerror(errno));
+		} else {
+			break;
+		}
+	}
+	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
+	if (listen(this->_socketFd, BACKLOG) == -1) {
+		std::cerr << _RED _BOLD "Error listening to server socket\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+
+	if (fcntl(this->_socketFd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket to be nonblocking\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+}
+
+int Server::addConnection() {
+	Client* newClient = new Client(this);
+	this->_connections.push_back(newClient);
+	return newClient->fd;
+}
+
+void Server::showclients(const fd_set& readfds, const fd_set& writefds) {
+	for (std::vector<Client*>::const_iterator it = this->_connections.begin(); it != this->_connections.end(); ++it) {
+		std::cerr << _CYAN " -- We have a client with fd " << (*it)->fd << " at " << (*it)->ipaddress << ".\n";
+		std::cerr << "It is " << (FD_ISSET((*it)->fd, &readfds) ? "" : "not") << " readable.\n";
+		std::cerr << "It is " << (FD_ISSET((*it)->fd, &writefds) ? "" : "not") << " writeable.\n";
+	}
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "Default root folder: " << x.getroot() << std::endl;
@@ -285,4 +342,102 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	}
 	o << std::endl;
 	return (o);
+}
+
+Client::Client(Server* S) : parent(S), fd(), port(), open(true), addr(), size(sizeof(addr)), req(), lastRequest(0), parsedRequest() {
+	bzero(&addr, size);
+	this->fd = accept(S->getSocketFd(), (struct sockaddr*)&addr, &size);
+	if (this->fd == -1) {
+		std::cerr << _RED _BOLD "Error accepting connection\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << _RED _BOLD "Error setting connection fd to be nonblocking\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	int opt = 1;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+		std::cerr << _RED _BOLD "Error setting connection fd socket options\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	this->ip = inet_ntoa(addr.sin_addr);
+	this->port = htons(addr.sin_port);
+	this->ipaddress = ip + ':' + ft::inttostring(port);
+
+	std::cerr << _YELLOW "Opened a new client for " << fd << " at " << ipaddress << std::endl << _END;
+}
+
+Client::~Client() {
+	close(fd);
+	fd = -1;
+	req.clear();
+	this->parsedRequest.clear();
+}
+
+int Client::receiveRequest() {
+	char buf[BUFLEN + 1];
+	int recvRet = -1;
+	bool recvCheck(false);
+
+	// Loop to receive complete request, even if buffer is smaller
+	ft_memset(buf, 0, BUFLEN);
+	this->resetTimeout();
+	while ((recvRet = recv(this->fd, buf, BUFLEN, 0)) > 0) {
+		buf[recvRet] = '\0';
+		this->req.append(buf);
+		recvCheck = true;
+	}
+	if (!recvCheck or recvRet == 0) { // Not possible to read from the socket (done reading or socket closed)
+		this->open = false;
+		if (recvRet == 0)
+			std::cerr << this->fd << " closed, ip was " << this->ipaddress << std::endl;
+		else if (!recvCheck)
+			std::cerr << "recvCheck is false. " << (recvRet == -1 ? strerror(errno) : "") << std::endl;
+		return (0);
+	}
+	return (1);
+}
+
+void Client::sendReply(const char* msg, request_s& request) {
+	long	bytesToSend = ft_strlen(msg),
+			bytesSent(0),
+			sendRet;
+	while (bytesToSend > 0) {
+		sendRet = send(this->fd, msg + bytesSent, bytesToSend, 0);
+		if (sendRet == -1) {
+			if (bytesToSend != 0)
+				continue;
+			throw (std::runtime_error(strerror(errno)));
+		}
+		bytesSent += sendRet;
+		bytesToSend -= sendRet;
+	}
+	static int i = 0, post = 0;
+	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
+	if (request.method == POST)
+		std::cerr << " #" << post++;
+	std::cerr << ").\n" _END;
+}
+
+void Client::resetTimeout() {
+	this->lastRequest = ft::getTime();
+}
+
+void Client::checkTimeout() {
+	if (this->lastRequest) {
+		time_t diff = ft::getTime() - this->lastRequest;
+//		std::cerr << "timediff is " << diff << std::endl;
+		if (diff > 10000000) {
+//			std::cerr << "connection was " << (this->open ? "open" : "closed") << ", and now it times out, cus difference was " << diff << std::endl;
+			this->open = false;
+		}
+	}
+}
+
+void Client::reset() {
+	std::cerr << "Resetting client!\n";
+	this->open = true;
+	req.clear();
+	lastRequest = 0;
+	this->parsedRequest.clear();
 }

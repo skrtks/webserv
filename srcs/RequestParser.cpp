@@ -13,6 +13,7 @@
 #include "Colours.hpp"
 #include "RequestParser.hpp"
 #include "libftGnl.hpp"
+#include <fstream>
 
 RequestParser::RequestParser() : _method() {
 	_status_code = 0;
@@ -68,27 +69,23 @@ RequestParser& RequestParser::operator= (const RequestParser &obj) {
 	return *this;
 }
 
-std::string RequestParser::parseBody()
-{
-	std::string ret;
-	std::size_t pos, i = 0;
 
-	ret = _rawRequest.substr(_rawRequest.find("\r\n") + 2);
-	while (true) {
-		pos = ret.find("\r\n");
-		if (pos == std::string::npos)
-			break ;
-		i = ret.find("\r\n", pos + 1);
-		if (i == std::string::npos)
-			break ;
-		while (ret[i] != '\n')
-			i++;
-		ret.erase(pos, (i - pos) + 1);
-		if ((pos = ret.find("\r\n")) == ret.find_last_of("\r\n") || ret.find("\r\n", pos+=1) == std::string::npos)
-			break ;
+void RequestParser::parseBody(request_s& req)
+{
+	size_t startpos = 0 , endpos;
+	size_t lastrn = _rawRequest.rfind("\r\n");
+
+	while (startpos < lastrn) {
+		startpos = _rawRequest.find("\r\n", startpos) + 2;
+		endpos = _rawRequest.find("\r\n", startpos);
+		if (startpos == std::string::npos || endpos == std::string::npos || startpos > endpos) {
+			std::cerr << "breaking because " << (startpos == std::string::npos ? "startpos is npos" : "endpos is npos") << std::endl;
+			break;
+		}
+		req.body.append(_rawRequest, startpos, endpos - startpos);
+		startpos = endpos + 1;
 	}
-	ret.erase(ret.length() - 2, 2);
-	return ret;
+	std::cerr << "end product has size: " << req.body.length() << std::endl;
 }
 
 request_s RequestParser::parseHeadersOnly(const std::string &req)
@@ -115,12 +112,10 @@ request_s RequestParser::parseRequest(const std::string &req) {
 	this->_env.clear();
 	request_s request = parseHeadersOnly(req);
 
-	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end()) {
-		request.body = parseBody();
-	}
-	else {
+	if (request.headers.find(TRANSFER_ENCODING) != request.headers.end())
+		parseBody(request);
+	else
 		request.body = _rawRequest.substr(0, _rawRequest.length() - 2);
-	}
 
 	if (_status_code)
 		request.status_code = _status_code;
@@ -343,6 +338,35 @@ void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::st
 		this->_env[insert] = value;
 }
 
+request_s::request_s() : status_code(), server(), transfer_buffer() {
+
+}
+
+request_s::request_s(const request_s &x) : status_code(), server(), transfer_buffer() {
+	*this = x;
+}
+
+request_s &request_s::operator=(const request_s &x) {
+	if (this != &x) {
+		status_code = x.status_code;
+		method = x.method;
+		uri = x.uri;
+		version = x.version;
+		headers = x.headers;
+		server = x.server;
+		body = x.body;
+		transfer_buffer = x.transfer_buffer;
+		env = x.env;
+	}
+	return *this;
+}
+
+request_s::~request_s() {
+	this->headers.clear();
+	this->body.clear();
+	this->env.clear();
+}
+
 std::string request_s::MethodToSTring() const {
 	switch (this->method) {
 		case GET:
@@ -356,6 +380,17 @@ std::string request_s::MethodToSTring() const {
 		default:
 			return "NOMETHOD";
 	}
+}
+
+void request_s::clear() {
+	this->status_code = 200;
+	this->method = ERROR;
+	this->uri.clear();
+	this->headers.clear();
+	this->server = NULL;
+	this->body.clear();
+	this->transfer_buffer = false;
+	this->env.clear();
 }
 
 std::ostream&	operator<<(std::ostream& o, const request_s& r) {

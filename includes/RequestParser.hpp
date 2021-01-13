@@ -22,20 +22,26 @@
 #include <ctime>
 #include <sstream>
 #include "Colours.hpp"
-#include "Server.hpp"
+#include "Enums.hpp"
 
+class Server;
 struct request_s {
 	int									status_code;
 	e_method							method;
 	std::string							uri;
 	std::pair<int, int>					version;
 	std::map<headerType, std::string>	headers;
-	Server								server;
+	Server*								server;
 	std::string							body;
 	bool								transfer_buffer;
 	std::map<std::string, std::string>	env;
-	std::string		MethodToSTring() const;
 
+	request_s();
+	request_s(const request_s& x);
+	request_s& operator=(const request_s& x);
+	~request_s();
+	std::string		MethodToSTring() const;
+	void			clear();
 };
 
 std::ostream&	operator<<(std::ostream& o, const request_s& r);
@@ -59,7 +65,7 @@ public:
 	RequestParser&	operator= (const RequestParser &obj);
 
 	request_s		parseRequest(const std::string &req);
-	std::string		parseBody();
+	void			parseBody(request_s& req);
 	void			AddHeaderToEnv(const std::string& upperHeader, const std::string& value);
 	request_s		parseHeadersOnly(const std::string &req);
 	void			parseRequestLine();
