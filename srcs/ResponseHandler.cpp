@@ -263,7 +263,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
-	handleALLOW();
+	handleALLOW(request);
 	handleDATE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
@@ -331,14 +331,11 @@ void ResponseHandler::handleCONTENT_LANGUAGE() {
 	size_t	found = _body.find("<html");
 	size_t	lang_idx = _body.find("lang", found + 1);
 
-	if (lang_idx != std::string::npos)
-	{
+	if (lang_idx != std::string::npos) {
 		for (size_t i = lang_idx + 6; _body[i] != '\"'; i++)
 			lang += _body[i];
 		_header_vals[CONTENT_LANGUAGE] = lang;
-	}
-	else
-	{
+	} else {
 		_header_vals[CONTENT_LANGUAGE] = "en-US";
 	}
 	_response += "Content-Language: ";
