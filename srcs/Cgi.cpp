@@ -4,6 +4,10 @@
 
 #include "Cgi.hpp"
 #include <sys/wait.h>
+#include <cerrno>
+#include "libftGnl.hpp"
+#include "Colours.hpp"
+#include "Server.hpp"
 
 void	exit_fatal() {
 	std::cerr << _RED _BOLD << strerror(errno) << std::endl << _END;
