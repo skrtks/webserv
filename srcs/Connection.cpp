@@ -17,6 +17,8 @@
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
 #include <signal.h>
+#include <cerrno>
+#include <algorithm>
 
 Connection::Connection() : _socketFd(), _readFds(), _writeFds(), _readFdsBak(), _writeFdsBak() {
 	FD_ZERO(&_readFds);
@@ -97,7 +99,7 @@ void Connection::startListening() {
 				}
 				c->checkTimeout();
 				if (!c->open) {
-					std::cerr << c->fd << " at " << c->ip << ':' << c->port << " is closing\n";
+					std::cerr << c->fd << " at " << c->ipaddress << " is closing\n";
 					FD_CLR(c->fd, &_readFdsBak);
 					FD_CLR(c->fd, &_writeFdsBak);
 					this->_allConnections.erase(c->fd);
