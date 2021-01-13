@@ -13,49 +13,11 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include "Base64.hpp"
-# include "Location.hpp"
-# include <set>
-# include <cerrno>
-# include <fcntl.h>
-# include <iostream>
-# include <zconf.h>
-#include <arpa/inet.h>
-#include <sys/select.h>
-#include <netinet/tcp.h>
-#include <string.h>
-# include <sys/stat.h>
-#include "Colours.hpp"
-#include "RequestParser.hpp"
+# include <vector>
+# include	"Location.hpp"
+# include	"Client.hpp"
 
-#define BUFLEN 8192
 #define BACKLOG 128
-
-class Server;
-struct Client {
-	Server* parent;
-	int fd,
-		port;
-	bool open;
-	struct sockaddr_in addr;
-	socklen_t size;
-	std::string req,
-				ip;
-	std::string ipaddress;
-	time_t	lastRequest;
-	request_s	parsedRequest;
-
-	explicit Client(Server* x);
-	~Client();
-	int		receiveRequest();
-	void	resetTimeout();
-	void 	sendReply(const char* msg, request_s& request);
-	void	checkTimeout();
-	void	reset();
-
-private:
-	Client();
-};
 
 class Server {
 	public:

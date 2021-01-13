@@ -1,0 +1,41 @@
+//
+// Created by peerdb on 13-01-21.
+//
+
+#ifndef WEBSERV_CLIENT_HPP
+#define WEBSERV_CLIENT_HPP
+#include	<arpa/inet.h>
+#include	<string.h>
+#include	<iostream>
+#include	"RequestParser.hpp"
+#include	"Colours.hpp"
+
+#define	BUFLEN 8192
+
+class Server;
+struct Client {
+	Server* parent;
+	int		fd,
+			port;
+	bool	open;
+	struct sockaddr_in addr;
+	socklen_t size;
+	std::string req,
+				host;
+	std::string ipaddress;
+	time_t	lastRequest;
+	request_s	parsedRequest;
+
+	explicit Client(Server* x);
+	~Client();
+	int		receiveRequest();
+	void	resetTimeout();
+	void 	sendReply(const char* msg, request_s& request) const;
+	void	checkTimeout();
+	void	reset();
+
+private:
+	Client();
+};
+
+#endif //WEBSERV_CLIENT_HPP
