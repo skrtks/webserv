@@ -16,7 +16,6 @@
 #include "RequestParser.hpp"
 #include "Cgi.hpp"
 
-
 class ResponseHandler {
 	std::map<headerType, std::string>	_header_vals;
 	std::map<headerType, std::string>	_cgi_headers;
