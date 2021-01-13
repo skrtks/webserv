@@ -346,10 +346,7 @@ void ResponseHandler::handleCONTENT_LENGTH() {
 	std::stringstream	ss;
 	std::string			str;
 
-	if (!_body.empty())
-		_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
-	else
-		_header_vals[CONTENT_LENGTH] = "0";
+	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
 	_response += "Content-Length: ";
 	_response += _header_vals[CONTENT_LENGTH];
 	_response += "\r\n";

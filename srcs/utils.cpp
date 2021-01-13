@@ -18,6 +18,8 @@ namespace ft {
 	std::string inttostring(int n) {
 		std::string ss;
 
+		if (n == 0)
+			ss = "0";
 		while (n) {
 			char i = '0' + (n % 10);
 			n /= 10;
