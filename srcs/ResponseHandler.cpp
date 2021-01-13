@@ -110,7 +110,6 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
-	std::cout << this->_autoindex << std::endl;
 
 	if (request.server.isExtensionAllowed(request.uri)) {
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
