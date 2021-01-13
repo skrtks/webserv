@@ -42,7 +42,7 @@ public:			//getters
 		std::string					getroot() const;
 		std::string					getautoindex() const;
 		std::string					getlocationmatch() const;
-		std::vector<e_method>		getallowmethods() const;
+		std::string					getallowedmethods() const;
 		std::string					getindex() const;
 		std::vector<std::string>	getindexes() const;
 		std::vector<std::string>	getcgiallowedextensions() const;

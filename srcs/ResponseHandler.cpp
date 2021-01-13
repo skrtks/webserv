@@ -319,8 +319,8 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 	_response += _status_codes[_status_code];
 }
 
-void ResponseHandler::handleALLOW() {
-	_header_vals[ALLOW] = "GET, HEAD, POST, PUT";
+void ResponseHandler::handleALLOW(request_s& request) {
+	_header_vals[ALLOW] = request.server->matchlocation(request.uri).getallowedmethods();
 	_response += "Allow: ";
 	_response += _header_vals[ALLOW];
 	_response += "\r\n";
