@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <cerrno>
 #include <algorithm>
+#include "Enums.hpp"
 
 Connection::Connection() : _socketFd(), _readFds(), _writeFds(), _readFdsBak(), _writeFdsBak() {
 	FD_ZERO(&_readFds);
@@ -94,7 +95,7 @@ void Connection::startListening() {
 					c->sendReply(response.c_str(), c->parsedRequest);
 
 					response.clear();
-					c->reset();
+					c->reset(responseHandler._header_vals[CONNECTION]);
 					FD_CLR(c->fd, &_writeFdsBak);
 				}
 				c->checkTimeout();
