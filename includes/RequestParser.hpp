@@ -52,6 +52,7 @@ class RequestParser {
 
 public:
 	friend class ResponseHandler;
+	friend class Connection;
 	RequestParser();
 	virtual ~RequestParser();
 	RequestParser(const RequestParser &obj);
