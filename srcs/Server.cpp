@@ -286,8 +286,13 @@ void Server::startListening() {
 	}
 	// Fill struct with info about port and ip
 	addr.sin_family = AF_INET; // ipv4
-	addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	addr.sin_port = htons(this->getport()); // set port (htons translates host bit order to network order)
+	if (gethost() == "localhost") {
+		addr.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
+	}
+	else {
+		addr.sin_addr.s_addr = inet_addr(gethost().c_str());
+	}
+	addr.sin_port = htons(getport());
 
 	// Associate the socket with a port and ip
 	for (int i = 0; i < 6; ++i) {
