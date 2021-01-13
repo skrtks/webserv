@@ -95,7 +95,12 @@ void Client::checkTimeout() {
 	}
 }
 
-void Client::reset() {
+void Client::reset(const std::string& connection) {
+	if (connection == "close") {
+		std::cerr << "We ain't resetting, we're closing this client, baby" << std::endl;
+		this->open = false;
+		return;
+	}
 	std::cerr << "Resetting client!\n";
 	this->open = true;
 	req.clear();

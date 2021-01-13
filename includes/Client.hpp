@@ -32,7 +32,7 @@ struct Client {
 	void	resetTimeout();
 	void 	sendReply(const char* msg, request_s& request) const;
 	void	checkTimeout();
-	void	reset();
+	void	reset(const std::string&);
 
 private:
 	Client();
