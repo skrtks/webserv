@@ -38,6 +38,7 @@ public:
 	void loadConfiguration();
 	void handleCLI();
 	void stopServer();
+	static void signalServer(int n);
 	bool	checkIfEnded(const std::string& request);
 	int		getMaxFD();
 };

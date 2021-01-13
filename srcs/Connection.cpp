@@ -16,6 +16,7 @@
 #include <Colours.hpp>
 #include "ResponseHandler.hpp"
 #include "libftGnl.hpp"
+#include <signal.h>
 
 Connection::Connection() : _socketFd(), _readFds(), _writeFds(), _readFdsBak(), _writeFdsBak() {
 	FD_ZERO(&_readFds);
@@ -116,9 +117,17 @@ void Connection::startListening() {
 }
 
 // ------------------ Process Handling ------------------------
+Connection*	THIS;
 void Connection::startServer() {
 	loadConfiguration();
+	THIS = this;
+	signal(SIGINT, Connection::signalServer);
 	startListening();
+}
+
+void Connection::signalServer(int n) {
+	THIS->stopServer();
+	exit(n);
 }
 
 void Connection::stopServer() {
