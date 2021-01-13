@@ -260,6 +260,7 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 	}
 	_body += "</pre><hr>";
 	_autoindex = false;
+	closedir(dir);
 }
 
 void ResponseHandler::handleBody(request_s& request) {
