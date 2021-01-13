@@ -79,13 +79,11 @@ void RequestParser::parseBody(request_s& req)
 		startpos = _rawRequest.find("\r\n", startpos) + 2;
 		endpos = _rawRequest.find("\r\n", startpos);
 		if (startpos == std::string::npos || endpos == std::string::npos || startpos > endpos) {
-			std::cerr << "breaking because " << (startpos == std::string::npos ? "startpos is npos" : "endpos is npos") << std::endl;
 			break;
 		}
 		req.body.append(_rawRequest, startpos, endpos - startpos);
 		startpos = endpos + 1;
 	}
-	std::cerr << "end product has size: " << req.body.length() << std::endl;
 }
 
 request_s RequestParser::parseHeadersOnly(const std::string &req)
