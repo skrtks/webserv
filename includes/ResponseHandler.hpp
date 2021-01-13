@@ -26,6 +26,7 @@ class ResponseHandler {
 	int									_status_code;
 	Cgi									CGI;
 public:
+	friend class Connection;
 	ResponseHandler();
 	virtual ~ResponseHandler();
 	ResponseHandler(const ResponseHandler &src);
