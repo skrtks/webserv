@@ -269,7 +269,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	handleCONTENT_LOCATION();
 	handleCONTENT_LANGUAGE();
 	handleSERVER();
-//	handleCONNECTION_HEADER(request);
+	handleCONNECTION_HEADER(request);
 	_response += "\r\n";
 	if (request.method != HEAD && !_body.empty()) {
 		_response += _body;
