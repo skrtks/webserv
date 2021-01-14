@@ -227,7 +227,7 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + s + "\">../</a><br>";
 
 	while ((entry = readdir(dir)) != NULL) {
-		ss.str("");
+		ss.str(std::string());
 		if (ft_strncmp(entry->d_name, ".", 1) != 0 && ft_strncmp(entry->d_name, "..", 2) != 0) {
 			if (url[url.length()-1] == '/')
 				url = url.substr(0, url.length()-1);
