@@ -182,8 +182,7 @@ void	Server::setup(int fd) {
 		if (is_first_char(str, '}')) // End of server block
 			break ;
 		get_key_value(str, key, value);
-		// std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
-		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
+		(this->*(m.at(key)))(value);
 	}
 	if (_port <= 0 || _host.empty() || _maxfilesize <= 0 || _error_page.empty() || _server_name.empty())
 		throw std::runtime_error("invalid setting in server block");
