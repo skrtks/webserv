@@ -102,7 +102,12 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 		request.headers = _headers;
 		request.method = _method;
 		request.version = _version;
-		request.uri = _uri;
+		size_t n = _uri.find_first_of('?');
+		request.uri = _uri.substr(0, n);
+		if (n != std::string::npos)
+			request.cgiparams = _uri.substr(_uri.find('?'));
+//		std::cerr << "cgiparams is " << request.cgiparams << std::endl;
+//		std::cerr << "new uri  is " << request.uri << std::endl;
 		request.env = _env;
 	}
 	return (request);
@@ -338,7 +343,7 @@ void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::st
 		this->_env[insert] = value;
 }
 
-request_s::request_s() : status_code(), server(), transfer_buffer() {
+request_s::request_s() : status_code(), uri(), cgiparams(), server(), transfer_buffer() {
 
 }
 
@@ -351,6 +356,7 @@ request_s &request_s::operator=(const request_s &x) {
 		status_code = x.status_code;
 		method = x.method;
 		uri = x.uri;
+		cgiparams = x.cgiparams;
 		version = x.version;
 		headers = x.headers;
 		server = x.server;
@@ -386,6 +392,7 @@ void request_s::clear() {
 	this->status_code = 200;
 	this->method = ERROR;
 	this->uri.clear();
+	this->cgiparams.clear();
 	this->headers.clear();
 	this->server = NULL;
 	this->body.clear();

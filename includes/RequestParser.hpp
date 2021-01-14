@@ -22,6 +22,7 @@ struct request_s {
 	int									status_code;
 	e_method							method;
 	std::string							uri;
+	std::string							cgiparams;
 	std::pair<int, int>					version;
 	std::map<headerType, std::string>	headers;
 	Server*								server;
