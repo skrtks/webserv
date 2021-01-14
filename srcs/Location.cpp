@@ -42,6 +42,7 @@ Location&	Location::operator=(const Location& x) {
 		this->_error_page = x._error_page;
 		this->_maxBody = x._maxBody;
 		this->_default_cgi_path = x._default_cgi_path;
+		this->_php_cgi = x._php_cgi;
 	}
 	return *this;
 }
@@ -82,6 +83,14 @@ void	Location::setroot(const std::string& in) {
 		throw std::runtime_error("location root folder does not exist.");
 }
 
+
+void Location::setphpcgipath(const std::string& in) {
+	struct stat statstruct = {};
+	this->_php_cgi = in;
+	if (stat(_root.c_str(), &statstruct) == -1)
+		throw std::runtime_error("php-cgi executable path does not exist.");
+}
+
 //getters
 std::string					Location::getroot() const { return this->_root; }
 std::string					Location::getautoindex() const { return this->_autoindex; }
@@ -90,9 +99,20 @@ std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
 std::vector<std::string>	Location::getcgiallowedextensions() const { return this->_cgi_allowed_extensions; }
 std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
 long unsigned int			Location::getmaxbody() const { return this->_maxBody; }
-std::string					Location::getindex() const { return this->_indexes[0]; }
+std::string					Location::getindex() const {
+	struct stat statstruct = {};
+	for (size_t i = 0; i < this->_indexes.size(); i++) {
+		std::string check = this->_root + '/' + this->_indexes[i];
+		std::cerr << "check whether this index file exists: '" << check << "'\n";
+		if (stat(check.c_str(), &statstruct) != -1) {
+			std::cerr << "it does!\n";
+			return this->_indexes[i];
+		}
+	}
+	return "";
+}
 std::string					Location::getdefaultcgipath() const { return this->_default_cgi_path; }
-
+std::string					Location::getphpcgipath() const { return this->_php_cgi; }
 std::string					Location::getallowedmethods() const {
 	std::string ret("Allow:");
 	for (size_t i = 0; i < this->_allow_method.size(); ++i) {
@@ -115,10 +135,11 @@ void	Location::setup(int fd) {
 	m["autoindex"] = &Location::setautoindex;
 	m["allow_method"] = &Location::setallow_method;
 	m["index"] = &Location::setindex;
-	m["cgi"] = &Location::setcgiallowedextensions;
+	m["ext"] = &Location::setcgiallowedextensions;
 	m["error_page"] = &Location::seterrorpage;
 	m["maxBody"] = &Location::setmaxbody;
 	m["default_cgi"] = &Location::setdefaultcgipath;
+	m["php-cgi"] = &Location::setphpcgipath;
 	std::string str;
 	
 	while (ft::get_next_line(fd, str) > 0) {
