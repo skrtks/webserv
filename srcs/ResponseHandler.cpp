@@ -425,7 +425,7 @@ void ResponseHandler::negotiateLanguage(request_s& request) {
 	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++) {
 		ft::trimstring(*it, " \t");
 		tmp = filepath + '.' + (*it).substr(0, 2);
-		if (stat(tmp.c_str(), &structstat) == 0 && !S_ISDIR(structstat.st_mode)) {
+		if (stat(tmp.c_str(), &structstat) == 0) {
 			request.uri = tmp.substr(tmp.find(request.location->getlocationmatch()));
 		}
 	}
