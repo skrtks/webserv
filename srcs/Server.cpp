@@ -15,10 +15,6 @@
 #include	"libftGnl.hpp"
 #include	<cerrno>
 #include	<sys/stat.h>
-//# include <fcntl.h>
-//#include <zconf.h>
-//#include <sys/select.h>
-//#include <netinet/tcp.h>
 
 Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
@@ -36,6 +32,13 @@ Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 
 Server::~Server() {
 	close(_socketFd);
+	for (std::vector<Location*>::iterator it = _locations.begin(); it != _locations.end(); it++) {
+		delete *it;
+		it = _locations.erase(it);
+	}
+	_locations.clear();
+	_indexes.clear();
+	_loginfo.clear();
 }
 
 Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd(), addr() {
@@ -160,12 +163,12 @@ std::string	Server::gethtpasswdpath() const {
 
 void	Server::configurelocation(const std::string& in) {
 	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f");
-	Location	loc(v[0]);
-	loc.setup(this->_fd);
+	Location	*loc = new Location(v[0]);
+	loc->setup(this->_fd);
 	this->_locations.push_back(loc);
 }
 
-std::vector<Location>	Server::getlocations() const {
+std::vector<Location*>	Server::getlocations() const {
 	return this->_locations;
 }
 
@@ -192,8 +195,9 @@ void	Server::setup(int fd) {
 		if (is_first_char(str, '}')) // End of server block
 			break ;
 		get_key_value(str, key, value);
-//		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
-		(this->*(m.at(key)))(value); // (this->*(m[key]))(value);
+		if (!m.count(key))
+			std::cerr << _RED _BOLD "Unable to parse key '" << key << "' in Server block " << this->getservername() << _END << std::endl;
+		(this->*(m.at(key)))(value);
 	}
 	if (_port <= 0 || _host.empty() || _maxfilesize <= 0 || _error_page.empty() || _server_name.empty())
 		throw std::runtime_error("invalid setting in server block");
@@ -211,27 +215,27 @@ std::string Server::getautoindex() const {
 	return this->_autoindex;
 }
 
-Location Server::matchlocation(const std::string &uri) const {
+Location* Server::matchlocation(const std::string &uri) const {
 	size_t		n;
-	Location	out;
+	Location*	out = NULL;
 
-	for (std::vector<Location>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); ++it) {
-		n = it->getlocationmatch().length();
-		if (it->getlocationmatch()[n - 1] == '/' && n > 1)
+	for (std::vector<Location*>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); ++it) {
+		n = (*it)->getlocationmatch().length();
+		if ((*it)->getlocationmatch()[n - 1] == '/' && n > 1)
 			n -= 1;
-		if (n >= out.getlocationmatch().length() && it->getlocationmatch().compare(0, n, uri, 0, n) == 0)
+		if (n >= out->getlocationmatch().length() && (*it)->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
-	out.addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page);
+	out->addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page);
 	return (out);
 }
 
 std::string	Server::getfilepath(const std::string& uri) const {
-	Location loca = this->matchlocation(uri);
+	Location* loca = this->matchlocation(uri);
 
 	std::string	TrimmedUri(uri),
-				filepath(loca.getroot());
-	TrimmedUri.erase(0, loca._location_match.length());
+				filepath(loca->getroot());
+	TrimmedUri.erase(0, loca->_location_match.length());
 	if (filepath[filepath.length() - 1] != '/' && TrimmedUri[0] != '/') // I wanna use .front() and .back() but they're C++11 :sadge:
 		filepath += '/';
 	filepath += TrimmedUri;
@@ -241,20 +245,20 @@ std::string	Server::getfilepath(const std::string& uri) const {
 int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode) const {
 	struct stat statstruct = {};
 	int fd = -1;
-	Location loca = this->matchlocation(uri);
+	Location*	loca = this->matchlocation(uri);
 	std::string filepath = this->getfilepath(uri);
 
 	if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (S_ISDIR(statstruct.st_mode)) {
 			if (filepath[filepath.length() - 1] != '/')
 				filepath += '/';
-			filepath += loca.getindex();
+			filepath += loca->getindex();
 		}
 		if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
 	}
 	if (fd == -1) {
-		filepath = loca.geterrorpage();
+		filepath = loca->geterrorpage();
 		fd = open(filepath.c_str(), O_RDONLY);
 		statuscode = 404;
 	}
@@ -270,7 +274,7 @@ bool Server::getmatch(const std::string& username, const std::string& passwd) {
 
 bool Server::isExtensionAllowed(const std::string& uri) const {
 	std::string extension = ft::getextension(uri);
-	std::vector<std::string> allowed_extensions = matchlocation(uri).getcgiallowedextensions();
+	std::vector<std::string> allowed_extensions = matchlocation(uri)->getcgiallowedextensions();
 
 	for (std::vector<std::string>::const_iterator it = allowed_extensions.begin(); it != allowed_extensions.end(); ++it) {
 		if (extension == *it)
@@ -343,7 +347,7 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << "Default index page: " << x.getindex() << std::endl;
 	o << "error page: " << x.geterrorpage() << std::endl;
 	o << "client body limit: " << x.getmaxfilesize() << std::endl << std::endl;
-	std::vector<Location> v = x.getlocations();
+	std::vector<Location*> v = x.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
 		o << v[i];
 	}

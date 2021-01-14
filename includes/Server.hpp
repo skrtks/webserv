@@ -13,7 +13,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include <vector>
+# include	<vector>
 # include	"Location.hpp"
 # include	"Client.hpp"
 
@@ -58,11 +58,11 @@ public:
 		std::string 			getauthbasicrealm() const;
 		std::string				gethtpasswdpath() const;
 		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&) const;
-		std::vector<Location> 	getlocations() const;
+		std::vector<Location*> 	getlocations() const;
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
 
-		Location	matchlocation(const std::string& uri) const;
+		Location*	matchlocation(const std::string& uri) const;
 		std::string	getfilepath(const std::string& uri) const;
 		void		setup(int fd);
 		bool		getmatch(const std::string& username, const std::string& passwd);
@@ -81,7 +81,7 @@ private:
 					_socketFd;
 		struct sockaddr_in	addr;
 		std::vector<std::string> _indexes;
-		std::vector<Location> _locations;
+		std::vector<Location*> _locations;
 		std::map<std::string, std::string>	_loginfo;
 };
 

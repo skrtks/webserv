@@ -149,7 +149,8 @@ void	Location::setup(int fd) {
 		if (is_first_char(str, '}')) // End of location block
 			break ;
 		get_key_value(str, key, value);
-//		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
+		if (!m.count(key))
+			std::cerr <<_RED _BOLD "Unable to parse key '" << key << "' in Location block " << this->getlocationmatch() << _END << std::endl;
 		(this->*(m.at(key)))(value);
 	}
 	if (this->_indexes.empty())
