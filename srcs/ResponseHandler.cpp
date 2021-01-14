@@ -38,6 +38,7 @@ std::string getCurrentDatetime() {
 }
 
 ResponseHandler::ResponseHandler() : _cgi_status_code() {
+	_autoindex = false;
 	_header_vals[ACCEPT_CHARSET].clear();
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
@@ -353,6 +354,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 			this->_autoindex_root = v[i].getroot();
 		}
 	}
+	std::cout << this->_autoindex << std::endl;
 	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
