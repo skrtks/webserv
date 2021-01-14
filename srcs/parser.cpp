@@ -41,7 +41,7 @@ std::vector<Server*>	parse(char *av) {
 	if (av && stat(av, &statstruct) != -1)
 		fd = open(av, O_RDONLY);
 	else
-		fd = open("configfiles/42test.conf", O_RDONLY);
+		fd = open("configfiles/default.conf", O_RDONLY);
 	if (fd < 0)
 		return skrtks;
 	
