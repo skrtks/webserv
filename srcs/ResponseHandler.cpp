@@ -178,9 +178,10 @@ void ResponseHandler::handleBody(request_s& request) {
 	int		fd;
 	int totalreadsize = 0;
 
+	std::cout << "STATUS " << request.status_code << std::endl;
 	_body.clear();
-	if (request.status_code == 400 || this->_status_code == 405) {
-		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
+	if (request.status_code == 400 || request.status_code == 405) {
+		fd = open(request.server->matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
 	}
 	else {
 		fd = generatePage(request);
