@@ -11,7 +11,13 @@
 /* ************************************************************************** */
 
 #include "ResponseHandler.hpp"
+#include "Server.hpp"
 #include "libftGnl.hpp"
+#include "Base64.hpp"
+#include <ctime>
+#include <sys/stat.h>
+#include <sstream>
+#include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -32,12 +38,11 @@ std::string getCurrentDatetime() {
 }
 
 ResponseHandler::ResponseHandler() : _cgi_status_code() {
-	this->_status_code = 200;
 	_header_vals[ACCEPT_CHARSET].clear();
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
 	_header_vals[AUTHORIZATION].clear();
-	_header_vals[CONNECTION] = "close";
+	_header_vals[CONNECTION] = "keep-alive";
 	_header_vals[CONTENT_LANGUAGE].clear();
 	_header_vals[CONTENT_LENGTH].clear();
 	_header_vals[CONTENT_LOCATION].clear();
@@ -89,7 +94,7 @@ ResponseHandler::~ResponseHandler() {
 	this->_body.clear();
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code(), _status_code() {
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code() {
 	*this = src;
 }
 
@@ -101,7 +106,6 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 		this->_status_codes = rhs._status_codes;
 		this->_response	= rhs._response;
 		this->_body = rhs._body;
-		this->_status_code = rhs._status_code;
 		this->CGI = rhs.CGI;
 	}
 	return *this;
@@ -111,13 +115,13 @@ int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
 
-	if (request.server.isExtensionAllowed(request.uri)) {
+	if (request.server->isExtensionAllowed(request.uri)) {
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
 			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
 		}
 		else {
-			std::string tmpuri = '/' + request.server.matchlocation(request.uri).getroot();
+			std::string tmpuri = '/' + request.server->matchlocation(request.uri).getroot();
 			size_t second_slash_index = request.uri.find_first_of('/', 1);
 			if (second_slash_index == std::string::npos)
 				tmpuri += request.uri;
@@ -125,7 +129,7 @@ int ResponseHandler::generatePage(request_s& request) {
 				tmpuri += request.uri.substr(second_slash_index);
 			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
 			if (stat(scriptpath.c_str(), &statstruct) == -1) {
-				std::string defaultcgipath = request.server.matchlocation(request.uri).getdefaultcgipath();
+				std::string defaultcgipath = request.server->matchlocation(request.uri).getdefaultcgipath();
 				if (defaultcgipath.empty()) {
 					fd = -2;
 				}
@@ -149,10 +153,10 @@ int ResponseHandler::generatePage(request_s& request) {
 			fd = request.server.getpage(request.uri, _header_vals, _status_code, false);
 	}
 	if (fd == -1)
-		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error
+		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error TODO should this be changed?
 	if (fd == -2) {
-		fd = open(request.server.geterrorpage().c_str(), O_RDONLY);
-		_status_code = 404;
+		fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
+		request.status_code = 404;
 	}
 	return (fd);
 }
@@ -270,7 +274,7 @@ void ResponseHandler::handleBody(request_s& request) {
 	
 	_body.clear();
 	if (request.status_code == 400) {
-		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
+		fd = open(request.server->matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
 	}
 	else {
 		fd = generatePage(request);
@@ -300,9 +304,8 @@ void ResponseHandler::handleBody(request_s& request) {
 	}
 
 }
-std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
-	this->_response.resize(1);
-	_response.front().clear();
+std::string& ResponseHandler::handleRequest(request_s& request) {
+	this->_response.clear();
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -313,40 +316,35 @@ std::vector<std::string> ResponseHandler::handleRequest(request_s& request) {
 }
 
 void ResponseHandler::handlePut(request_s& request) {
-	struct stat statstruct = {};
-	_response[0] = "HTTP/1.1 ";
+	_response = "HTTP/1.1 ";
+	std::string filePath = request.server->getfilepath(request.uri);
 
-	std::string filePath = request.server.getfilepath(request.uri);
-	int statret = stat(filePath.c_str(), &statstruct);
-
-	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
-		_status_code = 405;
+	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+		request.status_code = 405;
+		handleBody(request);
 		_body.clear();
 	}
 	else {
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
 		if (fd != -1) {
-			if (statret == -1)
-				this->_response[0] += _status_codes[201];
-			else
-				this->_response[0] += _status_codes[204];
+			this->_response += _status_codes[204];
 			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
-			close(fd);
+			if (close(fd) == -1)
+				throw std::runtime_error("error closing putfile");
 			if (WriteRet != request.body.length())
 				throw std::runtime_error(_RED _BOLD "Write return in ResponseHandler::handlePut is not equal to request.body.length()");
 			handleLOCATION(filePath);
 		}
 		else {
-			this->_response[0] += _status_codes[500];
+			this->_response += _status_codes[500];
 		}
 	}
-	handleCONNECTION_HEADER(request);
-	_response[0] += "\r\n";
+	_response += "\r\n";
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
-	this->_status_code = 200;
-	_response[0] = "HTTP/1.1 ";
+	request.status_code = 200;
+	_response = "HTTP/1.1 ";
 
 	std::vector<Location> v = request.server.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
@@ -361,32 +359,29 @@ void ResponseHandler::generateResponse(request_s& request) {
 	}
 	if (this->authenticate(request))
 		return;
-	if (request.body.length() > request.server.matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
+	if (request.body.length() > request.server->matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
 		request.status_code = 413;
 	}
-	if (request.status_code)
-		this->_status_code = request.status_code;
 
 	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
-	handleALLOW();
+	handleALLOW(request);
 	handleDATE();
 	handleCONTENT_LENGTH();
 	handleCONTENT_LOCATION();
 	handleCONTENT_LANGUAGE();
 	handleSERVER();
 	handleCONNECTION_HEADER(request);
-	_response[0] += "\r\n";
-	if (request.method != HEAD) {
-		_response[0] += _body;
-		_response[0] += "\r\n";
+	_response += "\r\n";
+	if (request.method != HEAD && !_body.empty()) {
+		_response += _body;
 	}
 	_body.clear();
 }
 
 int ResponseHandler::authenticate(request_s& request) {
-	if (request.server.gethtpasswdpath().empty()) {
+	if (request.server->gethtpasswdpath().empty()) {
 		request.headers[AUTHORIZATION].clear();
 		return 0;
 	}
@@ -403,35 +398,35 @@ int ResponseHandler::authenticate(request_s& request) {
 	}
 	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
 	request.headers[REMOTE_USER] = username;
-	if (request.server.getmatch(username, passwd)) {
+	if (request.server->getmatch(username, passwd)) {
 		std::cout << _GREEN "Authorization successful!" _END << std::endl;
 		return 0;
 	}
 
 	std::cout << _RED "Authorization failed!" _END << std::endl;
-	this->_status_code = 401;
-	_response[0] += "401 Unauthorized\r\n";
-	this->_response[0] +=	"Server: Webserv/0.1\r\n"
+	request.status_code = 401;
+	_response += "401 Unauthorized\r\n";
+	this->_response +=	"Server: Webserv/0.1\r\n"
 					  	"Content-Type: text/html\r\n"
 	   					"WWW-Authenticate: Basic realm=";
-	this->_response[0] += request.server.getauthbasicrealm();
-	this->_response[0] += ", charset=\"UTF-8\"\r\n";
+	this->_response += request.server->getauthbasicrealm();
+	this->_response += ", charset=\"UTF-8\"\r\n";
 	return 1;
 }
 
 void	ResponseHandler::handleStatusCode(request_s& request) {
-	if (this->_status_code == 200 && _cgi_status_code)
-		_status_code = _cgi_status_code;
-	if (request.version.first != 1 && _status_code == 200)
-		_status_code = 505;
-	_response[0] += _status_codes[_status_code];
+	if (request.status_code == 200 && _cgi_status_code)
+		request.status_code = _cgi_status_code;
+	if (request.version.first != 1 && request.status_code == 200)
+		request.status_code = 505;
+	_response += _status_codes[request.status_code];
 }
 
-void ResponseHandler::handleALLOW() {
-	_header_vals[ALLOW] = "GET, HEAD, POST, PUT";
-	_response[0] += "Allow: ";
-	_response[0] += _header_vals[ALLOW];
-	_response[0] += "\r\n";
+void ResponseHandler::handleALLOW(request_s& request) {
+	_header_vals[ALLOW] = request.server->matchlocation(request.uri).getallowedmethods();
+	_response += "Allow: ";
+	_response += _header_vals[ALLOW];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LANGUAGE() {
@@ -439,19 +434,16 @@ void ResponseHandler::handleCONTENT_LANGUAGE() {
 	size_t	found = _body.find("<html");
 	size_t	lang_idx = _body.find("lang", found + 1);
 
-	if (lang_idx != std::string::npos)
-	{
+	if (lang_idx != std::string::npos) {
 		for (size_t i = lang_idx + 6; _body[i] != '\"'; i++)
 			lang += _body[i];
 		_header_vals[CONTENT_LANGUAGE] = lang;
-	}
-	else
-	{
+	} else {
 		_header_vals[CONTENT_LANGUAGE] = "en-US";
 	}
-	_response[0] += "Content-Language: ";
-	_response[0] += _header_vals[CONTENT_LANGUAGE];
-	_response[0] += "\r\n";
+	_response += "Content-Language: ";
+	_response += _header_vals[CONTENT_LANGUAGE];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LENGTH() {
@@ -459,16 +451,16 @@ void ResponseHandler::handleCONTENT_LENGTH() {
 	std::string			str;
 
 	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
-	_response[0] += "Content-Length: ";
-	_response[0] += _header_vals[CONTENT_LENGTH];
-	_response[0] += "\r\n";
+	_response += "Content-Length: ";
+	_response += _header_vals[CONTENT_LENGTH];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleCONTENT_LOCATION() {
 	if (!_header_vals[CONTENT_LOCATION].empty()) {
-		_response[0] += "Content-Location: ";
-		_response[0] += _header_vals[CONTENT_LOCATION];
-		_response[0] += "\r\n";
+		_response += "Content-Location: ";
+		_response += _header_vals[CONTENT_LOCATION];
+		_response += "\r\n";
 	}
 }
 
@@ -490,89 +482,32 @@ void ResponseHandler::handleCONTENT_TYPE(request_s& request) {
 		_header_vals[CONTENT_TYPE] = "text/html";
 	}
 	request.headers[CONTENT_TYPE] = this->_header_vals[CONTENT_TYPE];
-	_response[0] += "Content-Type: ";
-	_response[0] += _header_vals[CONTENT_TYPE];
-	_response[0] += "\r\n";
+	_response += "Content-Type: ";
+	_response += _header_vals[CONTENT_TYPE];
+	_response += "\r\n";
 }
 
 void ResponseHandler::handleDATE() {
 	_header_vals[DATE] = getCurrentDatetime();
-	_response[0] += "Date: ";
-	_response[0] += _header_vals[DATE];
-	_response[0] += "\r\n";
+	_response += "Date: ";
+	_response += _header_vals[DATE];
+	_response += "\r\n";
 }
-
-//void ResponseHandler::handleHOST( request_s& request ) {
-//	std::stringstream ss;
-//	ss << request.server.gethost() << ":" << request.server.getport();
-//	_header_vals[HOST] = ss.str();
-//	//std::cout << "HOST: " << _header_vals[HOST] << std::endl;
-//}
-
-//void ResponseHandler::handleLAST_MODIFIED() {
-//	_response[0] += "Last-Modified: ";
-//	_response[0] += getCurrentDatetime();
-//	_header_vals[LAST_MODIFIED] = getCurrentDatetime();
-//	_response[0] += "\r\n";
-//}
 
 void ResponseHandler::handleLOCATION( std::string& url ) {
 	_header_vals[LOCATION] = url;
-	_response[0] += "Location: ";
-	_response[0] += url;
-	_response[0] += "\r\n";
+	_response += "Location: ";
+	_response += url;
+	_response += "\r\n";
 }
 
-//void ResponseHandler::handleRETRY_AFTER() {
-//	_response[0] += "Retry-After: 120\r\n";
-//}
-
 void ResponseHandler::handleSERVER() {
-	_response[0] += "Server: Webserv/1.0\r\n";
+	_response += "Host: Webserv/1.0\r\n";
 }
 
 void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
 	if (request.headers.count(CONNECTION) == 1)
 		_header_vals[CONNECTION] = request.headers.at(CONNECTION);
-	_response[0] += "Connection: " + _header_vals[CONNECTION] + "\r\n";
-	// _response[0] += "Accept-Encoding: gzip\r\n";
+	_response += "Connection: " + _header_vals[CONNECTION] + "\r\n";
 }
 
-//void ResponseHandler::handleTRANSFER_ENCODING( request_s& request ) {
-//	std::stringstream ss;
-//	std::string response;
-//	int i = 0;
-//	_header_vals[TRANSFER_ENCODING] = "chunked";
-//	response += "Transfer-Encoding: chunked\r\n\r\n";
-//	request.transfer_buffer = true;
-//	while (_body.length() > 10000) {
-//		ss << std::hex << 10000;
-//		response += ss.str();
-//		ss.str("");
-//		response += "\r\n";
-//		response.append(_body, 0, 10000);
-//		response += "\r\n";
-//		_body.erase(0, 10000);
-//		if (i == 0)
-//			_response[0] += response;
-//		else
-//			_response.push_back(response);
-//		response.clear();
-//		i++;
-//	}
-//	ss << std::hex << _body.length();
-//	response += ss.str();
-//	ss.str("");
-//	response += "\r\n";
-//	response.append(_body, 0, _body.length());
-//	_body.clear();
-//	response += "\r\n";
-//	if (i == 0)
-//		_response[0] += response;
-//	else
-//		_response.push_back(response);
-//	response.clear();
-//	i++;
-//	response += "0\r\n\r\n";
-//	_response.push_back(response);
-//}

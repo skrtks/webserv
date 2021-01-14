@@ -13,13 +13,11 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include "Base64.hpp"
-# include "Location.hpp"
-# include <cerrno>
-# include <fcntl.h>
-# include <iostream>
-# include <zconf.h>
-# include <sys/stat.h>
+# include <vector>
+# include	"Location.hpp"
+# include	"Client.hpp"
+
+#define BACKLOG 128
 
 class Server {
 	public:
@@ -29,6 +27,7 @@ class Server {
 		~Server();
 		Server(const Server& x);
 		Server& 	operator=(const Server& x);
+		friend class Connection;
 
 private:	//setters
 		void		setport(const std::string& );
@@ -43,7 +42,10 @@ private:	//setters
 		void		setautoindex(const std::string& );
 		void		configurelocation(const std::string& );
 public:
-		void		setSocketFd(int socketFd);
+		void		startListening();
+		int			addConnection();
+		void		showclients(const fd_set& readfds, const fd_set& writefds);
+		std::vector<Client*> _connections;
 
 		//getters
 		size_t					getport() const;
@@ -75,7 +77,9 @@ private:
 					_auth_basic_realm,
 					_htpasswd_path,
 					_autoindex;
-		int			_fd, _socketFd;
+		int			_fd,
+					_socketFd;
+		struct sockaddr_in	addr;
 		std::vector<std::string> _indexes;
 		std::vector<Location> _locations;
 		std::map<std::string, std::string>	_loginfo;

@@ -4,6 +4,7 @@
 
 #include "libftGnl.hpp"
 #include <string>
+#include <sys/time.h>
 
 namespace ft {
 
@@ -17,6 +18,8 @@ namespace ft {
 	std::string inttostring(int n) {
 		std::string ss;
 
+		if (n == 0)
+			ss = "0";
 		while (n) {
 			char i = '0' + (n % 10);
 			n /= 10;
@@ -50,5 +53,13 @@ namespace ft {
 				return i;
 		}
 		return -1;
+	}
+	
+	time_t	getTime() {
+		struct timeval tv = {};
+		struct timezone tz = {};
+
+		gettimeofday(&tv, &tz);
+		return (tv.tv_usec);
 	}
 }

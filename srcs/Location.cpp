@@ -13,6 +13,7 @@
 #include "Location.hpp"
 #include <sys/stat.h>
 #include "libftGnl.hpp"
+#include <climits>
 
 Location::Location() : _maxBody(LONG_MAX), _default_cgi_path() {
 	this->_location_match = "";
@@ -85,7 +86,6 @@ void	Location::setroot(const std::string& in) {
 std::string					Location::getroot() const { return this->_root; }
 std::string					Location::getautoindex() const { return this->_autoindex; }
 std::string					Location::getlocationmatch() const { return this->_location_match; }
-std::vector<e_method>		Location::getallowmethods() const { return this->_allow_method; }
 std::vector<std::string>	Location::getindexes() const { return this->_indexes; }
 std::vector<std::string>	Location::getcgiallowedextensions() const { return this->_cgi_allowed_extensions; }
 std::string					Location::geterrorpage() const { return this->getroot() + '/' + this->_error_page; }
@@ -93,6 +93,15 @@ long unsigned int			Location::getmaxbody() const { return this->_maxBody; }
 std::string					Location::getindex() const { return this->_indexes[0]; }
 std::string					Location::getdefaultcgipath() const { return this->_default_cgi_path; }
 
+std::string					Location::getallowedmethods() const {
+	std::string ret("Allow:");
+	for (size_t i = 0; i < this->_allow_method.size(); ++i) {
+		if (i > 0)
+			ret += ',';
+		ret += " " + methodAsString(this->_allow_method[i]);
+	}
+	return (ret);
+}
 bool		Location::checkifMethodAllowed(const e_method& meth) const {
 	for (std::vector<e_method>::const_iterator it = this->_allow_method.begin(); it != this->_allow_method.end(); ++it)
 		if (*it == meth)
@@ -144,11 +153,7 @@ std::ostream&	operator<<(std::ostream& o, const Location& x) {
 	o	<< "Location block \"" << x.getlocationmatch() << "\":" << std::endl
 		<< "\troot folder: \"" << x.getroot() << "\"" << std::endl
 		<< "\tautoindex is: \"" << x.getautoindex() << "\"" << std::endl;
-	o	<< "\tallowed methods:";
-	meths = x.getallowmethods();
-	for (size_t i = 0; i < meths.size(); i++)
-		o << " \"" << methodAsString(meths[i]) << "\"";
-	o << std::endl;
+	o	<< '\t' << x.getallowedmethods() << std::endl;
 	o	<< "\tindexes:";
 	v = x.getindexes();
 	for (size_t i = 0; i < v.size(); i++)

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 project(webserv)
 
-add_subdirectory(test)
 add_subdirectory(libft)
 include_directories(includes srcs getnextline libft)
 set(CMAKE_CXX_STANDARD 98)
@@ -15,7 +14,6 @@ add_executable(webserv srcs/Base64.cpp
 		srcs/RequestParser.cpp
 		srcs/ResponseHandler.cpp
 		srcs/Server.cpp
-		srcs/Servermanager.cpp
 		srcs/split.cpp
 		srcs/utils.cpp
 		includes/Base64.hpp
@@ -27,8 +25,7 @@ add_executable(webserv srcs/Base64.cpp
 		includes/RequestParser.hpp
 		includes/ResponseHandler.hpp
 		includes/Server.hpp
-		includes/Servermanager.hpp
 		getnextline/get_next_line.cpp
-		getnextline/get_next_line.hpp includes/Enums.hpp srcs/Cgi.cpp srcs/Enums.cpp)
+		getnextline/get_next_line.hpp includes/Enums.hpp srcs/Cgi.cpp srcs/Enums.cpp srcs/Client.cpp includes/Client.hpp)
 
 target_link_libraries(webserv PUBLIC libft)

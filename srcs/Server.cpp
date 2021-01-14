@@ -10,27 +10,35 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
-#include "libftGnl.hpp"
+#include	"Base64.hpp"
+#include	"Server.hpp"
+#include	"libftGnl.hpp"
+#include	<cerrno>
+#include	<sys/stat.h>
+//# include <fcntl.h>
+//#include <zconf.h>
+//#include <sys/select.h>
+//#include <netinet/tcp.h>
 
 Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"),
 		_auth_basic_realm(), _htpasswd_path(),
-		_fd(), _socketFd() {
+		_fd(), _socketFd(), addr() {
 }
 
 Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
-		_socketFd() {
+		_socketFd(), addr() {
 	this->_fd = fd;
 }
 
 Server::~Server() {
+	close(_socketFd);
 }
 
-Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd() {
+Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd(), addr() {
 	*this = x;
 }
 
@@ -47,9 +55,11 @@ Server&	Server::operator=(const Server& x) {
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
+		this->addr = x.addr;
 		this->_auth_basic_realm = x._auth_basic_realm;
 		this->_htpasswd_path = x._htpasswd_path;
 		this->_loginfo = x._loginfo;
+		this->_connections = x._connections;
 	}
 	return *this;
 }
@@ -192,10 +202,6 @@ int Server::getSocketFd() const {
 	return _socketFd;
 }
 
-void Server::setSocketFd(int socketFd) {
-	_socketFd = socketFd;
-}
-
 void Server::setautoindex(const std::string& ai) {
 	this->_autoindex = ai;
 }
@@ -276,6 +282,64 @@ bool Server::isExtensionAllowed(const std::string& uri) const {
 	return (false);
 }
 
+void Server::startListening() {
+	bzero(&addr, sizeof(addr));
+
+	if ((_socketFd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	int x = 1;
+	if (setsockopt(_socketFd, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x)) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket options\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+	// Fill struct with info about port and ip
+	addr.sin_family = AF_INET; // ipv4
+	if (gethost() == "localhost") {
+		addr.sin_addr.s_addr = INADDR_ANY; // choose local ip for me
+	}
+	else {
+		addr.sin_addr.s_addr = inet_addr(gethost().c_str());
+	}
+	addr.sin_port = htons(getport());
+
+	// Associate the socket with a port and ip
+	for (int i = 0; i < 6; ++i) {
+		if ((bind(this->_socketFd, (struct sockaddr *) &addr, sizeof(addr))) == -1) {
+			std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
+			if (i == 5)
+				throw std::runtime_error(strerror(errno));
+		} else {
+			break;
+		}
+	}
+	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
+	if (listen(this->_socketFd, BACKLOG) == -1) {
+		std::cerr << _RED _BOLD "Error listening to server socket\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+
+	if (fcntl(this->_socketFd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cerr << _RED _BOLD "Error setting server socket to be nonblocking\n" _END;
+		throw std::runtime_error(strerror(errno));
+	}
+}
+
+int Server::addConnection() {
+	Client* newClient = new Client(this);
+	this->_connections.push_back(newClient);
+	return newClient->fd;
+}
+
+void Server::showclients(const fd_set& readfds, const fd_set& writefds) {
+	for (std::vector<Client*>::const_iterator it = this->_connections.begin(); it != this->_connections.end(); ++it) {
+		std::cerr << _CYAN " -- We have a client with fd " << (*it)->fd << " at " << (*it)->ipaddress << ".\n";
+		std::cerr << "It is " << (FD_ISSET((*it)->fd, &readfds) ? "" : "not") << " readable.\n";
+		std::cerr << "It is " << (FD_ISSET((*it)->fd, &writefds) ? "" : "not") << " writeable.\n";
+	}
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "Default root folder: " << x.getroot() << std::endl;
@@ -289,3 +353,4 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << std::endl;
 	return (o);
 }
+
