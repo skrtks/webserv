@@ -95,7 +95,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 	bool			redirect_status = false;
 	char*			args[3] = {&scriptpath[0], NULL, NULL};
 
-	std::string phpcgipath = request.server->matchlocation(OriginalUri).getphpcgipath();
+	std::string phpcgipath = request.server->matchlocation(OriginalUri)->getphpcgipath();
 	if (!phpcgipath.empty()) {
 		args[0] = ft_strdup(phpcgipath.c_str());
 		args[1] = ft_strdup(scriptpath.c_str());

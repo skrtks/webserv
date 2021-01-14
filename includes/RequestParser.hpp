@@ -18,6 +18,7 @@
 #include "Enums.hpp"
 
 class Server;
+class Location;
 struct request_s {
 	int									status_code;
 	e_method							method;
@@ -26,6 +27,7 @@ struct request_s {
 	std::pair<int, int>					version;
 	std::map<headerType, std::string>	headers;
 	Server*								server;
+	Location*							location;
 	std::string							body;
 	bool								transfer_buffer;
 	std::map<std::string, std::string>	env;

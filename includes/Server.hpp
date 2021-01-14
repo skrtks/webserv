@@ -13,7 +13,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include <vector>
+# include	<vector>
 # include	"Location.hpp"
 # include	"Client.hpp"
 
@@ -37,8 +37,6 @@ private:	//setters
 		void		setservername(const std::string& );
 		void		setmaxfilesize(const std::string& );
 		void		seterrorpage(const std::string& );
-		void		setauth_basic_realm(const std::string& );
-		void		sethtpasswdpath(const std::string& );
 		void		setautoindex(const std::string& );
 		void		configurelocation(const std::string& );
 public:
@@ -55,18 +53,15 @@ public:
 		std::string				getservername() const;
 		long int				getmaxfilesize() const;
 		std::string				geterrorpage() const;
-		std::string 			getauthbasicrealm() const;
-		std::string				gethtpasswdpath() const;
 		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&) const;
-		std::vector<Location> 	getlocations() const;
+		std::vector<Location*> 	getlocations() const;
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
 
-		Location	matchlocation(const std::string& uri) const;
+		Location*	matchlocation(const std::string& uri) const;
 		std::string	getfilepath(const std::string& uri) const;
 		void		setup(int fd);
-		bool		getmatch(const std::string& username, const std::string& passwd);
-		bool		isExtensionAllowed(const std::string& uri) const;
+
 private:
 		size_t		_port;
 		long int	_maxfilesize;
@@ -74,15 +69,12 @@ private:
 					_server_name,
 					_error_page,
 					_root,
-					_auth_basic_realm,
-					_htpasswd_path,
 					_autoindex;
 		int			_fd,
 					_socketFd;
 		struct sockaddr_in	addr;
 		std::vector<std::string> _indexes;
-		std::vector<Location> _locations;
-		std::map<std::string, std::string>	_loginfo;
+		std::vector<Location*> _locations;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Server& x);

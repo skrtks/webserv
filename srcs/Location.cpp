@@ -11,8 +11,9 @@
 /* ************************************************************************** */
 
 #include "Location.hpp"
-#include <sys/stat.h>
 #include "libftGnl.hpp"
+#include "Base64.hpp"
+#include <sys/stat.h>
 #include <climits>
 
 Location::Location() : _maxBody(LONG_MAX), _default_cgi_path() {
@@ -25,6 +26,7 @@ Location::Location(std::string& location_match) : _maxBody(LONG_MAX), _default_c
 }
 
 Location::~Location() {
+	_loginfo.clear();
 }
 
 Location::Location(const Location& x) : _maxBody(LONG_MAX) {
@@ -34,15 +36,18 @@ Location::Location(const Location& x) : _maxBody(LONG_MAX) {
 Location&	Location::operator=(const Location& x) {
 	if (this != &x) {
 		this->_root = x._root;
+		this->_location_match = x._location_match;
 		this->_autoindex = x._autoindex;
 		this->_allow_method = x._allow_method;
 		this->_indexes = x._indexes;
-		this->_cgi_allowed_extensions = x._cgi_allowed_extensions;
-		this->_location_match = x._location_match;
 		this->_error_page = x._error_page;
 		this->_maxBody = x._maxBody;
+		this->_cgi_allowed_extensions = x._cgi_allowed_extensions;
 		this->_default_cgi_path = x._default_cgi_path;
 		this->_php_cgi = x._php_cgi;
+		this->_auth_basic_realm = x._auth_basic_realm;
+		this->_htpasswd_path = x._htpasswd_path;
+		this->_loginfo = x._loginfo;
 	}
 	return *this;
 }
@@ -140,16 +145,19 @@ void	Location::setup(int fd) {
 	m["maxBody"] = &Location::setmaxbody;
 	m["default_cgi"] = &Location::setdefaultcgipath;
 	m["php-cgi"] = &Location::setphpcgipath;
+	m["auth_basic"] = &Location::setauth_basic_realm;
+	m["auth_basic_user_file"] = &Location::sethtpasswdpath;
 	std::string str;
 	
 	while (ft::get_next_line(fd, str) > 0) {
 		std::string key, value;
-		if (is_first_char(str) || str.empty()) // checks for comments or empty lines
+		if (str.empty() || is_first_char(str) || is_first_char(str, ';')) // checks for comments or empty lines
 			continue ;
 		if (is_first_char(str, '}')) // End of location block
 			break ;
 		get_key_value(str, key, value);
-//		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
+		if (!m.count(key))
+			std::cerr <<_RED _BOLD "Unable to parse key '" << key << "' in Location block " << this->getlocationmatch() << _END << std::endl;
 		(this->*(m.at(key)))(value);
 	}
 	if (this->_indexes.empty())
@@ -168,12 +176,57 @@ void	Location::addServerInfo(const std::string& root, const std::string& autoind
 		this->_error_page = errorpage;
 }
 
+void	Location::setauth_basic_realm(const std::string &realm) {
+	this->_auth_basic_realm = realm;
+}
+
+std::string	Location::getauthbasicrealm() const {
+	return this->_auth_basic_realm;
+}
+
+void	Location::sethtpasswdpath(const std::string &path) {
+	struct stat statstruct = {};
+	if (stat(path.c_str(), &statstruct) == -1)
+		return ;
+
+	this->_htpasswd_path = path;
+	int htpasswd_fd = open(this->_htpasswd_path.c_str(), O_RDONLY);
+	if (htpasswd_fd < 0)
+		return;
+	std::string line;
+	while (ft::get_next_line(htpasswd_fd, line)) {
+		std::string user, pass;
+		get_key_value(line, user, pass, ":");
+		this->_loginfo[user] = pass;
+	}
+}
+
+std::string	Location::gethtpasswdpath() const {
+	return this->_htpasswd_path;
+}
+
+bool Location::getmatch(const std::string& username, const std::string& passwd) {
+	std::map<std::string, std::string>::const_iterator it = this->_loginfo.find(username);
+
+	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
+}
+
+bool Location::isExtensionAllowed(const std::string& uri) const {
+	std::string extension = ft::getextension(uri);
+
+	for (std::vector<std::string>::const_iterator it = _cgi_allowed_extensions.begin(); it != _cgi_allowed_extensions.end(); ++it) {
+		if (extension == *it)
+			return (true);
+	}
+	return (false);
+}
+
 std::ostream&	operator<<(std::ostream& o, const Location& x) {
 	std::vector<std::string> v;
 	std::vector<e_method>	meths;
 	o	<< "Location block \"" << x.getlocationmatch() << "\":" << std::endl
-		<< "\troot folder: \"" << x.getroot() << "\"" << std::endl
-		<< "\tautoindex is: \"" << x.getautoindex() << "\"" << std::endl;
+		 << "\troot folder: \"" << x.getroot() << "\"" << std::endl
+		 << "\tautoindex is: \"" << x.getautoindex() << "\"" << std::endl;
 	o	<< '\t' << x.getallowedmethods() << std::endl;
 	o	<< "\tindexes:";
 	v = x.getindexes();

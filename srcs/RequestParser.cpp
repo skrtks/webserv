@@ -106,8 +106,6 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 		request.uri = _uri.substr(0, n);
 		if (n != std::string::npos)
 			request.cgiparams = _uri.substr(_uri.find('?'));
-//		std::cerr << "cgiparams is " << request.cgiparams << std::endl;
-//		std::cerr << "new uri  is " << request.uri << std::endl;
 		request.env = _env;
 	}
 	return (request);
@@ -343,11 +341,11 @@ void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::st
 		this->_env[insert] = value;
 }
 
-request_s::request_s() : status_code(), uri(), cgiparams(), server(), transfer_buffer() {
+request_s::request_s() : status_code(), uri(), cgiparams(), server(), location(), transfer_buffer() {
 
 }
 
-request_s::request_s(const request_s &x) : status_code(), server(), transfer_buffer() {
+request_s::request_s(const request_s &x) : status_code(), server(), location(), transfer_buffer() {
 	*this = x;
 }
 
@@ -360,6 +358,7 @@ request_s &request_s::operator=(const request_s &x) {
 		version = x.version;
 		headers = x.headers;
 		server = x.server;
+		location = x.location;
 		body = x.body;
 		transfer_buffer = x.transfer_buffer;
 		env = x.env;
@@ -371,6 +370,8 @@ request_s::~request_s() {
 	this->headers.clear();
 	this->body.clear();
 	this->env.clear();
+	this->server = NULL;
+	this->location = NULL;
 }
 
 std::string request_s::MethodToSTring() const {
@@ -395,6 +396,7 @@ void request_s::clear() {
 	this->cgiparams.clear();
 	this->headers.clear();
 	this->server = NULL;
+	this->location = NULL;
 	this->body.clear();
 	this->transfer_buffer = false;
 	this->env.clear();

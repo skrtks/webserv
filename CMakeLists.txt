@@ -6,8 +6,12 @@ include_directories(includes srcs getnextline libft)
 set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra")
 
-add_executable(webserv srcs/Base64.cpp
+add_executable(webserv
+		srcs/Base64.cpp
+		srcs/Cgi.cpp
+		srcs/Client.cpp
 		srcs/Connection.cpp
+		srcs/Enums.cpp
 		srcs/Location.cpp
 		srcs/main.cpp
 		srcs/parser.cpp
@@ -17,15 +21,17 @@ add_executable(webserv srcs/Base64.cpp
 		srcs/split.cpp
 		srcs/utils.cpp
 		includes/Base64.hpp
+		includes/Client.hpp
 		includes/Cgi.hpp
 		includes/Colours.hpp
 		includes/Connection.hpp
+		includes/Enums.hpp
 		includes/libftGnl.hpp
 		includes/Location.hpp
 		includes/RequestParser.hpp
 		includes/ResponseHandler.hpp
 		includes/Server.hpp
 		getnextline/get_next_line.cpp
-		getnextline/get_next_line.hpp includes/Enums.hpp srcs/Cgi.cpp srcs/Enums.cpp srcs/Client.cpp includes/Client.hpp)
+		getnextline/get_next_line.hpp )
 
 target_link_libraries(webserv PUBLIC libft)
