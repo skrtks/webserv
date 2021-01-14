@@ -138,9 +138,7 @@ void Connection::stopServer() {
 	std::vector<Server*>::iterator	sit;
 	std::vector<Client*>::iterator	cit;
 	for (sit = _servers.begin(); sit != _servers.end(); ++sit) {
-		close((*sit)->getSocketFd());
 		for (cit = (*sit)->_connections.begin(); cit != (*sit)->_connections.end(); ++cit) {
-			close((*cit)->fd);
 			delete *cit;
 		}
 		(*sit)->_connections.clear();
@@ -154,7 +152,7 @@ void Connection::stopServer() {
 	FD_ZERO(&_writeFds);
 	FD_ZERO(&_readFdsBak);
 	FD_ZERO(&_writeFdsBak);
-	std::cerr << _GREEN "\nServer stopped gracefully.\n" << _END;
+	std::cerr << _GREEN "Server stopped gracefully.\n" << _END;
 }
 
 void Connection::loadConfiguration() {
