@@ -112,9 +112,11 @@ int ResponseHandler::generatePage(request_s& request) {
 	struct stat statstruct = {};
 
 	if (request.server->isExtensionAllowed(request.uri)) {
+		std::cerr << "extension is allowed, pog\n";
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
 			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
+			this->_cgi_status_code = 200;
 		}
 		else {
 			std::string tmpuri = '/' + request.server->matchlocation(request.uri).getroot();
@@ -126,6 +128,7 @@ int ResponseHandler::generatePage(request_s& request) {
 			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
 			if (stat(scriptpath.c_str(), &statstruct) == -1) {
 				std::string defaultcgipath = request.server->matchlocation(request.uri).getdefaultcgipath();
+				std::cerr << "defaultcgipath is " << defaultcgipath << ", location is " << request.server->matchlocation(request.uri).getlocationmatch() << std::endl;
 				if (defaultcgipath.empty()) {
 					fd = -2;
 				}
@@ -138,7 +141,9 @@ int ResponseHandler::generatePage(request_s& request) {
 				std::string	OriginalUri(request.uri);
 				request.uri = tmpuri;
 				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
+				std::cerr << "running cgi with uri is " << request.uri << ", OGUri is " << OriginalUri << std::endl;
 				fd = this->CGI.run_cgi(request, scriptpath, OriginalUri);
+				this->_cgi_status_code = 200;
 			}
 		}
 	}
@@ -197,7 +202,7 @@ void ResponseHandler::handleBody(request_s& request) {
 		exit(EXIT_FAILURE);
 	}
 	size_t pos = _body.find("\r\n\r\n");
-	if (request.method == POST) {
+	if (this->_cgi_status_code == 200) {
 		this->extractCGIheaders(_body.substr(0, pos + 4));
 		if (pos != std::string::npos)
 			_body.erase(0, pos + 4);
