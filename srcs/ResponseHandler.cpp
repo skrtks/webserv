@@ -148,9 +148,9 @@ int ResponseHandler::generatePage(request_s& request) {
 	}
 	else {
 		if (this->_autoindex)
-			fd = request.server.getpage(request.uri, _header_vals, _status_code, true);
+			fd = request.server->getpage(request.uri, _header_vals, _status_code, true);
 		else
-			fd = request.server.getpage(request.uri, _header_vals, _status_code, false);
+			fd = request.server->getpage(request.uri, _header_vals, _status_code, false);
 	}
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error TODO should this be changed?
@@ -181,7 +181,7 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 }
 
 void ResponseHandler::handle404(request_s& request) {
-	int 	fd = open(request.server.geterrorpage().c_str(), O_RDONLY);
+	int 	fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
 	int		ret = 1024;
 	char	buf[1024];
 	_status_code = 404;
@@ -219,13 +219,13 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 		path += "/";
 	}
 
-	path += request.server.getfilepath(request.uri);
+	path += request.server->getfilepath(request.uri);
 	if ((dir = opendir(path.c_str())) == NULL) {
 		handle404(request);
 		return ;
 	}
-	ss << request.server.getport();
-	url += request.server.gethost() + ":" + ss.str();
+	ss << request.server->getport();
+	url += request.server->gethost() + ":" + ss.str();
 	s = s.substr(0, ft::findNthOccur(s, '/', 2) + 1);
 
 	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + s + "\">../</a><br>";
@@ -346,14 +346,14 @@ void ResponseHandler::generateResponse(request_s& request) {
 	request.status_code = 200;
 	_response = "HTTP/1.1 ";
 
-	std::vector<Location> v = request.server.getlocations();
+	std::vector<Location> v = request.server->getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
 		if (v[i].getautoindex() == "on") {
 			this->_autoindex = true;
 			this->_autoindex_root = v[i].getroot();
 		}
 	}
-	if (!request.server.matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
 	}
