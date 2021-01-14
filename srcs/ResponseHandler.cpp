@@ -111,7 +111,7 @@ int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
 
-	if (request.server->isExtensionAllowed(request.uri)) {
+	if (request.location->isExtensionAllowed(request.uri)) {
 		std::cerr << "extension is allowed, pog\n";
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
@@ -279,7 +279,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 }
 
 int ResponseHandler::authenticate(request_s& request) {
-	if (request.server->gethtpasswdpath().empty()) {
+	if (request.location->gethtpasswdpath().empty()) {
 		request.headers[AUTHORIZATION].clear();
 		return 0;
 	}
@@ -296,7 +296,7 @@ int ResponseHandler::authenticate(request_s& request) {
 	}
 	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
 	request.headers[REMOTE_USER] = username;
-	if (request.server->getmatch(username, passwd)) {
+	if (request.location->getmatch(username, passwd)) {
 		std::cout << _GREEN "Authorization successful!" _END << std::endl;
 		return 0;
 	}
@@ -307,7 +307,7 @@ int ResponseHandler::authenticate(request_s& request) {
 	this->_response +=	"Server: Webserv/0.1\r\n"
 					  	"Content-Type: text/html\r\n"
 	   					"WWW-Authenticate: Basic realm=";
-	this->_response += request.server->getauthbasicrealm();
+	this->_response += request.location->getauthbasicrealm();
 	this->_response += ", charset=\"UTF-8\"\r\n";
 	return 1;
 }
