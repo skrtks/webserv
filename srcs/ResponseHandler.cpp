@@ -181,6 +181,9 @@ void ResponseHandler::handleBody(request_s& request) {
 	if (request.status_code == 400) {
 		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
 	}
+	else if (this->_status_code == 405) {
+		fd = open("htmlfiles/405.html", O_RDONLY);
+	}
 	else {
 		fd = generatePage(request);
 	}
