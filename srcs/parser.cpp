@@ -33,15 +33,15 @@ void	get_key_value(std::string &str, std::string &key, std::string& value, const
 	value = str.substr(vbegin, vend - vbegin);
 }
 
-Servermanager	parse(char *av) {
-	Servermanager	skrtks;
+std::vector<Server*>	parse(char *av) {
+	std::vector<Server*>	skrtks;
 	std::string		str;
 	struct stat statstruct = {};
 	int fd;
 	if (av && stat(av, &statstruct) != -1)
 		fd = open(av, O_RDONLY);
 	else
-		fd = open("configfiles/42test.conf", O_RDONLY);
+		fd = open("configfiles/default.conf", O_RDONLY);
 	if (fd < 0)
 		return skrtks;
 	
@@ -49,10 +49,10 @@ Servermanager	parse(char *av) {
 		if (is_first_char(str) || str.empty())
 			continue ;
 		try {
-			Server	tmp;
+			Server*	tmp = new Server();
 			if (!str.empty() && str.compare(str.find_first_not_of(" \t\n"), ft_strlen("server {"), "server {") == 0) {
-				tmp.setup(fd);
-				skrtks += tmp;
+				tmp->setup(fd);
+				skrtks.push_back(tmp);
 			}
 		}
 		catch (std::exception& e) {

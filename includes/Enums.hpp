@@ -35,7 +35,8 @@ enum e_method {
 	GET, // These are mandatory according to rfc's
 	HEAD, // These are mandatory according to rfc's
 	POST,
-	PUT
+	PUT,
+	ERROR
 };
 
 std::string methodAsString(const e_method&);

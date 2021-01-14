@@ -12,7 +12,7 @@
 
 NAME = webserv
 FILES = main parser split utils Base64 Enums Cgi \
-		Server Servermanager Location Connection RequestParser ResponseHandler
+		Server Client Location Connection RequestParser ResponseHandler
 SRCS = $(addprefix srcs/, $(addsuffix .cpp, $(FILES)))
 OBJS = $(SRCS:.cpp=.o)
 INCLUDE = -Iincludes
