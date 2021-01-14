@@ -69,7 +69,6 @@ void Cgi::map_to_env(request_s& request) {
 
 	for (std::map<std::string, std::string>::const_iterator it = _m.begin(); it != _m.end(); it++) {
 		std::string tmp = it->first + "=" + it->second;
-		std::cerr << _YELLOW "\t" << tmp << _END << std::endl;
 		this->_env[i] = ft_strdup(tmp.c_str());
 		if (!this->_env[i])
 			exit_fatal();
@@ -85,8 +84,6 @@ void	Cgi::clear_env() {
 	free(_env);
 	_env = NULL;
 }
-
-#include <sys/stat.h>
 
 int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string& OriginalUri) {
 	int				incoming_file,
