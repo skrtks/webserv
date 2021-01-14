@@ -23,7 +23,6 @@ class ResponseHandler {
 	std::map<int, std::string>			_status_codes;
 	std::string							_response;
 	std::string							_body;
-	int									_status_code;
 	Cgi									CGI;
 public:
 	friend class Connection;
