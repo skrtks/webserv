@@ -20,7 +20,6 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
-#include <dirent.h>
 #include "Colours.hpp"
 
 std::string getCurrentDatetime() {
@@ -35,7 +34,6 @@ std::string getCurrentDatetime() {
 }
 
 ResponseHandler::ResponseHandler() : _cgi_status_code() {
-	this->_status_code = 200;
 	_header_vals[ACCEPT_CHARSET].clear();
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
@@ -92,7 +90,7 @@ ResponseHandler::~ResponseHandler() {
 	this->_body.clear();
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code(), _status_code() {
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code() {
 	*this = src;
 }
 
@@ -104,7 +102,6 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 		this->_status_codes = rhs._status_codes;
 		this->_response	= rhs._response;
 		this->_body = rhs._body;
-		this->_status_code = rhs._status_code;
 		this->CGI = rhs.CGI;
 	}
 	return *this;
@@ -146,12 +143,12 @@ int ResponseHandler::generatePage(request_s& request) {
 		}
 	}
 	else
-		fd = request.server->getpage(request.uri, _header_vals, _status_code);
+		fd = request.server->getpage(request.uri, _header_vals, request.status_code);
 	if (fd == -1)
 		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error TODO should this be changed?
 	if (fd == -2) {
 		fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
-		_status_code = 404;
+		request.status_code = 404;
 	}
 	return (fd);
 }
@@ -223,7 +220,8 @@ void ResponseHandler::handlePut(request_s& request) {
 	std::string filePath = request.server->getfilepath(request.uri);
 
 	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
-		_status_code = 405;
+		request.status_code = 405;
+		handleBody(request);
 		_body.clear();
 	}
 	else {
@@ -245,11 +243,11 @@ void ResponseHandler::handlePut(request_s& request) {
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
-	this->_status_code = 200;
+	request.status_code = 200;
 	_response = "HTTP/1.1 ";
 
 	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
-		_status_code = 405;
+		request.status_code = 405;
 		_body.clear();
 	}
 	if (this->authenticate(request))
@@ -258,7 +256,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 		request.status_code = 413;
 	}
 	if (request.status_code)
-		this->_status_code = request.status_code;
+		request.status_code = request.status_code;
 
 	handleBody(request);
 	handleStatusCode(request);
@@ -301,7 +299,7 @@ int ResponseHandler::authenticate(request_s& request) {
 	}
 
 	std::cout << _RED "Authorization failed!" _END << std::endl;
-	this->_status_code = 401;
+	request.status_code = 401;
 	_response += "401 Unauthorized\r\n";
 	this->_response +=	"Server: Webserv/0.1\r\n"
 					  	"Content-Type: text/html\r\n"
@@ -312,11 +310,11 @@ int ResponseHandler::authenticate(request_s& request) {
 }
 
 void	ResponseHandler::handleStatusCode(request_s& request) {
-	if (this->_status_code == 200 && _cgi_status_code)
-		_status_code = _cgi_status_code;
-	if (request.version.first != 1 && _status_code == 200)
-		_status_code = 505;
-	_response += _status_codes[_status_code];
+	if (request.status_code == 200 && _cgi_status_code)
+		request.status_code = _cgi_status_code;
+	if (request.version.first != 1 && request.status_code == 200)
+		request.status_code = 505;
+	_response += _status_codes[request.status_code];
 }
 
 void ResponseHandler::handleALLOW(request_s& request) {
