@@ -341,11 +341,11 @@ void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::st
 		this->_env[insert] = value;
 }
 
-request_s::request_s() : status_code(), uri(), cgiparams(), server(), transfer_buffer() {
+request_s::request_s() : status_code(), uri(), cgiparams(), server(), location(), transfer_buffer() {
 
 }
 
-request_s::request_s(const request_s &x) : status_code(), server(), transfer_buffer() {
+request_s::request_s(const request_s &x) : status_code(), server(), location(), transfer_buffer() {
 	*this = x;
 }
 
