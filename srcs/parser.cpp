@@ -6,7 +6,7 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:36:33 by peerdb        #+#    #+#                 */
-/*   Updated: 2020/11/10 12:09:25 by peerdb        ########   odam.nl         */
+/*   Updated: 2021/01/14 16:47:44 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ std::vector<Server*>	parse(char *av) {
 	if (av && stat(av, &statstruct) != -1)
 		fd = open(av, O_RDONLY);
 	else
-		fd = open("configfiles/default.conf", O_RDONLY);
+		fd = open("configfiles/42test.conf", O_RDONLY);
 	if (fd < 0)
 		return skrtks;
 	

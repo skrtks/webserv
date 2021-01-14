@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 14:50:52 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2020/10/15 18:23:06 by pde-bakk      ########   odam.nl         */
+/*   Updated: 2021/01/14 16:36:40 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,6 @@ void	Location::setup(int fd) {
 		if (is_first_char(str, '}')) // End of location block
 			break ;
 		get_key_value(str, key, value);
-//		 std::cout << "key = " << key << ", value = " << value << "$" << std::endl;
 		(this->*(m.at(key)))(value);
 	}
 	if (this->_indexes.empty())

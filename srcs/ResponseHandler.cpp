@@ -209,6 +209,7 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 	std::string					months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	std::string 				url = "http://";
 	std::string					s;
+	bool						valid_root = false;
 
 	if (request.uri[request.uri.length() - 1] != '/')
 		request.uri += "/";
@@ -221,7 +222,17 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 	}
 
 	path += request.server->getfilepath(request.uri);
-	if ((dir = opendir(path.c_str())) == NULL) {
+	if (path.find("global") != std::string::npos) {
+		valid_root = true;
+	}
+	else
+	{
+		for (std::vector<std::string>::iterator it = this->_autoindex_root.begin(); it != this->_autoindex_root.end(); it++) {
+			if (path.find(*it) != std::string::npos)
+				valid_root = true;
+		}
+	}
+	if (valid_root == false || (dir = opendir(path.c_str())) == NULL) {
 		handle404(request);
 		return ;
 	}
@@ -307,6 +318,7 @@ void ResponseHandler::handleBody(request_s& request) {
 }
 std::string& ResponseHandler::handleRequest(request_s& request) {
 	this->_response.clear();
+	
 	if (request.method == PUT) {
 		handlePut(request);
 	}
@@ -347,14 +359,21 @@ void ResponseHandler::generateResponse(request_s& request) {
 	request.status_code = 200;
 	_response = "HTTP/1.1 ";
 
-	std::vector<Location> v = request.server->getlocations();
-	for (size_t i = 0; i < v.size(); i++) {
-		if (v[i].getautoindex() == "on") {
-			this->_autoindex = true;
-			this->_autoindex_root = v[i].getroot();
+	if (request.server->getautoindex() == "on") {
+		this->_autoindex = true;
+		this->_autoindex_root.push_back("global");
+	}
+	else
+	{
+		std::vector<Location> v = request.server->getlocations();
+		for (size_t i = 0; i < v.size(); i++) {
+			if (v[i].getautoindex() == "on") {
+				this->_autoindex = true;
+				this->_autoindex_root.push_back(v[i].getroot());
+			}
 		}
 	}
-	std::cout << this->_autoindex << std::endl;
+	
 	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
