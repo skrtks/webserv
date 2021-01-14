@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include	"Base64.hpp"
 #include	"Server.hpp"
 #include	"libftGnl.hpp"
 #include	<cerrno>
@@ -19,13 +18,12 @@
 Server::Server() : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
 		_root("htmlfiles"),
-		_auth_basic_realm(), _htpasswd_path(),
 		_fd(), _socketFd(), addr() {
 }
 
 Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 		_host("0.0.0.0"), _error_page("error.html"),
-		_root("htmlfiles"), _auth_basic_realm(), _htpasswd_path(),
+		_root("htmlfiles"),
 		_socketFd(), addr() {
 	this->_fd = fd;
 }
@@ -34,11 +32,9 @@ Server::~Server() {
 	close(_socketFd);
 	for (std::vector<Location*>::iterator it = _locations.begin(); it != _locations.end(); it++) {
 		delete *it;
-		it = _locations.erase(it);
 	}
 	_locations.clear();
 	_indexes.clear();
-	_loginfo.clear();
 }
 
 Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd(), addr() {
@@ -54,14 +50,10 @@ Server&	Server::operator=(const Server& x) {
 		this->_error_page = x._error_page;
 		this->_indexes = x._indexes;
 		this->_root = x._root;
-		this->_auth_basic_realm = x._auth_basic_realm;
-		this->_htpasswd_path = x._htpasswd_path;
 		this->_locations = x._locations;
 		this->_socketFd = x._socketFd;
 		this->addr = x.addr;
-		this->_auth_basic_realm = x._auth_basic_realm;
-		this->_htpasswd_path = x._htpasswd_path;
-		this->_loginfo = x._loginfo;
+
 		this->_connections = x._connections;
 	}
 	return *this;
@@ -132,34 +124,6 @@ void	Server::seterrorpage(const std::string& errorpage) {
 	this->_error_page = errorpage;
 }
 
-void	Server::setauth_basic_realm(const std::string &realm) {
-	this->_auth_basic_realm = realm;
-}
-
-std::string	Server::getauthbasicrealm() const {
-	return this->_auth_basic_realm;
-}
-
-void	Server::sethtpasswdpath(const std::string &path) {
-	struct stat statstruct = {};
-	if (stat(path.c_str(), &statstruct) == -1)
-		return ;
-
-	this->_htpasswd_path = path;
-	int htpasswd_fd = open(this->_htpasswd_path.c_str(), O_RDONLY);
-	if (htpasswd_fd < 0)
-		return;
-	std::string line;
-	while (ft::get_next_line(htpasswd_fd, line)) {
-		std::string user, pass;
-		get_key_value(line, user, pass, ":");
-		this->_loginfo[user] = pass;
-	}
-}
-
-std::string	Server::gethtpasswdpath() const {
-	return this->_htpasswd_path;
-}
 
 void	Server::configurelocation(const std::string& in) {
 	std::vector<std::string> v = ft::split(in, " \t\r\n\v\f");
@@ -180,8 +144,6 @@ void	Server::setup(int fd) {
 	m["autoindex"] = &Server::setautoindex;
 	m["index"] = &Server::setindexes;
 	m["root"] = &Server::setroot;
-	m["auth_basic"] = &Server::setauth_basic_realm;
-	m["auth_basic_user_file"] = &Server::sethtpasswdpath;
 	m["server_name"] = &Server::setservername;
 	m["max_filesize"] = &Server::setmaxfilesize;
 	m["error_page"] = &Server::seterrorpage;
@@ -190,7 +152,7 @@ void	Server::setup(int fd) {
 
 	while (ft::get_next_line(fd, str) > 0) {
 		std::string key, value;
-		if (is_first_char(str) || is_first_char(str, ';') || str.empty()) //checks for comment char #
+		if (str.empty() || is_first_char(str) || is_first_char(str, ';')) //checks for comment char #
 			continue ;
 		if (is_first_char(str, '}')) // End of server block
 			break ;
@@ -217,9 +179,9 @@ std::string Server::getautoindex() const {
 
 Location* Server::matchlocation(const std::string &uri) const {
 	size_t		n;
-	Location*	out = NULL;
+	Location*	out = _locations.front();
 
-	for (std::vector<Location*>::const_iterator it = this->_locations.begin(); it != this->_locations.end(); ++it) {
+	for (std::vector<Location*>::const_iterator it = this->_locations.begin() + 1; it != this->_locations.end(); ++it) {
 		n = (*it)->getlocationmatch().length();
 		if ((*it)->getlocationmatch()[n - 1] == '/' && n > 1)
 			n -= 1;
@@ -264,23 +226,6 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 	}
  	headervals[CONTENT_LOCATION] = filepath;
 	return (fd);
-}
-
-bool Server::getmatch(const std::string& username, const std::string& passwd) {
-	std::map<std::string, std::string>::const_iterator it = this->_loginfo.find(username);
-
-	return ( it != _loginfo.end() && passwd == base64_decode(it->second) );
-}
-
-bool Server::isExtensionAllowed(const std::string& uri) const {
-	std::string extension = ft::getextension(uri);
-	std::vector<std::string> allowed_extensions = matchlocation(uri)->getcgiallowedextensions();
-
-	for (std::vector<std::string>::const_iterator it = allowed_extensions.begin(); it != allowed_extensions.end(); ++it) {
-		if (extension == *it)
-			return (true);
-	}
-	return (false);
 }
 
 void Server::startListening() {
@@ -349,7 +294,7 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << "client body limit: " << x.getmaxfilesize() << std::endl << std::endl;
 	std::vector<Location*> v = x.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
-		o << v[i];
+		o << *v[i];
 	}
 	o << std::endl;
 	return (o);
