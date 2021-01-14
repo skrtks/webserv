@@ -52,10 +52,6 @@ int Client::receiveRequest() {
 	}
 	if (!recvCheck or recvRet == 0) { // Not possible to read from the socket (done reading or socket closed)
 		this->open = false;
-//		if (recvRet == 0)
-//			std::cerr << this->fd << " closed, ip was " << this->ipaddress << std::endl;
-//		else if (!recvCheck)
-//			std::cerr << "recvCheck is false. " << (recvRet == -1 ? strerror(errno) : "") << std::endl;
 		return (0);
 	}
 	return (1);
