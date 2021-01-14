@@ -255,13 +255,14 @@ void ResponseHandler::generateResponse(request_s& request) {
 		request.status_code = 405;
 		_body.clear();
 	}
-	if (this->authenticate(request))
-		return;
-	if (request.body.length() > request.location->getmaxbody()) { // If body length is higher than location::maxBody
-		request.status_code = 413;
+	if (this->authenticate(request)) {
+		std::cout << _RED "Authorization failed!" _END << std::endl;
+	} else {
+		if (request.body.length() > request.location->getmaxbody()) // If body length is higher than location::maxBody
+			request.status_code = 413;
+		negotiateLanguage(request);
+		handleBody(request);
 	}
-
-	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
 	handleALLOW(request);
@@ -292,19 +293,18 @@ int ResponseHandler::authenticate(request_s& request) {
 		get_key_value(credentials, username, passwd, ":");
 	}
 	catch (std::exception& e) {
-		std::cerr << "No credentials provided by client" << std::endl;
+		std::cerr <<_RED _BOLD "No credentials provided by client" _END << std::endl;
 	}
 	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
 	request.headers[REMOTE_USER] = username;
 	if (request.location->getmatch(username, passwd)) {
-		std::cout << _GREEN "Authorization successful!" _END << std::endl;
+		std::cout << _GREEN _BOLD "Authorization successful!" _END << std::endl;
 		return 0;
 	}
 
-	std::cout << _RED "Authorization failed!" _END << std::endl;
 	request.status_code = 401;
 	_response += "401 Unauthorized\r\n";
-	this->_response +=	"Server: Webserv/0.1\r\n"
+	this->_response +=	"Server: Webserv/1.1\r\n"
 					  	"Content-Type: text/html\r\n"
 	   					"WWW-Authenticate: Basic realm=";
 	this->_response += request.location->getauthbasicrealm();
@@ -407,5 +407,27 @@ void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
 	if (request.headers.count(CONNECTION) == 1)
 		_header_vals[CONNECTION] = request.headers.at(CONNECTION);
 	_response += "Connection: " + _header_vals[CONNECTION] + "\r\n";
+}
+
+void ResponseHandler::negotiateLanguage(request_s& request) {
+	struct stat structstat = {};
+	std::string tmp, filepath = request.server->getfilepath(request.uri);
+
+	if (request.headers.count(ACCEPT_LANGUAGE) == 0 || stat(filepath.c_str(), &structstat) == -1)
+		return;
+	if (S_ISDIR(structstat.st_mode)) {
+		filepath = request.location->getroot();
+		if (filepath[filepath.length() - 1] != '/')
+			filepath += '/';
+		filepath += request.location->getindex();
+	}
+	std::vector<std::string>	vec = ft::split(request.headers.at(ACCEPT_LANGUAGE), " \t\r\v\n");
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++) {
+		ft::trimstring(*it, " \t");
+		tmp = filepath + '.' + (*it).substr(0, 2);
+		if (stat(tmp.c_str(), &structstat) == 0 && !S_ISDIR(structstat.st_mode)) {
+			request.uri = tmp.substr(tmp.find(request.location->getlocationmatch()));
+		}
+	}
 }
 

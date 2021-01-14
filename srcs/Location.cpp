@@ -108,9 +108,7 @@ std::string					Location::getindex() const {
 	struct stat statstruct = {};
 	for (size_t i = 0; i < this->_indexes.size(); i++) {
 		std::string check = this->_root + '/' + this->_indexes[i];
-		std::cerr << "check whether this index file exists: '" << check << "'\n";
 		if (stat(check.c_str(), &statstruct) != -1) {
-			std::cerr << "it does!\n";
 			return this->_indexes[i];
 		}
 	}
