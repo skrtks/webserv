@@ -204,7 +204,7 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 	struct dirent				*entry;
 	struct stat 				stats;
 	struct tm					dt;
-	std::stringstream 			ss;
+	std::string 				ss;
 	std::string 				path;
 	std::string					months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 	std::string 				url = "http://";
@@ -236,14 +236,13 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 		handle404(request);
 		return ;
 	}
-	ss << request.server->getport();
-	url += request.server->gethost() + ":" + ss.str();
+	url += request.server->gethost() + ":" + ft::inttostring(request.server->getport());
 	s = s.substr(0, ft::findNthOccur(s, '/', 2) + 1);
 
 	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + s + "\">../</a><br>";
 
 	while ((entry = readdir(dir)) != NULL) {
-		ss.str(std::string());
+		ss = "";
 		if (ft_strncmp(entry->d_name, ".", 1) != 0 && ft_strncmp(entry->d_name, "..", 2) != 0) {
 			if (url[url.length()-1] == '/')
 				url = url.substr(0, url.length()-1);
@@ -254,21 +253,21 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 			if (stat((path + entry->d_name).c_str(), &stats) == 0) {
 				dt = *(gmtime(&stats.st_ctime));
 				if (dt.tm_mday < 10)
-					ss << "0" << dt.tm_mday << "-";
+					ss += "0" + ft::inttostring(dt.tm_mday) + "-";
 				else
-					ss << dt.tm_mday << "-";
+					ss += ft::inttostring(dt.tm_mday) + "-";
 				
-				ss	<< months[dt.tm_mon] << "-"
-					<< dt.tm_year + 1900 << " "
-					<< dt.tm_hour << ":"
-					<< dt.tm_min << ":"
-					<< dt.tm_sec << "\t\t\t";
+				ss	+= months[dt.tm_mon] + "-"
+					+ ft::inttostring(dt.tm_year + 1900) + " "
+					+ ft::inttostring(dt.tm_hour) + ":"
+					+ ft::inttostring(dt.tm_min) + ":"
+					+ ft::inttostring(dt.tm_sec) + "\t\t\t";
 				
 				if (S_ISDIR(stats.st_mode))
-					ss << "-" << "<br>";
+					ss += std::string("-") + "<br>";
 				else
-					ss << stats.st_size << "<br>";
-				_body += ss.str();
+					ss += ft::inttostring(stats.st_size) + "<br>";
+				_body += ss;
 
 			}
 		}
