@@ -35,6 +35,7 @@ Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 }
 
 Server::~Server() {
+	close(_socketFd);
 }
 
 Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd(), addr() {

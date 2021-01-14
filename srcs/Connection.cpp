@@ -138,9 +138,7 @@ void Connection::stopServer() {
 	std::vector<Server*>::iterator	sit;
 	std::vector<Client*>::iterator	cit;
 	for (sit = _servers.begin(); sit != _servers.end(); ++sit) {
-		close((*sit)->getSocketFd());
 		for (cit = (*sit)->_connections.begin(); cit != (*sit)->_connections.end(); ++cit) {
-			close((*cit)->fd);
 			delete *cit;
 		}
 		(*sit)->_connections.clear();
