@@ -178,10 +178,7 @@ void ResponseHandler::handleBody(request_s& request) {
 	int totalreadsize = 0;
 
 	_body.clear();
-	if (request.status_code == 400) {
-		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
-	}
-	else if (this->_status_code == 405) {
+	if (request.status_code == 400 || this->_status_code == 405) {
 		fd = open(request.server.matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
 	}
 	else {
