@@ -37,6 +37,7 @@ private:		//setters
 		void	seterrorpage(const std::string& );
 		void	setmaxbody(const std::string& );
 		void	setdefaultcgipath(const std::string& );
+		void	setphpcgipath(const std::string& );
 		
 public:			//getters
 		std::string					getroot() const;
@@ -49,6 +50,7 @@ public:			//getters
 		std::string					geterrorpage() const;
 		std::string					getdefaultcgipath() const;
 		long unsigned int			getmaxbody() const;
+		std::string					getphpcgipath() const;
 		
 		void	setup(int );
 		bool	checkifMethodAllowed(const e_method& meth) const;
@@ -65,6 +67,7 @@ private:
 	std::vector<e_method>		_allow_method;
 	long unsigned int			_maxBody;
 	std::string					_default_cgi_path;
+	std::string					_php_cgi;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Location& x);
