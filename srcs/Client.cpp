@@ -6,6 +6,7 @@
 #include "Server.hpp"
 #include "libftGnl.hpp"
 #include <cerrno>
+
 int g_sigpipe;
 
 Client::Client(Server* S) : parent(S), fd(), port(), open(true), addr(), size(sizeof(addr)), lastRequest(0), parsedRequest() {
@@ -88,19 +89,19 @@ void Client::resetTimeout() {
 void Client::checkTimeout() {
 	if (this->lastRequest) {
 		time_t diff = ft::getTime() - this->lastRequest;
-//		std::cerr << "timediff is " << diff << std::endl;
 		if (diff > 10000000)
 			this->open = false;
 	}
 }
 
 void Client::reset(const std::string& connection) {
-	if (connection == "close" || !this->open) {
+	if (connection == "close") {
 		if (CONNECTION_LOGS)
 			std::cerr << "We ain't resetting, we're closing this client, baby" << std::endl;
 		this->open = false;
 		return;
-	}
+	} else if (!this->open)
+		return;
 	if (CONNECTION_LOGS)
 		std::cerr << "Resetting client!\n";
 	this->open = true;
