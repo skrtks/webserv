@@ -71,7 +71,7 @@ void Client::sendReply(const char* msg, request_s& request) const {
 		bytesSent += sendRet;
 		bytesToSend -= sendRet;
 	}
-	static int i = 0, post = 0;
+	static int i = 1, post = 1;
 	std::cerr << _PURPLE "sent response for request #" << i++ << " (" << methodAsString(request.method);
 	if (request.method == POST)
 		std::cerr << " #" << post++;

@@ -414,7 +414,6 @@ void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
 }
 
 void ResponseHandler::negotiateLanguage(request_s& request) {
-	std::cerr << "start\n";
 	struct stat structstat = {};
 	std::string tmp, filepath = request.server->getfilepath(request.uri);
 
@@ -432,7 +431,6 @@ void ResponseHandler::negotiateLanguage(request_s& request) {
 		tmp = filepath + '.' + (*it).substr(0, 2);
 		if (stat(tmp.c_str(), &structstat) == 0) {
 			request.uri = tmp.substr(tmp.find(request.location->getlocationmatch()));
-			std::cerr << _WHITE "request uri is now " << request.uri << std::endl << _END;
 		}
 	}
 }

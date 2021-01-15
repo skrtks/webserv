@@ -97,7 +97,6 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 
 	parseRequestLine();
 	parseHeaders();
-	std::cerr << "after paserHeaders, status code is " << _status_code << std::endl;
 	request.headers = _headers;
 	request.method = _method;
 	request.version = _version;
