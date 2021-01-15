@@ -109,7 +109,6 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
-//	std::string uri = request.uri.substr(1);
 	std::string filepath(request.location->getroot());
 	if (filepath[filepath.length() - 1] != '/')
 		filepath.append("/");
@@ -117,27 +116,22 @@ int ResponseHandler::generatePage(request_s& request) {
 		filepath.append(request.uri, request.uri.rfind('/') + 1);
 
 
-	bool validfile = stat(filepath.c_str(), &statstruct) == 0; //S_ISDIR(statstruct.st_mode);
-	std::cerr << "filepath is " << filepath << ", validfile is " << std::boolalpha << validfile << std::endl;
+	bool	validfile = stat(filepath.c_str(), &statstruct) == 0,
+			allowed_extension = request.location->isExtensionAllowed(filepath);
 
-	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || request.location->isExtensionAllowed(request.uri)) {
+	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || allowed_extension) {
 		if (validfile && !S_ISDIR(statstruct.st_mode)) {
 			fd = this->CGI.run_cgi(request, filepath, request.uri);
 			this->_cgi_status_code = 200;
 		}
 		else if (!request.location->getdefaultcgipath().empty()) {
 			std::string defaultcgipath = request.location->getdefaultcgipath();
-			std::cerr << _BLUE "default cgi path is '" << defaultcgipath << "'\n" _END;
 			fd = this->CGI.run_cgi(request, defaultcgipath, request.uri);
 			this->_cgi_status_code = 200;
 		}
 	}
-	else if (request.method == POST || (validfile && request.method == GET && request.location->isExtensionAllowed(request.uri))) {
-		if (validfile) {
-			fd = this->CGI.run_cgi(request, filepath, request.uri);
-		}
-		else if (request.method == POST)
-			handlePut(request);
+	else if (request.method == POST) {
+		handlePut(request);
 	} else {
 		fd = request.server->getpage(request.uri, _header_vals);
 		if (fd == -1)
@@ -156,7 +150,6 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 		get_key_value(*it, key, value, ":");
 		ft::stringtoupper(key);
 		ft::trimstring(value);
-		std::cerr << _YELLOW <<  key << ":" << value << std::endl << _END;
 		std::map<std::string, headerType>::iterator header = TMP._headerMap.find(key);
 		if (header != TMP._headerMap.end()) {
 			_cgi_headers[header->second] = value;
@@ -181,7 +174,7 @@ void ResponseHandler::handleBody(request_s& request) {
 			fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
 	}
 	if (fd < 0) {
-		_body = "Why are you here?\n";
+		_body = "Why are you here? Something obviously went wrong.\n";
 		return;
 	}
 	while (ret == 1024) {
