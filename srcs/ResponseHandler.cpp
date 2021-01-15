@@ -123,8 +123,6 @@ int ResponseHandler::generatePage(request_s& request) {
 	bool	validfile = stat(filepath.c_str(), &statstruct) == 0,
 			allowed_extension = request.location->isExtensionAllowed(filepath);
 
-	std::cerr << "validfile is " << validfile << ", allowed extension is " << allowed_extension << ", defaultcgi path is " << request.location->getdefaultcgipath() << std::endl;
-
 	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || allowed_extension || (request.method == POST && !request.location->getdefaultcgipath().empty())) {
 		if (validfile && !S_ISDIR(statstruct.st_mode)) {
 			fd = this->CGI.run_cgi(request, filepath, request.uri);

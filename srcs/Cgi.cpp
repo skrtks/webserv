@@ -129,10 +129,7 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 	waitpid(0, &status, 0);
 	if (WIFEXITED(status))
 		status = WEXITSTATUS(status);
-	std::cerr << "CGI exit status is " << status << std::endl;
 	request.cgi_ran = true;
-//	if (status == 1)
-//		return (-1);
 	if ((outgoing_file = open("/tmp/webservout.txt", O_RDONLY, S_IRWXU)) == -1)
 		exit_fatal();
 	if (!phpcgipath.empty()) {
