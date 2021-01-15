@@ -83,7 +83,8 @@ void Connection::startListening() {
 				if (FD_ISSET(c->fd, &_readFds)) {
 					if (c->receiveRequest() == 1 && checkIfEnded(c->req)) {
 						FD_SET(c->fd, &_writeFdsBak);
-					}
+						std::cerr << _BLUE "request ended!\n" _END;
+					} else std::cerr << _CYAN "request not done yet\n";
 				}
 				if (FD_ISSET(c->fd, &_writeFds)) {
 					RequestParser					requestParser;

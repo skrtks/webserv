@@ -54,6 +54,9 @@ int Client::receiveRequest() {
 		this->open = false;
 		return (0);
 	}
+	std::cerr << _RED "recvRet is " << recvRet << std::endl << _END;
+	if (recvRet == -1)
+		std::cerr << _RED _BOLD << strerror(errno) << std::endl << _END;
 	return (1);
 }
 
