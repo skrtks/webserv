@@ -77,8 +77,7 @@ void	Location::seterrorpage(const std::string& in) { this->_error_page = in; }
 void	Location::setmaxbody(const std::string& in) { this->_maxBody = ft_atoi(in.c_str()); }
 void	Location::setdefaultcgipath(const std::string& in) {
 	struct stat statstruct = {};
-	std::string	filepath = this->_root + '/' + in;
-	if (stat(filepath.c_str(), &statstruct) != -1)
+	if (stat(in.c_str(), &statstruct) != -1)
 		this->_default_cgi_path = in;
 }
 void	Location::setroot(const std::string& in) {
@@ -126,9 +125,10 @@ std::string					Location::getallowedmethods() const {
 	return (ret);
 }
 bool		Location::checkifMethodAllowed(const e_method& meth) const {
-	for (std::vector<e_method>::const_iterator it = this->_allow_method.begin(); it != this->_allow_method.end(); ++it)
+	for (std::vector<e_method>::const_iterator it = this->_allow_method.begin(); it != this->_allow_method.end(); ++it) {
 		if (*it == meth)
 			return true;
+	}
 	return false;
 }
 
