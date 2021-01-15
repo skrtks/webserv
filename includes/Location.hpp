@@ -37,7 +37,11 @@ private:		//setters
 		void	seterrorpage(const std::string& );
 		void	setmaxbody(const std::string& );
 		void	setdefaultcgipath(const std::string& );
-		
+		void	setphpcgipath(const std::string& );
+		void		setauth_basic_realm(const std::string& );
+		void		sethtpasswdpath(const std::string& );
+
+
 public:			//getters
 		std::string					getroot() const;
 		std::string					getautoindex() const;
@@ -49,22 +53,33 @@ public:			//getters
 		std::string					geterrorpage() const;
 		std::string					getdefaultcgipath() const;
 		long unsigned int			getmaxbody() const;
-		
+		std::string					getphpcgipath() const;
+		std::string 				getauthbasicrealm() const;
+		std::string					gethtpasswdpath() const;
+
+
 		void	setup(int );
 		bool	checkifMethodAllowed(const e_method& meth) const;
 		void	addServerInfo(const std::string& root, const std::string& autoindex,
 					 const std::vector<std::string>& indexes, const std::string& errorpage);
 
+	bool		getmatch(const std::string& username, const std::string& passwd);
+	bool		isExtensionAllowed(const std::string& uri) const;
+
 private:
 	std::string					_root,
 								_autoindex,
 								_location_match,
-								_error_page;
+								_error_page,
+								_auth_basic_realm,
+								_htpasswd_path;
 	std::vector<std::string>	_indexes,
 								_cgi_allowed_extensions;
 	std::vector<e_method>		_allow_method;
 	long unsigned int			_maxBody;
 	std::string					_default_cgi_path;
+	std::string					_php_cgi;
+	std::map<std::string, std::string>	_loginfo;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Location& x);

@@ -81,8 +81,9 @@ void Connection::startListening() {
 			while (itc != s->_connections.end()) {
 				Client* c = *itc;
 				if (FD_ISSET(c->fd, &_readFds)) {
-					if (c->receiveRequest() == 1 && checkIfEnded(c->req))
+					if (c->receiveRequest() == 1 && checkIfEnded(c->req)) {
 						FD_SET(c->fd, &_writeFdsBak);
+					}
 				}
 				if (FD_ISSET(c->fd, &_writeFds)) {
 					RequestParser					requestParser;
@@ -91,10 +92,11 @@ void Connection::startListening() {
 
 					c->parsedRequest = requestParser.parseRequest(c->req);
 					c->parsedRequest.server = c->parent;
+					c->parsedRequest.location = c->parent->matchlocation(c->parsedRequest.uri);
 					if (requestParser._status_code != 400) {
 						response = responseHandler.handleRequest(c->parsedRequest);
 						c->sendReply(response.c_str(), c->parsedRequest);
-					}
+					} else std::cerr << "requestparser status code is " << requestParser._status_code << ", so we aint handling it!" << std::endl;
 					response.clear();
 					c->reset(responseHandler._header_vals[CONNECTION]);
 					FD_CLR(c->fd, &_writeFdsBak);

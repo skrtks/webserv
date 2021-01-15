@@ -18,7 +18,7 @@ public:
 	int		run_cgi(request_s&, std::string& scriptpath, const std::string& OriginalUri);
 
 private:
-	void	populate_map(request_s&, const std::string&);
+	void	populate_map(request_s&, const std::string&, bool redirect_status);
 	void map_to_env(request_s& request);
 	void	clear_env();
 

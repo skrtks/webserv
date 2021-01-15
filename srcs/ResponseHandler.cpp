@@ -116,13 +116,15 @@ int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
 
-	if (request.server->isExtensionAllowed(request.uri)) {
+	if (request.location->isExtensionAllowed(request.uri)) {
+		std::cerr << "extension is allowed, pog\n";
 		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
 		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
 			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
+			this->_cgi_status_code = 200;
 		}
 		else {
-			std::string tmpuri = '/' + request.server->matchlocation(request.uri).getroot();
+			std::string tmpuri = '/' + request.location->getroot();
 			size_t second_slash_index = request.uri.find_first_of('/', 1);
 			if (second_slash_index == std::string::npos)
 				tmpuri += request.uri;
@@ -130,7 +132,8 @@ int ResponseHandler::generatePage(request_s& request) {
 				tmpuri += request.uri.substr(second_slash_index);
 			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
 			if (stat(scriptpath.c_str(), &statstruct) == -1) {
-				std::string defaultcgipath = request.server->matchlocation(request.uri).getdefaultcgipath();
+				std::string defaultcgipath = request.location->getdefaultcgipath();
+				std::cerr << "defaultcgipath is " << defaultcgipath << ", location is " << request.location->getlocationmatch() << std::endl;
 				if (defaultcgipath.empty()) {
 					fd = -2;
 				}
@@ -143,7 +146,9 @@ int ResponseHandler::generatePage(request_s& request) {
 				std::string	OriginalUri(request.uri);
 				request.uri = tmpuri;
 				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
+				std::cerr << "running cgi with uri is " << request.uri << ", OGUri is " << OriginalUri << std::endl;
 				fd = this->CGI.run_cgi(request, scriptpath, OriginalUri);
+				this->_cgi_status_code = 200;
 			}
 		}
 	}
@@ -285,7 +290,7 @@ void ResponseHandler::handleBody(request_s& request) {
 	
 	_body.clear();
 	if (request.status_code == 400) {
-		fd = open(request.server->matchlocation(request.uri).geterrorpage().c_str(), O_RDONLY);
+		fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
 	}
 	else {
 		fd = generatePage(request);
@@ -308,7 +313,7 @@ void ResponseHandler::handleBody(request_s& request) {
 		}
 	}
 	size_t pos = _body.find("\r\n\r\n");
-	if (request.method == POST) {
+	if (this->_cgi_status_code == 200) {
 		this->extractCGIheaders(_body.substr(0, pos + 4));
 		if (pos != std::string::npos)
 			_body.erase(0, pos + 4);
@@ -331,7 +336,7 @@ void ResponseHandler::handlePut(request_s& request) {
 	_response = "HTTP/1.1 ";
 	std::string filePath = request.server->getfilepath(request.uri);
 
-	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+	if (!request.location->checkifMethodAllowed(request.method)) {
 		request.status_code = 405;
 		handleBody(request);
 		_body.clear();
@@ -377,13 +382,14 @@ void ResponseHandler::generateResponse(request_s& request) {
 		_status_code = 405;
 		_body.clear();
 	}
-	if (this->authenticate(request))
-		return;
-	if (request.body.length() > request.server->matchlocation(request.uri).getmaxbody()) { // If body length is higher than location::maxBody
-		request.status_code = 413;
+	if (this->authenticate(request)) {
+		std::cout << _RED "Authorization failed!" _END << std::endl;
+	} else {
+		if (request.body.length() > request.location->getmaxbody()) // If body length is higher than location::maxBody
+			request.status_code = 413;
+		negotiateLanguage(request);
+		handleBody(request);
 	}
-
-	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
 	handleALLOW(request);
@@ -401,7 +407,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 }
 
 int ResponseHandler::authenticate(request_s& request) {
-	if (request.server->gethtpasswdpath().empty()) {
+	if (request.location->gethtpasswdpath().empty()) {
 		request.headers[AUTHORIZATION].clear();
 		return 0;
 	}
@@ -414,22 +420,21 @@ int ResponseHandler::authenticate(request_s& request) {
 		get_key_value(credentials, username, passwd, ":");
 	}
 	catch (std::exception& e) {
-		std::cerr << "No credentials provided by client" << std::endl;
+		std::cerr <<_RED _BOLD "No credentials provided by client" _END << std::endl;
 	}
 	request.headers[AUTHORIZATION] = request.headers[AUTHORIZATION].substr(0, request.headers[AUTHORIZATION].find_first_of(' '));
 	request.headers[REMOTE_USER] = username;
-	if (request.server->getmatch(username, passwd)) {
-		std::cout << _GREEN "Authorization successful!" _END << std::endl;
+	if (request.location->getmatch(username, passwd)) {
+		std::cout << _GREEN _BOLD "Authorization successful!" _END << std::endl;
 		return 0;
 	}
 
-	std::cout << _RED "Authorization failed!" _END << std::endl;
 	request.status_code = 401;
 	_response += "401 Unauthorized\r\n";
-	this->_response +=	"Server: Webserv/0.1\r\n"
+	this->_response +=	"Server: Webserv/1.1\r\n"
 					  	"Content-Type: text/html\r\n"
 	   					"WWW-Authenticate: Basic realm=";
-	this->_response += request.server->getauthbasicrealm();
+	this->_response += request.location->getauthbasicrealm();
 	this->_response += ", charset=\"UTF-8\"\r\n";
 	return 1;
 }
@@ -443,7 +448,7 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 }
 
 void ResponseHandler::handleALLOW(request_s& request) {
-	_header_vals[ALLOW] = request.server->matchlocation(request.uri).getallowedmethods();
+	_header_vals[ALLOW] = request.location->getallowedmethods();
 	_response += "Allow: ";
 	_response += _header_vals[ALLOW];
 	_response += "\r\n";
@@ -529,5 +534,27 @@ void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
 	if (request.headers.count(CONNECTION) == 1)
 		_header_vals[CONNECTION] = request.headers.at(CONNECTION);
 	_response += "Connection: " + _header_vals[CONNECTION] + "\r\n";
+}
+
+void ResponseHandler::negotiateLanguage(request_s& request) {
+	struct stat structstat = {};
+	std::string tmp, filepath = request.server->getfilepath(request.uri);
+
+	if (request.headers.count(ACCEPT_LANGUAGE) == 0 || stat(filepath.c_str(), &structstat) == -1)
+		return;
+	if (S_ISDIR(structstat.st_mode)) {
+		filepath = request.location->getroot();
+		if (filepath[filepath.length() - 1] != '/')
+			filepath += '/';
+		filepath += request.location->getindex();
+	}
+	std::vector<std::string>	vec = ft::split(request.headers.at(ACCEPT_LANGUAGE), " \t\r\v\n");
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++) {
+		ft::trimstring(*it, " \t");
+		tmp = filepath + '.' + (*it).substr(0, 2);
+		if (stat(tmp.c_str(), &structstat) == 0) {
+			request.uri = tmp.substr(tmp.find(request.location->getlocationmatch()));
+		}
+	}
 }
 

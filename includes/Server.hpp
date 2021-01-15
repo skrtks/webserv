@@ -6,14 +6,14 @@
 /*   By: peerdb <peerdb@student.codam.nl>             +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/09/29 16:32:46 by peerdb        #+#    #+#                 */
-/*   Updated: 2021/01/08 17:07:22 by tuperera      ########   odam.nl         */
+/*   Updated: 2021/01/15 11:37:08 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include <vector>
+# include	<vector>
 # include	"Location.hpp"
 # include	"Client.hpp"
 
@@ -37,8 +37,6 @@ private:	//setters
 		void		setservername(const std::string& );
 		void		setmaxfilesize(const std::string& );
 		void		seterrorpage(const std::string& );
-		void		setauth_basic_realm(const std::string& );
-		void		sethtpasswdpath(const std::string& );
 		void		setautoindex(const std::string& );
 		void		configurelocation(const std::string& );
 public:
@@ -62,11 +60,10 @@ public:
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
 
-		Location	matchlocation(const std::string& uri) const;
+		Location*	matchlocation(const std::string& uri) const;
 		std::string	getfilepath(const std::string& uri) const;
 		void		setup(int fd);
-		bool		getmatch(const std::string& username, const std::string& passwd);
-		bool		isExtensionAllowed(const std::string& uri) const;
+
 private:
 		size_t		_port;
 		long int	_maxfilesize;
@@ -74,15 +71,12 @@ private:
 					_server_name,
 					_error_page,
 					_root,
-					_auth_basic_realm,
-					_htpasswd_path,
 					_autoindex;
 		int			_fd,
 					_socketFd;
 		struct sockaddr_in	addr;
 		std::vector<std::string> _indexes;
-		std::vector<Location> _locations;
-		std::map<std::string, std::string>	_loginfo;
+		std::vector<Location*> _locations;
 };
 
 std::ostream&	operator<<(std::ostream& o, const Server& x);
