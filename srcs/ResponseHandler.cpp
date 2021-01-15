@@ -373,7 +373,6 @@ int ResponseHandler::handlePost(request_s &request, std::string& filepath, bool 
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
-	std::cerr << "start of gen Response\n";
 	try {
 		if (!request.location->checkifMethodAllowed(request.method)) {
 			request.status_code = 405;
@@ -391,7 +390,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 		std::cout << _RED << e.what() << _END << std::endl;
 	}
 
-	std::cerr << "before handlbody\n";
 	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
@@ -407,7 +405,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 		_response += _body;
 	}
 	_body.clear();
-	std::cerr << "Done with responsehandler\n";
 }
 
 int ResponseHandler::authenticate(request_s& request) {

@@ -62,7 +62,7 @@ void Client::sendReply(const char* msg, request_s& request) const {
 	long	bytesToSend = ft_strlen(msg),
 			bytesSent(0),
 			sendRet;
-	
+
 	g_sigpipe = 0;
 	while (bytesToSend > 0) {
 		sendRet = send(this->fd, msg + bytesSent, bytesToSend, 0);
