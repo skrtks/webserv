@@ -211,28 +211,54 @@ void ResponseHandler::handleBody(request_s& request) {
 }
 std::string& ResponseHandler::handleRequest(request_s& request) {
 	this->_response.clear();
-	if (request.method == PUT) {
+	_body.clear();
+	if (request.method == PUT)
 		handlePut(request);
-	}
-	else {
+	else
 		generateResponse(request);
-	}
+	handleCONTENT_LENGTH();
+	handleDATE();
+	handleCONTENT_TYPE(request);
+	handleCONNECTION_HEADER(request);
+
+	this->_response += "\r\n";
+	if (!_body.empty())
+		this->_response += _body + "\r\n";
+	_body.clear();
 	return _response;
 }
 
 void ResponseHandler::handlePut(request_s& request) {
 	_response = "HTTP/1.1 ";
+	struct stat statstruct = {};
 	std::string filePath = request.server->getfilepath(request.uri);
 
 	if (!request.location->checkifMethodAllowed(request.method)) {
-		request.status_code = 405;
+		this->_response += _status_codes[405];
 		handleBody(request);
-		_body.clear();
+		handleALLOW(request);
+	}
+	else if (request.body.length() > request.location->getmaxbody()) { // If body length is higher than location::maxBody
+		this->_response += _status_codes[413];
+		this->_header_vals[CONNECTION] = "close";
+		handleBody(request);
+	}
+	else if (filePath[filePath.length() - 1] == '/' || (stat(filePath.c_str(), &statstruct) == 0 && S_ISDIR(statstruct.st_mode))) {
+		this->_response += _status_codes[409];
+		request.status_code = 409;
+		handleLOCATION(filePath);
+		handleBody(request);
 	}
 	else {
+		if (stat(filePath.c_str(), &statstruct) == 0 && !S_ISDIR(statstruct.st_mode)) {
+			request.status_code = 204;
+			std::cerr << filePath << "already exists, therefore we return 204" << std::endl;
+		}
+		else
+			request.status_code = 201;
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
 		if (fd != -1) {
-			this->_response += _status_codes[204];
+			this->_response += _status_codes[request.status_code];
 			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
 			if (close(fd) == -1)
 				throw std::runtime_error("error closing putfile");
@@ -244,7 +270,7 @@ void ResponseHandler::handlePut(request_s& request) {
 			this->_response += _status_codes[500];
 		}
 	}
-	_response += "\r\n";
+//	_response += "\r\n";
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
