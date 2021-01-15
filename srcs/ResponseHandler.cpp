@@ -15,10 +15,15 @@
 #include "libftGnl.hpp"
 #include "Base64.hpp"
 #include <ctime>
+#include <cerrno>
 #include <sys/stat.h>
 #include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include "Base64.hpp"
 #include "Colours.hpp"
 
 std::string getCurrentDatetime() {
@@ -158,6 +163,95 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 	}
 }
 
+void ResponseHandler::handle404(request_s& request) {
+	int 	fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
+	int		ret = 1024;
+	char	buf[1025];
+	_status_code = 404;
+	if (fd == -1) {
+		_body += "Sorry, something went wrong in handling the error. whoops.\n";
+		return;
+	}
+	while (ret == 1024) {
+		ret = read(fd, buf, 1024);
+		if (ret <= 0)
+			break ;
+		_body.append(buf, ret);
+		memset(buf, 0, 1025);
+	}
+	close(fd);
+}
+
+void ResponseHandler::handleAutoIndex(request_s& request) {
+	DIR							*dir;
+	char						cwd[2048];
+	struct dirent				*entry;
+	struct stat 				stats = {};
+	struct tm					dt = {};
+	std::string 				ss;
+	std::string 				path;
+	std::string					months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	std::string 				url = "http://";
+	std::string					s;
+	bool						valid_root = false;
+
+	if (request.uri[request.uri.length() - 1] != '/')
+		request.uri += "/";
+	s = request.uri;
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+    	perror("getcwd() error");
+	else {
+		path += cwd;
+		path += "/";
+	}
+	path += request.server->getfilepath(request.uri);
+	if (stat(path.c_str(), &stats) == 0 && S_ISDIR(stats.st_mode)) {
+		valid_root = true;
+	}
+	if (!valid_root || (dir = opendir(path.c_str())) == NULL) {
+		handle404(request);
+		return ;
+	}
+	url += request.server->gethost() + ":" + ft::inttostring(request.server->getport());
+	s = s.substr(0, ft::findNthOccur(s, '/', 2) + 1);
+
+	_body += "<h1>Index of " + request.uri + "</h1><hr><pre><a href=\"" + url + s + "\">../</a><br>";
+
+	while ((entry = readdir(dir)) != NULL) {
+		ss = "";
+		if (ft_strncmp(entry->d_name, ".", 1) != 0 && ft_strncmp(entry->d_name, "..", 2) != 0) {
+			if (url[url.length()-1] == '/')
+				url = url.substr(0, url.length()-1);
+			_body += "<a href=\"" + url + request.uri + entry->d_name + "\">" + entry->d_name + "</a>";
+			for (int i = std::string(entry->d_name).length(); i < 51; i++) {
+				_body += " ";
+			}
+			if (stat((path + entry->d_name).c_str(), &stats) == 0) {
+				dt = *(gmtime(&stats.st_ctime));
+				if (dt.tm_mday < 10)
+					ss += "0" + ft::inttostring(dt.tm_mday) + "-";
+				else
+					ss += ft::inttostring(dt.tm_mday) + "-";
+				
+				ss	+= months[dt.tm_mon] + "-"
+					+ ft::inttostring(dt.tm_year + 1900) + " "
+					+ ft::inttostring(dt.tm_hour) + ":"
+					+ ft::inttostring(dt.tm_min) + ":"
+					+ ft::inttostring(dt.tm_sec) + "\t\t\t";
+				
+				if (S_ISDIR(stats.st_mode))
+					ss += std::string("-") + "<br>";
+				else
+					ss += ft::inttostring(stats.st_size) + "<br>";
+				_body += ss;
+
+			}
+		}
+	}
+	_body += "</pre><hr>";
+	closedir(dir);
+}
+
 void ResponseHandler::handleBody(request_s& request) {
 	char	buf[1024];
 	int		ret = 1024,
@@ -175,20 +269,26 @@ void ResponseHandler::handleBody(request_s& request) {
 				request.status_code = 404;
 		}
 	}
-	if (fd < 0) {
+	if (fd == -3) {
+		this->handleAutoIndex(request);
+	}
+	else if (fd < 0) {
 		_body = "Why are you here? Something obviously went wrong.\n";
 		return;
 	}
-	while (ret == 1024) {
-		ret = read(fd, buf, 1024);
-		if (ret <= 0)
-			break;
-		totalreadsize += ret;
-		_body.append(buf, ret);
-		memset(buf, 0, 1024);
-	}
-	if (close(fd) == -1) {
-		exit(EXIT_FAILURE);
+	else
+	{
+		while (ret == 1024) {
+			ret = read(fd, buf, 1024);
+			if (ret <= 0)
+				break;
+			totalreadsize += ret;
+			_body.append(buf, ret);
+			memset(buf, 0, 1024);
+		}
+		if (close(fd) == -1) {
+			exit(EXIT_FAILURE);
+		}
 	}
 	if (this->_cgi_status_code == 200) {
 		size_t pos = _body.find("\r\n\r\n");
@@ -200,6 +300,7 @@ void ResponseHandler::handleBody(request_s& request) {
 }
 std::string& ResponseHandler::handleRequest(request_s& request) {
 	this->_response.clear();
+	_response = "HTTP/" + ft::inttostring(request.version.first) + '.' + ft::inttostring(request.version.second) + ' ';
 	_body.clear();
 	if (request.method == PUT)
 		handlePut(request);
@@ -210,7 +311,6 @@ std::string& ResponseHandler::handleRequest(request_s& request) {
 }
 
 void ResponseHandler::handlePut(request_s& request) {
-	_response = "HTTP/1.1 ";
 	struct stat statstruct = {};
 	std::string filePath = request.server->getfilepath(request.uri);
 
@@ -272,11 +372,9 @@ int ResponseHandler::handlePost(request_s &request, std::string& filepath, bool 
 		return (-1);
 	fd = open(filepath.c_str(), O_RDONLY);
 	return (fd);
-
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
-	_response = "HTTP/" + ft::inttostring(request.version.first) + '.' + ft::inttostring(request.version.second) + ' ';
 	try {
 		if (!request.location->checkifMethodAllowed(request.method)) {
 			request.status_code = 405;
@@ -284,7 +382,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 		}
 		if (this->authenticate(request))
 			throw std::runtime_error("Authorization failed!");
-		if (request.body.length() > request.location->getmaxbody()) { // If body length is higher than location::maxBody
+		if (request.body.length() > request.location->getmaxbody()) {// If body length is higher than location::maxBody
 			request.status_code = 413;
 			this->_header_vals[CONNECTION] = "close";
 			throw std::runtime_error("Payload too large.");
@@ -293,6 +391,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 	} catch (std::exception& e) {
 		std::cout << _RED << e.what() << _END << std::endl;
 	}
+
 	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
