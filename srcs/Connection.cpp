@@ -93,13 +93,9 @@ void Connection::startListening() {
 					c->parsedRequest = requestParser.parseRequest(c->req);
 					c->parsedRequest.server = c->parent;
 					c->parsedRequest.location = c->parent->matchlocation(c->parsedRequest.uri);
-					if (requestParser._status_code == 400)
-						std::cerr << "requestparser status code is " << requestParser._status_code << std::endl;
-//					std::cerr << _RED << c->req << _END << std::endl;
 
 					response = responseHandler.handleRequest(c->parsedRequest);
 					c->sendReply(response.c_str(), c->parsedRequest);
-//					std::cerr << _RED "responded:\n" << response << _END "$$$" << "\n";
 					response.clear();
 					c->reset(responseHandler._header_vals[CONNECTION]);
 					FD_CLR(c->fd, &_writeFdsBak);
