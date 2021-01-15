@@ -115,11 +115,10 @@ int ResponseHandler::generatePage(request_s& request) {
 	if (request.location->getlocationmatch() != request.uri)
 		filepath.append(request.uri, request.uri.rfind('/') + 1);
 
-
 	bool	validfile = stat(filepath.c_str(), &statstruct) == 0,
 			allowed_extension = request.location->isExtensionAllowed(filepath);
 
-	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || allowed_extension) {
+	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || allowed_extension || (request.method == POST && !request.location->getdefaultcgipath().empty())) {
 		if (validfile && !S_ISDIR(statstruct.st_mode)) {
 			fd = this->CGI.run_cgi(request, filepath, request.uri);
 			this->_cgi_status_code = 200;
@@ -131,7 +130,7 @@ int ResponseHandler::generatePage(request_s& request) {
 		}
 	}
 	else if (request.method == POST) {
-		handlePut(request);
+		fd = handlePost(request, filepath, validfile);
 	} else {
 		fd = request.server->getpage(request.uri, _header_vals);
 		if (fd == -1)
@@ -170,8 +169,11 @@ void ResponseHandler::handleBody(request_s& request) {
 		fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
 	} else {
 		fd = generatePage(request);
-		if (fd == -1)
+		if (fd == -1) {
 			fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
+			if (request.status_code == 200)
+				request.status_code = 404;
+		}
 	}
 	if (fd < 0) {
 		_body = "Why are you here? Something obviously went wrong.\n";
@@ -255,6 +257,22 @@ void ResponseHandler::handlePut(request_s& request) {
 	this->_response += "\r\n";
 	if (!_body.empty())
 		this->_response += _body + "\r\n";
+}
+
+int ResponseHandler::handlePost(request_s &request, std::string& filepath, bool validfile) {
+	std::cerr << "handling post file, like a put request, filepath is " << filepath << ", validfile is " << validfile << std::endl;
+	request.status_code = 200;
+	if (!validfile)
+		request.status_code = 201;
+	int fd = open(filepath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
+	if (fd == -1)
+		return (fd);
+	size_t writeret = write(fd, request.body.c_str(), request.body.length());
+	if (close(fd) == -1 || writeret < request.body.length())
+		return (-1);
+	fd = open(filepath.c_str(), O_RDONLY);
+	return (fd);
+
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
