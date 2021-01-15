@@ -204,7 +204,7 @@ std::string	Server::getfilepath(const std::string& uri) const {
 	return (filepath);
 }
 
-int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode) const {
+int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals) const {
 	struct stat statstruct = {};
 	int fd = -1;
 	Location*	loca = this->matchlocation(uri);
@@ -218,11 +218,6 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 		}
 		if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
-	}
-	if (fd == -1) {
-		filepath = loca->geterrorpage();
-		fd = open(filepath.c_str(), O_RDONLY);
-		statuscode = 404;
 	}
  	headervals[CONTENT_LOCATION] = filepath;
 	return (fd);
