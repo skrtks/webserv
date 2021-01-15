@@ -10,7 +10,7 @@
 #include	"RequestParser.hpp"
 #include	"Colours.hpp"
 
-#define	BUFLEN 8192
+#define	BUFLEN 32768
 
 class Server;
 struct Client {
