@@ -32,7 +32,7 @@ std::string getCurrentDatetime() {
 	return datetime;
 }
 
-ResponseHandler::ResponseHandler() : _cgi_status_code() {
+ResponseHandler::ResponseHandler() : _cgi_status_code(0) {
 	_header_vals[ACCEPT_CHARSET].clear();
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
@@ -89,7 +89,7 @@ ResponseHandler::~ResponseHandler() {
 	this->_body.clear();
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code() {
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code(0) {
 	*this = src;
 }
 
@@ -109,48 +109,39 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
+//	std::string uri = request.uri.substr(1);
+	std::string filepath(request.location->getroot());
+	if (filepath[filepath.length() - 1] != '/')
+		filepath.append("/");
+	if (request.location->getlocationmatch() != request.uri)
+		filepath.append(request.uri, request.uri.rfind('/') + 1);
 
-	if (request.location->isExtensionAllowed(request.uri)) {
-		std::cerr << "extension is allowed, pog\n";
-		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
-		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
-			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
+
+	bool validfile = stat(filepath.c_str(), &statstruct) == 0; //S_ISDIR(statstruct.st_mode);
+	std::cerr << "filepath is " << filepath << ", validfile is " << std::boolalpha << validfile << std::endl;
+
+	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || request.location->isExtensionAllowed(request.uri)) {
+		if (validfile && !S_ISDIR(statstruct.st_mode)) {
+			fd = this->CGI.run_cgi(request, filepath, request.uri);
 			this->_cgi_status_code = 200;
 		}
-		else {
-			std::string tmpuri = '/' + request.location->getroot();
-			size_t second_slash_index = request.uri.find_first_of('/', 1);
-			if (second_slash_index == std::string::npos)
-				tmpuri += request.uri;
-			else
-				tmpuri += request.uri.substr(second_slash_index);
-			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
-			if (stat(scriptpath.c_str(), &statstruct) == -1) {
-				std::string defaultcgipath = request.location->getdefaultcgipath();
-				std::cerr << "defaultcgipath is " << defaultcgipath << ", location is " << request.location->getlocationmatch() << std::endl;
-				if (defaultcgipath.empty()) {
-					fd = -2;
-				}
-				else {
-					second_slash_index = tmpuri.find_first_of('/', 1);
-					tmpuri.replace(second_slash_index + 1, tmpuri.find_first_of('/', second_slash_index), defaultcgipath);
-				}
-			}
-			if (fd != -2) {
-				std::string	OriginalUri(request.uri);
-				request.uri = tmpuri;
-				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
-				std::cerr << "running cgi with uri is " << request.uri << ", OGUri is " << OriginalUri << std::endl;
-				fd = this->CGI.run_cgi(request, scriptpath, OriginalUri);
-				this->_cgi_status_code = 200;
-			}
+		else if (!request.location->getdefaultcgipath().empty()) {
+			std::string defaultcgipath = request.location->getdefaultcgipath();
+			std::cerr << _BLUE "default cgi path is '" << defaultcgipath << "'\n" _END;
+			fd = this->CGI.run_cgi(request, defaultcgipath, request.uri);
+			this->_cgi_status_code = 200;
 		}
 	}
-	else
-		fd = request.server->getpage(request.uri, _header_vals, request.status_code);
-	if (fd == -2) {
-		fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
-		request.status_code = 404;
+	else if (request.method == POST || (validfile && request.method == GET && request.location->isExtensionAllowed(request.uri))) {
+		if (validfile) {
+			fd = this->CGI.run_cgi(request, filepath, request.uri);
+		}
+		else if (request.method == POST)
+			handlePut(request);
+	} else {
+		fd = request.server->getpage(request.uri, _header_vals);
+		if (fd == -1)
+			request.status_code = 404;
 	}
 	return (fd);
 }
@@ -165,6 +156,7 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 		get_key_value(*it, key, value, ":");
 		ft::stringtoupper(key);
 		ft::trimstring(value);
+		std::cerr << _YELLOW <<  key << ":" << value << std::endl << _END;
 		std::map<std::string, headerType>::iterator header = TMP._headerMap.find(key);
 		if (header != TMP._headerMap.end()) {
 			_cgi_headers[header->second] = value;
@@ -185,6 +177,8 @@ void ResponseHandler::handleBody(request_s& request) {
 		fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
 	} else {
 		fd = generatePage(request);
+		if (fd == -1)
+			fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
 	}
 	if (fd < 0) {
 		_body = "Why are you here?\n";
@@ -289,7 +283,6 @@ void ResponseHandler::generateResponse(request_s& request) {
 		std::cout << _RED << e.what() << _END << std::endl;
 	}
 	handleBody(request);
-
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
 	handleALLOW(request);
@@ -457,4 +450,3 @@ void ResponseHandler::negotiateLanguage(request_s& request) {
 		}
 	}
 }
-
