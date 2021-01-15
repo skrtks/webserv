@@ -188,7 +188,7 @@ Location* Server::matchlocation(const std::string &uri) const {
 		if (n >= out->getlocationmatch().length() && (*it)->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
-	out->addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page);
+	this->addServerInfoToLocation(out);
 	return (out);
 }
 
@@ -204,30 +204,26 @@ std::string	Server::getfilepath(const std::string& uri) const {
 	return (filepath);
 }
 
-int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, int& statuscode, bool autoindex) const {
+
+int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals) const {
 	struct stat statstruct = {};
 	int fd = -1;
 	Location*	loca = this->matchlocation(uri);
 	std::string filepath = this->getfilepath(uri);
-	
+
 	if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (S_ISDIR(statstruct.st_mode)) {
 			if (filepath[filepath.length() - 1] != '/')
 				filepath += '/';
+			if (loca->getautoindex() == "on")
+				return (-3);
 			filepath += loca->getindex();
 			if (!filepath.empty())
 				fd = open(filepath.c_str(), O_RDONLY);
-			if (fd == -1 && autoindex)
-				return (-3);
-		}
-		else if (!filepath.empty())
+		} else if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
-	}
-	if (fd == -1) {
-		filepath = loca->geterrorpage();
-		fd = open(filepath.c_str(), O_RDONLY);
-		statuscode = 404;
-	}
+	} else if (loca->getautoindex() == "on" && uri[uri.length() - 1] == '/')
+		return (-3);
  	headervals[CONTENT_LOCATION] = filepath;
 	return (fd);
 }
@@ -290,6 +286,19 @@ void Server::showclients(const fd_set& readfds, const fd_set& writefds) {
 	}
 }
 
+void Server::addServerInfoToLocation(Location* loc) const {
+	if (loc->_root.empty())
+		loc->_root = this->_root;
+	if (loc->_autoindex.empty())
+		loc->_autoindex = this->_autoindex;
+	if (loc->_indexes.empty())
+		loc->_indexes = this->_indexes;
+	if (loc->_maxBody == 0)
+		loc->_maxBody = this->_maxfilesize;
+	if (loc->_error_page.empty())
+		loc->_error_page = this->_error_page;
+}
+
 std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << x.getservername() <<  " is listening on: " << x.gethost() << ":" << x.getport() << std::endl;
 	o << "Default root folder: " << x.getroot() << std::endl;
@@ -298,7 +307,7 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << "client body limit: " << x.getmaxfilesize() << std::endl << std::endl;
 	std::vector<Location*> v = x.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
-		o << v[i];
+		o << *v[i];
 	}
 	o << std::endl;
 	return (o);

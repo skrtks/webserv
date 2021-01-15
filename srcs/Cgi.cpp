@@ -34,8 +34,7 @@ Cgi::~Cgi() {
 	this->_m.clear();
 }
 
-void Cgi::populate_map(request_s &req, const std::string& OriginalUri, bool redirect_status) {
-	int split_path = req.uri.find_first_of('/', req.uri.find_first_of('.') );
+void Cgi::populate_map(request_s &req, const std::string& OriginalUri, bool redirect_status, std::string& scriptpath) {
 	char buf[500];
 	std::string	realpath = getcwd(buf, 500);
 	this->_m["AUTH_TYPE"] = req.headers[AUTHORIZATION];
@@ -50,8 +49,9 @@ void Cgi::populate_map(request_s &req, const std::string& OriginalUri, bool redi
 	this->_m["REMOTE_USER"] = req.headers[REMOTE_USER];
 	this->_m["REQUEST_METHOD"] = req.MethodToSTring();
 	this->_m["REQUEST_URI"] = OriginalUri;
-	this->_m["SCRIPT_FILENAME"] = req.uri.substr(1, split_path - 1 );
-	this->_m["SCRIPT_NAME"] = req.uri.substr(1, split_path - 1 );
+	this->_m["REQUEST_FILENAME"] = OriginalUri;
+	this->_m["SCRIPT_FILENAME"] = scriptpath;
+	this->_m["SCRIPT_NAME"] = scriptpath;
 	this->_m["SERVER_NAME"] = req.server->getservername();
 	this->_m["SERVER_PORT"] = std::string(ft::inttostring(req.server->getport()));
 	this->_m["SERVER_PROTOCOL"] = "HTTP/1.1";
@@ -87,19 +87,19 @@ void	Cgi::clear_env() {
 
 int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string& OriginalUri) {
 	int				incoming_file,
-					outgoing_file;
+					outgoing_file,
+					status;
 	pid_t			pid;
 	bool			redirect_status = false;
 	char*			args[3] = {&scriptpath[0], NULL, NULL};
 
 	std::string phpcgipath = request.server->matchlocation(OriginalUri)->getphpcgipath();
-	if (!phpcgipath.empty()) {
+	if (!phpcgipath.empty() && ft::getextension(scriptpath) == ".php") {
 		args[0] = ft_strdup(phpcgipath.c_str());
 		args[1] = ft_strdup(scriptpath.c_str());
 		redirect_status = true;
 	}
-
-	this->populate_map(request, OriginalUri, redirect_status);
+	this->populate_map(request, OriginalUri, redirect_status, scriptpath);
 	this->map_to_env(request);
 
 	if ((incoming_file = open("/tmp/webservin.txt", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
@@ -112,7 +112,6 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 		exit_fatal();
 
 	if (pid == 0) {
-		std::cerr << args[0] << " " << args[1] << (args[2] == NULL ? " NULL" : args[2]) << std::endl;
 		if ((outgoing_file = open("/tmp/webservout.txt", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 			exit_fatal();
 		if (dup2(outgoing_file, STDOUT_FILENO) == -1 || close(outgoing_file) == -1)
@@ -122,12 +121,18 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 		if (dup2(incoming_file, STDIN_FILENO) == -1 || close(incoming_file) == -1)
 			exit_fatal();
 		if (execve(args[0], args, _env) == -1)
-			std::cerr << "execve: " << strerror(errno) << std::endl;
+			std::cerr << _RED _BOLD "execve: " << strerror(errno) << _END << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
 	this->clear_env();
-	waitpid(0, NULL, 0);
+	waitpid(0, &status, 0);
+	if (WIFEXITED(status))
+		status = WEXITSTATUS(status);
+	std::cerr << "CGI exit status is " << status << std::endl;
+	request.cgi_ran = true;
+//	if (status == 1)
+//		return (-1);
 	if ((outgoing_file = open("/tmp/webservout.txt", O_RDONLY, S_IRWXU)) == -1)
 		exit_fatal();
 	if (!phpcgipath.empty()) {

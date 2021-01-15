@@ -60,11 +60,9 @@ public:			//getters
 
 		void	setup(int );
 		bool	checkifMethodAllowed(const e_method& meth) const;
-		void	addServerInfo(const std::string& root, const std::string& autoindex,
-					 const std::vector<std::string>& indexes, const std::string& errorpage);
 
-	bool		getmatch(const std::string& username, const std::string& passwd);
-	bool		isExtensionAllowed(const std::string& uri) const;
+		bool	getmatch(const std::string& username, const std::string& passwd);
+		bool	isExtensionAllowed(const std::string& uri) const;
 
 private:
 	std::string					_root,
