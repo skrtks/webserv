@@ -53,7 +53,7 @@ public:
 		std::string				getservername() const;
 		long int				getmaxfilesize() const;
 		std::string				geterrorpage() const;
-		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&) const;
+		int 					getpage(const std::string& uri, std::map<headerType, std::string>&) const;
 		std::vector<Location*> 	getlocations() const;
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
