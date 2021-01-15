@@ -61,6 +61,7 @@ public:
 		Location*	matchlocation(const std::string& uri) const;
 		std::string	getfilepath(const std::string& uri) const;
 		void		setup(int fd);
+		void		addServerInfoToLocation(Location* loc) const;
 
 private:
 		size_t		_port;
