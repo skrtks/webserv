@@ -94,10 +94,14 @@ void Connection::startListening() {
 					c->parsedRequest.server = c->parent;
 					c->parsedRequest.location = c->parent->matchlocation(c->parsedRequest.uri);
 
-					response = responseHandler.handleRequest(c->parsedRequest);
-					c->sendReply(response.c_str(), c->parsedRequest);
-					response.clear();
-					c->reset(responseHandler._header_vals[CONNECTION]);
+					try {
+						response = responseHandler.handleRequest(c->parsedRequest);
+						c->sendReply(response.c_str(), c->parsedRequest);
+						response.clear();
+						c->reset(responseHandler._header_vals[CONNECTION]);
+					} catch (std::exception& e) {
+						c->open = false;
+					}
 					FD_CLR(c->fd, &_writeFdsBak);
 				}
 				c->checkTimeout();
@@ -127,6 +131,7 @@ void Connection::startServer() {
 	loadConfiguration();
 	THIS = this;
 	signal(SIGINT, Connection::signalServer);
+	signal(SIGPIPE, Client::breakOnSIGPIPE);
 	startListening();
 }
 

@@ -6,6 +6,7 @@
 #include "Server.hpp"
 #include "libftGnl.hpp"
 #include <cerrno>
+int g_sigpipe;
 
 Client::Client(Server* S) : parent(S), fd(), port(), open(true), addr(), size(sizeof(addr)), lastRequest(0), parsedRequest() {
 	bzero(&addr, size);
@@ -61,12 +62,14 @@ void Client::sendReply(const char* msg, request_s& request) const {
 	long	bytesToSend = ft_strlen(msg),
 			bytesSent(0),
 			sendRet;
+	
+	g_sigpipe = 0;
 	while (bytesToSend > 0) {
 		sendRet = send(this->fd, msg + bytesSent, bytesToSend, 0);
 		if (sendRet == -1) {
-			if (bytesToSend != 0)
+			if (g_sigpipe == 0 && bytesToSend != 0)
 				continue;
-			throw (std::runtime_error(strerror(errno)));
+			throw std::runtime_error(strerror(errno));
 		}
 		bytesSent += sendRet;
 		bytesToSend -= sendRet;
@@ -92,7 +95,7 @@ void Client::checkTimeout() {
 }
 
 void Client::reset(const std::string& connection) {
-	if (connection == "close") {
+	if (connection == "close" || !this->open) {
 		if (CONNECTION_LOGS)
 			std::cerr << "We ain't resetting, we're closing this client, baby" << std::endl;
 		this->open = false;
@@ -108,4 +111,9 @@ void Client::reset(const std::string& connection) {
 
 Client::Client() : parent(), fd(), port(), open(), addr(), size(), lastRequest() {
 
+}
+
+void Client::breakOnSIGPIPE(int) {
+	std::cerr << _RED _BOLD << "sending response failed. shutting down connection.\n" _END;
+	g_sigpipe = 1;
 }

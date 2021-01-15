@@ -123,8 +123,6 @@ int ResponseHandler::generatePage(request_s& request) {
 	bool	validfile = stat(filepath.c_str(), &statstruct) == 0,
 			allowed_extension = request.location->isExtensionAllowed(filepath);
 
-	std::cerr << "validfile is " << validfile << ", allowed extension is " << allowed_extension << ", defaultcgi path is " << request.location->getdefaultcgipath() << std::endl;
-
 	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || allowed_extension || (request.method == POST && !request.location->getdefaultcgipath().empty())) {
 		if (validfile && !S_ISDIR(statstruct.st_mode)) {
 			fd = this->CGI.run_cgi(request, filepath, request.uri);
@@ -375,6 +373,7 @@ int ResponseHandler::handlePost(request_s &request, std::string& filepath, bool 
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
+	std::cerr << "start of gen Response\n";
 	try {
 		if (!request.location->checkifMethodAllowed(request.method)) {
 			request.status_code = 405;
@@ -392,6 +391,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 		std::cout << _RED << e.what() << _END << std::endl;
 	}
 
+	std::cerr << "before handlbody\n";
 	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
@@ -407,6 +407,7 @@ void ResponseHandler::generateResponse(request_s& request) {
 		_response += _body;
 	}
 	_body.clear();
+	std::cerr << "Done with responsehandler\n";
 }
 
 int ResponseHandler::authenticate(request_s& request) {
