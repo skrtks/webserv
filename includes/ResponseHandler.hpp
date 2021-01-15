@@ -6,7 +6,7 @@
 /*   By: skorteka <skorteka@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/08 16:15:14 by skorteka      #+#    #+#                 */
-/*   Updated: 2020/11/28 21:01:34 by tuperera      ########   odam.nl         */
+/*   Updated: 2021/01/14 16:41:25 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 
 #include "RequestParser.hpp"
 #include "Cgi.hpp"
+#include <dirent.h>
+#include <vector>
 
 class ResponseHandler {
 	std::map<headerType, std::string>	_header_vals;
@@ -23,6 +25,9 @@ class ResponseHandler {
 	std::map<int, std::string>			_status_codes;
 	std::string							_response;
 	std::string							_body;
+	bool								_autoindex;
+	std::vector<std::string>			_autoindex_root;
+	int									_status_code;
 	Cgi									CGI;
 public:
 	friend class Connection;
@@ -33,6 +38,8 @@ public:
 
 	std::string&	handleRequest(request_s& request);
 	void		handleBody(request_s& request);
+	void 		handle404(request_s& request);
+	void		handleAutoIndex(request_s& request);
 	void		handleStatusCode(request_s& request);
 	void		handleALLOW(request_s& request);
 	void		handleCONTENT_LANGUAGE( );
