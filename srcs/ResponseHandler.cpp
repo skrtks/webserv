@@ -17,7 +17,6 @@
 #include <ctime>
 #include <sys/stat.h>
 #include <sstream>
-#include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
 #include "Colours.hpp"
@@ -149,8 +148,6 @@ int ResponseHandler::generatePage(request_s& request) {
 	}
 	else
 		fd = request.server->getpage(request.uri, _header_vals, request.status_code);
-	if (fd == -1)
-		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error TODO should this be changed?
 	if (fd == -2) {
 		fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
 		request.status_code = 404;
@@ -178,17 +175,20 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 }
 
 void ResponseHandler::handleBody(request_s& request) {
-	int		ret = 1024;
 	char	buf[1024];
-	int		fd;
-	int totalreadsize = 0;
+	int		ret = 1024,
+			fd,
+			totalreadsize = 0;
 
 	_body.clear();
-	if (request.status_code == 400) {
+	if (request.status_code >= 400 && request.status_code < 500) {
 		fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
-	}
-	else {
+	} else {
 		fd = generatePage(request);
+	}
+	if (fd < 0) {
+		_body = "Why are you here?\n";
+		return;
 	}
 	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
@@ -201,8 +201,8 @@ void ResponseHandler::handleBody(request_s& request) {
 	if (close(fd) == -1) {
 		exit(EXIT_FAILURE);
 	}
-	size_t pos = _body.find("\r\n\r\n");
 	if (this->_cgi_status_code == 200) {
+		size_t pos = _body.find("\r\n\r\n");
 		this->extractCGIheaders(_body.substr(0, pos + 4));
 		if (pos != std::string::npos)
 			_body.erase(0, pos + 4);
@@ -248,21 +248,25 @@ void ResponseHandler::handlePut(request_s& request) {
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
-	request.status_code = 200;
-	_response = "HTTP/1.1 ";
-
-	if (!request.location->checkifMethodAllowed(request.method)) {
-		request.status_code = 405;
-		_body.clear();
-	}
-	if (this->authenticate(request)) {
-		std::cout << _RED "Authorization failed!" _END << std::endl;
-	} else {
-		if (request.body.length() > request.location->getmaxbody()) // If body length is higher than location::maxBody
+	_response = "HTTP/" + ft::inttostring(request.version.first) + '.' + ft::inttostring(request.version.second) + ' ';
+	try {
+		if (!request.location->checkifMethodAllowed(request.method)) {
+			request.status_code = 405;
+			throw std::runtime_error("Method not allowed.");
+		}
+		if (this->authenticate(request))
+			throw std::runtime_error("Authorization failed!");
+		if (request.body.length() > request.location->getmaxbody()) { // If body length is higher than location::maxBody
 			request.status_code = 413;
+			this->_header_vals[CONNECTION] = "close";
+			throw std::runtime_error("Payload too large.");
+		}
 		negotiateLanguage(request);
-		handleBody(request);
+	} catch (std::exception& e) {
+		std::cout << _RED << e.what() << _END << std::endl;
 	}
+	handleBody(request);
+
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
 	handleALLOW(request);
@@ -410,6 +414,7 @@ void ResponseHandler::handleCONNECTION_HEADER(const request_s& request) {
 }
 
 void ResponseHandler::negotiateLanguage(request_s& request) {
+	std::cerr << "start\n";
 	struct stat structstat = {};
 	std::string tmp, filepath = request.server->getfilepath(request.uri);
 
@@ -427,6 +432,7 @@ void ResponseHandler::negotiateLanguage(request_s& request) {
 		tmp = filepath + '.' + (*it).substr(0, 2);
 		if (stat(tmp.c_str(), &structstat) == 0) {
 			request.uri = tmp.substr(tmp.find(request.location->getlocationmatch()));
+			std::cerr << _WHITE "request uri is now " << request.uri << std::endl << _END;
 		}
 	}
 }
