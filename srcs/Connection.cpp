@@ -131,6 +131,7 @@ void Connection::startServer() {
 }
 
 void Connection::signalServer(int n) {
+	std::cerr << _RED _BOLD "\nSignaled to stop the server.\n" _END;
 	THIS->stopServer();
 	exit(n);
 }
@@ -154,7 +155,7 @@ void Connection::stopServer() {
 	FD_ZERO(&_writeFds);
 	FD_ZERO(&_readFdsBak);
 	FD_ZERO(&_writeFdsBak);
-	std::cerr << _GREEN "\nServer stopped gracefully.\n" << _END;
+	std::cerr << _GREEN "Server stopped gracefully.\n" << _END;
 }
 
 void Connection::loadConfiguration() {
