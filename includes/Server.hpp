@@ -53,9 +53,7 @@ public:
 		std::string				getservername() const;
 		long int				getmaxfilesize() const;
 		std::string				geterrorpage() const;
-		std::string 			getauthbasicrealm() const;
-		std::string				gethtpasswdpath() const;
-		int 					getpage(const std::string& uri, std::map<headerType, std::string>&, int&, bool autoindex) const;
+		int 					getpage(const std::string& uri, std::map<headerType, std::string>&) const;
 		std::vector<Location*> 	getlocations() const;
 		int						getSocketFd() const;
 		std::string 			getautoindex() const;
@@ -63,6 +61,7 @@ public:
 		Location*	matchlocation(const std::string& uri) const;
 		std::string	getfilepath(const std::string& uri) const;
 		void		setup(int fd);
+		void		addServerInfoToLocation(Location* loc) const;
 
 private:
 		size_t		_port;

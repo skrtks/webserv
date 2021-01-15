@@ -16,11 +16,11 @@
 #include <sys/stat.h>
 #include <climits>
 
-Location::Location() : _maxBody(LONG_MAX), _default_cgi_path() {
+Location::Location() : _maxBody(0), _default_cgi_path() {
 	this->_location_match = "";
 }
 
-Location::Location(std::string& location_match) : _maxBody(LONG_MAX), _default_cgi_path() {
+Location::Location(std::string& location_match) : _maxBody(0), _default_cgi_path() {
 	this->_location_match = location_match;
 	this->_autoindex = "off";
 }
@@ -29,7 +29,7 @@ Location::~Location() {
 	_loginfo.clear();
 }
 
-Location::Location(const Location& x) : _maxBody(LONG_MAX) {
+Location::Location(const Location& x) : _maxBody(0) {
 	*this = x;
 }
 
@@ -77,8 +77,7 @@ void	Location::seterrorpage(const std::string& in) { this->_error_page = in; }
 void	Location::setmaxbody(const std::string& in) { this->_maxBody = ft_atoi(in.c_str()); }
 void	Location::setdefaultcgipath(const std::string& in) {
 	struct stat statstruct = {};
-	std::string	filepath = this->_root + '/' + in;
-	if (stat(filepath.c_str(), &statstruct) != -1)
+	if (stat(in.c_str(), &statstruct) != -1)
 		this->_default_cgi_path = in;
 }
 void	Location::setroot(const std::string& in) {
@@ -126,9 +125,10 @@ std::string					Location::getallowedmethods() const {
 	return (ret);
 }
 bool		Location::checkifMethodAllowed(const e_method& meth) const {
-	for (std::vector<e_method>::const_iterator it = this->_allow_method.begin(); it != this->_allow_method.end(); ++it)
+	for (std::vector<e_method>::const_iterator it = this->_allow_method.begin(); it != this->_allow_method.end(); ++it) {
 		if (*it == meth)
 			return true;
+	}
 	return false;
 }
 
@@ -158,20 +158,8 @@ void	Location::setup(int fd) {
 			std::cerr <<_RED _BOLD "Unable to parse key '" << key << "' in Location block " << this->getlocationmatch() << _END << std::endl;
 		(this->*(m.at(key)))(value);
 	}
-	if (this->_indexes.empty())
-		this->_indexes.push_back("index.html");
-}
-
-void	Location::addServerInfo(const std::string& root, const std::string& autoindex,
-							 const std::vector<std::string>& indexes, const std::string& errorpage) {
-	if (this->_root.empty())
-		this->_root = root;
-	if (this->_autoindex.empty())
-		this->_autoindex = autoindex;
-	if (this->_indexes.empty())
-		this->_indexes = indexes;
-	if (this->_error_page.empty())
-		this->_error_page = errorpage;
+//	if (this->_indexes.empty())
+//		this->_indexes.push_back("index.html");
 }
 
 void	Location::setauth_basic_realm(const std::string &realm) {

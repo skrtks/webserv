@@ -93,17 +93,16 @@ void Connection::startListening() {
 					c->parsedRequest = requestParser.parseRequest(c->req);
 					c->parsedRequest.server = c->parent;
 					c->parsedRequest.location = c->parent->matchlocation(c->parsedRequest.uri);
-					if (requestParser._status_code != 400) {
-						response = responseHandler.handleRequest(c->parsedRequest);
-						c->sendReply(response.c_str(), c->parsedRequest);
-					} else std::cerr << "requestparser status code is " << requestParser._status_code << ", so we aint handling it!" << std::endl;
+
+					response = responseHandler.handleRequest(c->parsedRequest);
+					c->sendReply(response.c_str(), c->parsedRequest);
 					response.clear();
 					c->reset(responseHandler._header_vals[CONNECTION]);
 					FD_CLR(c->fd, &_writeFdsBak);
 				}
 				c->checkTimeout();
 				if (!c->open) {
-					std::cerr << c->fd << " at " << c->ipaddress << " is closing\n";
+//					std::cerr << c->fd << " at " << c->ipaddress << " is closing\n";
 					FD_CLR(c->fd, &_readFdsBak);
 					FD_CLR(c->fd, &_writeFdsBak);
 					this->_allConnections.erase(c->fd);
@@ -132,6 +131,7 @@ void Connection::startServer() {
 }
 
 void Connection::signalServer(int n) {
+	std::cerr << _RED _BOLD "\nSignaled to stop the server.\n" _END;
 	THIS->stopServer();
 	exit(n);
 }
@@ -155,7 +155,7 @@ void Connection::stopServer() {
 	FD_ZERO(&_writeFds);
 	FD_ZERO(&_readFdsBak);
 	FD_ZERO(&_writeFdsBak);
-	std::cerr << _GREEN "\nServer stopped gracefully.\n" << _END;
+	std::cerr << _GREEN "Server stopped gracefully.\n" << _END;
 }
 
 void Connection::loadConfiguration() {

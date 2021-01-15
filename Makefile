@@ -34,6 +34,9 @@ ifeq ($(shell uname), Linux)
  ECHO = -e
  CGI_TESTER = ubuntu_cgi_tester
 endif
+ifdef CONNECTION_LOGS
+ CXXFLAGS += -D CONNECTION_LOGS=$(CONNECTION_LOGS)
+endif
 
 # Colours
 DARK_GREEN	= \033[0;32m

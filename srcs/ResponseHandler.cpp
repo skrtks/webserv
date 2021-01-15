@@ -15,9 +15,9 @@
 #include "libftGnl.hpp"
 #include "Base64.hpp"
 #include <ctime>
+#include <cerrno>
 #include <sys/stat.h>
 #include <sstream>
-#include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -37,8 +37,7 @@ std::string getCurrentDatetime() {
 	return datetime;
 }
 
-ResponseHandler::ResponseHandler() : _cgi_status_code() {
-	_autoindex = false;
+ResponseHandler::ResponseHandler() : _cgi_status_code(0) {
 	_header_vals[ACCEPT_CHARSET].clear();
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
@@ -95,7 +94,7 @@ ResponseHandler::~ResponseHandler() {
 	this->_body.clear();
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code() {
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code(0) {
 	*this = src;
 }
 
@@ -115,54 +114,32 @@ ResponseHandler& ResponseHandler::operator= (const ResponseHandler &rhs) {
 int ResponseHandler::generatePage(request_s& request) {
 	int			fd = -1;
 	struct stat statstruct = {};
+	std::string filepath(request.location->getroot());
+	if (filepath[filepath.length() - 1] != '/')
+		filepath.append("/");
+	if (request.location->getlocationmatch() != request.uri)
+		filepath.append(request.uri, request.uri.rfind('/') + 1);
 
-	if (request.location->isExtensionAllowed(request.uri)) {
-		std::cerr << "extension is allowed, pog\n";
-		std::string scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.') ) - 1);
-		if (request.uri.compare(0, 9, "/cgi-bin/") == 0 && request.uri.length() > 9) { // Run CGI script that creates an html page
-			fd = this->CGI.run_cgi(request, scriptpath, request.uri);
-			this->_cgi_status_code = 200;
+	bool	validfile = stat(filepath.c_str(), &statstruct) == 0,
+			allowed_extension = request.location->isExtensionAllowed(filepath);
+
+	std::cerr << "validfile is " << validfile << ", allowed extension is " << allowed_extension << ", defaultcgi path is " << request.location->getdefaultcgipath() << std::endl;
+
+	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || allowed_extension || (request.method == POST && !request.location->getdefaultcgipath().empty())) {
+		if (validfile && !S_ISDIR(statstruct.st_mode)) {
+			fd = this->CGI.run_cgi(request, filepath, request.uri);
 		}
-		else {
-			std::string tmpuri = '/' + request.location->getroot();
-			size_t second_slash_index = request.uri.find_first_of('/', 1);
-			if (second_slash_index == std::string::npos)
-				tmpuri += request.uri;
-			else
-				tmpuri += request.uri.substr(second_slash_index);
-			scriptpath = tmpuri.substr(1, tmpuri.find_first_of('/', tmpuri.find_first_of('.') ) - 1);
-			if (stat(scriptpath.c_str(), &statstruct) == -1) {
-				std::string defaultcgipath = request.location->getdefaultcgipath();
-				std::cerr << "defaultcgipath is " << defaultcgipath << ", location is " << request.location->getlocationmatch() << std::endl;
-				if (defaultcgipath.empty()) {
-					fd = -2;
-				}
-				else {
-					second_slash_index = tmpuri.find_first_of('/', 1);
-					tmpuri.replace(second_slash_index + 1, tmpuri.find_first_of('/', second_slash_index), defaultcgipath);
-				}
-			}
-			if (fd != -2) {
-				std::string	OriginalUri(request.uri);
-				request.uri = tmpuri;
-				scriptpath = request.uri.substr(1, request.uri.find_first_of('/', request.uri.find_first_of('.')) - 1);
-				std::cerr << "running cgi with uri is " << request.uri << ", OGUri is " << OriginalUri << std::endl;
-				fd = this->CGI.run_cgi(request, scriptpath, OriginalUri);
-				this->_cgi_status_code = 200;
-			}
+		else if (!request.location->getdefaultcgipath().empty() && request.method == POST) {
+			std::string defaultcgipath = request.location->getdefaultcgipath();
+			fd = this->CGI.run_cgi(request, defaultcgipath, request.uri);
 		}
 	}
-	else {
-		if (this->_autoindex)
-			fd = request.server->getpage(request.uri, _header_vals, _status_code, true);
-		else
-			fd = request.server->getpage(request.uri, _header_vals, _status_code, false);
-	}
-	if (fd == -1)
-		throw std::runtime_error(strerror(errno)); // cant even serve the error page, so I throw an error TODO should this be changed?
-	if (fd == -2) {
-		fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
-		request.status_code = 404;
+	else if (request.method == POST) {
+		fd = handlePost(request, filepath, validfile);
+	} else {
+		fd = request.server->getpage(request.uri, _header_vals);
+		if (fd == -1)
+			request.status_code = 404;
 	}
 	return (fd);
 }
@@ -189,26 +166,28 @@ void ResponseHandler::extractCGIheaders(const std::string& incoming) {
 void ResponseHandler::handle404(request_s& request) {
 	int 	fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
 	int		ret = 1024;
-	char	buf[1024];
+	char	buf[1025];
 	_status_code = 404;
+	if (fd == -1) {
+		_body += "Sorry, something went wrong in handling the error. whoops.\n";
+		return;
+	}
 	while (ret == 1024) {
 		ret = read(fd, buf, 1024);
 		if (ret <= 0)
 			break ;
 		_body.append(buf, ret);
-		memset(buf, 0, 1024);
+		memset(buf, 0, 1025);
 	}
-	if (close(fd) == -1) {
-		exit(EXIT_FAILURE);
-	}
+	close(fd);
 }
 
 void ResponseHandler::handleAutoIndex(request_s& request) {
 	DIR							*dir;
 	char						cwd[2048];
 	struct dirent				*entry;
-	struct stat 				stats;
-	struct tm					dt;
+	struct stat 				stats = {};
+	struct tm					dt = {};
 	std::string 				ss;
 	std::string 				path;
 	std::string					months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -225,19 +204,11 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 		path += cwd;
 		path += "/";
 	}
-
 	path += request.server->getfilepath(request.uri);
-	if (path.find("global") != std::string::npos) {
+	if (stat(path.c_str(), &stats) == 0 && S_ISDIR(stats.st_mode)) {
 		valid_root = true;
 	}
-	else
-	{
-		for (std::vector<std::string>::iterator it = this->_autoindex_root.begin(); it != this->_autoindex_root.end(); it++) {
-			if (path.find(*it) != std::string::npos)
-				valid_root = true;
-		}
-	}
-	if (valid_root == false || (dir = opendir(path.c_str())) == NULL) {
+	if (!valid_root || (dir = opendir(path.c_str())) == NULL) {
 		handle404(request);
 		return ;
 	}
@@ -278,25 +249,32 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 		}
 	}
 	_body += "</pre><hr>";
-	_autoindex = false;
 	closedir(dir);
 }
 
 void ResponseHandler::handleBody(request_s& request) {
-	int		ret = 1024;
 	char	buf[1024];
-	int		fd;
-	int totalreadsize = 0;
-	
+	int		ret = 1024,
+			fd,
+			totalreadsize = 0;
+
 	_body.clear();
-	if (request.status_code == 400) {
+	if (request.status_code >= 400 && request.status_code < 500) {
 		fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
-	}
-	else {
+	} else {
 		fd = generatePage(request);
+		if (fd == -1) {
+			fd = open(request.location->geterrorpage().c_str(), O_RDONLY);
+			if (request.status_code == 200)
+				request.status_code = 404;
+		}
 	}
 	if (fd == -3) {
-		this->handleAutoIndex(request);		
+		this->handleAutoIndex(request);
+	}
+	else if (fd < 0) {
+		_body = "Why are you here? Something obviously went wrong.\n";
+		return;
 	}
 	else
 	{
@@ -312,8 +290,8 @@ void ResponseHandler::handleBody(request_s& request) {
 			exit(EXIT_FAILURE);
 		}
 	}
-	size_t pos = _body.find("\r\n\r\n");
-	if (this->_cgi_status_code == 200) {
+	if (request.cgi_ran) {
+		size_t pos = _body.find("\r\n\r\n");
 		this->extractCGIheaders(_body.substr(0, pos + 4));
 		if (pos != std::string::npos)
 			_body.erase(0, pos + 4);
@@ -322,29 +300,44 @@ void ResponseHandler::handleBody(request_s& request) {
 }
 std::string& ResponseHandler::handleRequest(request_s& request) {
 	this->_response.clear();
-	
-	if (request.method == PUT) {
+	_response = "HTTP/" + ft::inttostring(request.version.first) + '.' + ft::inttostring(request.version.second) + ' ';
+	_body.clear();
+	if (request.method == PUT)
 		handlePut(request);
-	}
-	else {
+	else
 		generateResponse(request);
-	}
+	_body.clear();
 	return _response;
 }
 
 void ResponseHandler::handlePut(request_s& request) {
-	_response = "HTTP/1.1 ";
+	struct stat statstruct = {};
 	std::string filePath = request.server->getfilepath(request.uri);
 
 	if (!request.location->checkifMethodAllowed(request.method)) {
-		request.status_code = 405;
+		this->_response += _status_codes[405];
 		handleBody(request);
-		_body.clear();
+		handleALLOW(request);
+	}
+	else if (request.body.length() > request.location->getmaxbody()) { // If body length is higher than location::maxBody
+		this->_response += _status_codes[413];
+		this->_header_vals[CONNECTION] = "close";
+		handleBody(request);
+	}
+	else if (filePath[filePath.length() - 1] == '/' || (stat(filePath.c_str(), &statstruct) == 0 && S_ISDIR(statstruct.st_mode))) {
+		this->_response += _status_codes[409];
+		request.status_code = 409;
+		handleLOCATION(filePath);
+		handleBody(request);
 	}
 	else {
+		if (stat(filePath.c_str(), &statstruct) == 0 && !S_ISDIR(statstruct.st_mode))
+			request.status_code = 204;
+		else
+			request.status_code = 201;
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
 		if (fd != -1) {
-			this->_response += _status_codes[204];
+			this->_response += _status_codes[request.status_code];
 			size_t WriteRet = write(fd, request.body.c_str(), request.body.length());
 			if (close(fd) == -1)
 				throw std::runtime_error("error closing putfile");
@@ -356,40 +349,50 @@ void ResponseHandler::handlePut(request_s& request) {
 			this->_response += _status_codes[500];
 		}
 	}
-	_response += "\r\n";
+	handleCONTENT_LENGTH();
+	handleDATE();
+	handleCONTENT_TYPE(request);
+	handleCONNECTION_HEADER(request);
+
+	this->_response += "\r\n";
+	if (!_body.empty())
+		this->_response += _body + "\r\n";
+}
+
+int ResponseHandler::handlePost(request_s &request, std::string& filepath, bool validfile) {
+	std::cerr << "handling post file, like a put request, filepath is " << filepath << ", validfile is " << validfile << std::endl;
+	request.status_code = 200;
+	if (!validfile)
+		request.status_code = 201;
+	int fd = open(filepath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
+	if (fd == -1)
+		return (fd);
+	size_t writeret = write(fd, request.body.c_str(), request.body.length());
+	if (close(fd) == -1 || writeret < request.body.length())
+		return (-1);
+	fd = open(filepath.c_str(), O_RDONLY);
+	return (fd);
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
-	request.status_code = 200;
-	_response = "HTTP/1.1 ";
-
-	if (request.server->getautoindex() == "on") {
-		this->_autoindex = true;
-		this->_autoindex_root.push_back("global");
-	}
-	else
-	{
-		std::vector<Location*> v = request.server->getlocations();
-		for (size_t i = 0; i < v.size(); i++) {
-			if ((*v[i]).getautoindex() == "on") {
-				this->_autoindex = true;
-				this->_autoindex_root.push_back((*v[i]).getroot());
-			}
+	try {
+		if (!request.location->checkifMethodAllowed(request.method)) {
+			request.status_code = 405;
+			throw std::runtime_error("Method not allowed.");
 		}
-	}
-	
-	if (!request.server->matchlocation(request.uri)->checkifMethodAllowed(request.method)) {
-		_status_code = 405;
-		_body.clear();
-	}
-	if (this->authenticate(request)) {
-		std::cout << _RED "Authorization failed!" _END << std::endl;
-	} else {
-		if (request.body.length() > request.location->getmaxbody()) // If body length is higher than location::maxBody
+		if (this->authenticate(request))
+			throw std::runtime_error("Authorization failed!");
+		if (request.body.length() > request.location->getmaxbody()) {// If body length is higher than location::maxBody
 			request.status_code = 413;
+			this->_header_vals[CONNECTION] = "close";
+			throw std::runtime_error("Payload too large.");
+		}
 		negotiateLanguage(request);
-		handleBody(request);
+	} catch (std::exception& e) {
+		std::cout << _RED << e.what() << _END << std::endl;
 	}
+
+	handleBody(request);
 	handleStatusCode(request);
 	handleCONTENT_TYPE(request);
 	handleALLOW(request);
@@ -557,4 +560,3 @@ void ResponseHandler::negotiateLanguage(request_s& request) {
 		}
 	}
 }
-

@@ -11,6 +11,9 @@
 #include	"Colours.hpp"
 
 #define	BUFLEN 32768
+# ifndef CONNECTION_LOGS
+#  define CONNECTION_LOGS 0
+# endif
 
 class Server;
 struct Client {
