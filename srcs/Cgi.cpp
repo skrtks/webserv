@@ -93,7 +93,8 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 	char*			args[3] = {&scriptpath[0], NULL, NULL};
 
 	std::string phpcgipath = request.server->matchlocation(OriginalUri)->getphpcgipath();
-	if (!phpcgipath.empty()) {
+//	std::cerr << "has extension " << ft::getextension(scriptpath) << std::endl;
+	if (!phpcgipath.empty() && ft::getextension(scriptpath) == ".php") {
 		args[0] = ft_strdup(phpcgipath.c_str());
 		args[1] = ft_strdup(scriptpath.c_str());
 		redirect_status = true;
@@ -112,7 +113,6 @@ int Cgi::run_cgi(request_s &request, std::string& scriptpath, const std::string&
 		exit_fatal();
 
 	if (pid == 0) {
-		std::cerr << args[0] << " " << args[1] << (args[2] == NULL ? " NULL" : args[2]) << std::endl;
 		if ((outgoing_file = open("/tmp/webservout.txt", O_CREAT | O_TRUNC | O_RDWR, S_IRWXU)) == -1)
 			exit_fatal();
 		if (dup2(outgoing_file, STDOUT_FILENO) == -1 || close(outgoing_file) == -1)
