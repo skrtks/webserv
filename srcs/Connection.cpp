@@ -99,6 +99,7 @@ void Connection::startListening() {
 
 					response = responseHandler.handleRequest(c->parsedRequest);
 					c->sendReply(response.c_str(), c->parsedRequest);
+//					std::cerr << _RED "responded:\n" << response << _END "$$$" << "\n";
 					response.clear();
 					c->reset(responseHandler._header_vals[CONNECTION]);
 					FD_CLR(c->fd, &_writeFdsBak);

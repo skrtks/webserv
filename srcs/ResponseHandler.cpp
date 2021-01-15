@@ -216,14 +216,6 @@ std::string& ResponseHandler::handleRequest(request_s& request) {
 		handlePut(request);
 	else
 		generateResponse(request);
-	handleCONTENT_LENGTH();
-	handleDATE();
-	handleCONTENT_TYPE(request);
-	handleCONNECTION_HEADER(request);
-
-	this->_response += "\r\n";
-	if (!_body.empty())
-		this->_response += _body + "\r\n";
 	_body.clear();
 	return _response;
 }
@@ -250,10 +242,8 @@ void ResponseHandler::handlePut(request_s& request) {
 		handleBody(request);
 	}
 	else {
-		if (stat(filePath.c_str(), &statstruct) == 0 && !S_ISDIR(statstruct.st_mode)) {
+		if (stat(filePath.c_str(), &statstruct) == 0 && !S_ISDIR(statstruct.st_mode))
 			request.status_code = 204;
-			std::cerr << filePath << "already exists, therefore we return 204" << std::endl;
-		}
 		else
 			request.status_code = 201;
 		int fd = open(filePath.c_str(), O_TRUNC | O_CREAT | O_WRONLY, S_IRWXU);
@@ -270,7 +260,14 @@ void ResponseHandler::handlePut(request_s& request) {
 			this->_response += _status_codes[500];
 		}
 	}
-//	_response += "\r\n";
+	handleCONTENT_LENGTH();
+	handleDATE();
+	handleCONTENT_TYPE(request);
+	handleCONNECTION_HEADER(request);
+
+	this->_response += "\r\n";
+	if (!_body.empty())
+		this->_response += _body + "\r\n";
 }
 
 void ResponseHandler::generateResponse(request_s& request) {
