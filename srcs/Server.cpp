@@ -188,7 +188,7 @@ Location* Server::matchlocation(const std::string &uri) const {
 		if (n >= out->getlocationmatch().length() && (*it)->getlocationmatch().compare(0, n, uri, 0, n) == 0)
 			out = *it;
 	}
-	out->addServerInfo(this->_root, this->_autoindex, this->_indexes, this->_error_page);
+	this->addServerInfoToLocation(out);
 	return (out);
 }
 
@@ -284,6 +284,19 @@ void Server::showclients(const fd_set& readfds, const fd_set& writefds) {
 		std::cerr << "It is " << (FD_ISSET((*it)->fd, &readfds) ? "" : "not") << " readable.\n";
 		std::cerr << "It is " << (FD_ISSET((*it)->fd, &writefds) ? "" : "not") << " writeable.\n";
 	}
+}
+
+void Server::addServerInfoToLocation(Location* loc) const {
+	if (loc->_root.empty())
+		loc->_root = this->_root;
+	if (loc->_autoindex.empty())
+		loc->_autoindex = this->_autoindex;
+	if (loc->_indexes.empty())
+		loc->_indexes = this->_indexes;
+	if (loc->_maxBody == 0)
+		loc->_maxBody = this->_maxfilesize;
+	if (loc->_error_page.empty())
+		loc->_error_page = this->_error_page;
 }
 
 std::ostream& operator<<( std::ostream& o, const Server& x) {

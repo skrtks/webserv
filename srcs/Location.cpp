@@ -16,11 +16,11 @@
 #include <sys/stat.h>
 #include <climits>
 
-Location::Location() : _maxBody(LONG_MAX), _default_cgi_path() {
+Location::Location() : _maxBody(0), _default_cgi_path() {
 	this->_location_match = "";
 }
 
-Location::Location(std::string& location_match) : _maxBody(LONG_MAX), _default_cgi_path() {
+Location::Location(std::string& location_match) : _maxBody(0), _default_cgi_path() {
 	this->_location_match = location_match;
 	this->_autoindex = "off";
 }
@@ -29,7 +29,7 @@ Location::~Location() {
 	_loginfo.clear();
 }
 
-Location::Location(const Location& x) : _maxBody(LONG_MAX) {
+Location::Location(const Location& x) : _maxBody(0) {
 	*this = x;
 }
 
@@ -158,20 +158,8 @@ void	Location::setup(int fd) {
 			std::cerr <<_RED _BOLD "Unable to parse key '" << key << "' in Location block " << this->getlocationmatch() << _END << std::endl;
 		(this->*(m.at(key)))(value);
 	}
-	if (this->_indexes.empty())
-		this->_indexes.push_back("index.html");
-}
-
-void	Location::addServerInfo(const std::string& root, const std::string& autoindex,
-							 const std::vector<std::string>& indexes, const std::string& errorpage) {
-	if (this->_root.empty())
-		this->_root = root;
-	if (this->_autoindex.empty())
-		this->_autoindex = autoindex;
-	if (this->_indexes.empty())
-		this->_indexes = indexes;
-	if (this->_error_page.empty())
-		this->_error_page = errorpage;
+//	if (this->_indexes.empty())
+//		this->_indexes.push_back("index.html");
 }
 
 void	Location::setauth_basic_realm(const std::string &realm) {
