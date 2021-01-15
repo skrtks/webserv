@@ -369,16 +369,16 @@ void ResponseHandler::generateResponse(request_s& request) {
 	}
 	else
 	{
-		std::vector<Location> v = request.server->getlocations();
+		std::vector<Location*> v = request.server->getlocations();
 		for (size_t i = 0; i < v.size(); i++) {
-			if (v[i].getautoindex() == "on") {
+			if ((*v[i]).getautoindex() == "on") {
 				this->_autoindex = true;
-				this->_autoindex_root.push_back(v[i].getroot());
+				this->_autoindex_root.push_back((*v[i]).getroot());
 			}
 		}
 	}
 	
-	if (!request.server->matchlocation(request.uri).checkifMethodAllowed(request.method)) {
+	if (!request.server->matchlocation(request.uri)->checkifMethodAllowed(request.method)) {
 		_status_code = 405;
 		_body.clear();
 	}

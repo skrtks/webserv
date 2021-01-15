@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2021/01/15 11:36:11 by tuperera      ########   odam.nl         */
+/*   Updated: 2021/01/15 11:41:16 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,7 +214,7 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 		if (S_ISDIR(statstruct.st_mode)) {
 			if (filepath[filepath.length() - 1] != '/')
 				filepath += '/';
-			filepath += loca.getindex();
+			filepath += loca->getindex();
 			if (!filepath.empty())
 				fd = open(filepath.c_str(), O_RDONLY);
 			if (fd == -1 && autoindex)
@@ -298,7 +298,7 @@ std::ostream& operator<<( std::ostream& o, const Server& x) {
 	o << "client body limit: " << x.getmaxfilesize() << std::endl << std::endl;
 	std::vector<Location*> v = x.getlocations();
 	for (size_t i = 0; i < v.size(); i++) {
-		o << *v[i];
+		o << v[i];
 	}
 	o << std::endl;
 	return (o);
