@@ -29,7 +29,8 @@ struct request_s {
 	Server*								server;
 	Location*							location;
 	std::string							body;
-	bool								transfer_buffer;
+	bool								transfer_buffer,
+										cgi_ran;
 	std::map<std::string, std::string>	env;
 
 	request_s();

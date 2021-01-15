@@ -123,15 +123,15 @@ int ResponseHandler::generatePage(request_s& request) {
 	bool	validfile = stat(filepath.c_str(), &statstruct) == 0,
 			allowed_extension = request.location->isExtensionAllowed(filepath);
 
+	std::cerr << "validfile is " << validfile << ", allowed extension is " << allowed_extension << ", defaultcgi path is " << request.location->getdefaultcgipath() << std::endl;
+
 	if ((request.uri.length() > 9 && request.uri.substr(0, 9) == "/cgi-bin/") || allowed_extension || (request.method == POST && !request.location->getdefaultcgipath().empty())) {
 		if (validfile && !S_ISDIR(statstruct.st_mode)) {
 			fd = this->CGI.run_cgi(request, filepath, request.uri);
-			this->_cgi_status_code = 200;
 		}
-		else if (!request.location->getdefaultcgipath().empty()) {
+		else if (!request.location->getdefaultcgipath().empty() && request.method == POST) {
 			std::string defaultcgipath = request.location->getdefaultcgipath();
 			fd = this->CGI.run_cgi(request, defaultcgipath, request.uri);
-			this->_cgi_status_code = 200;
 		}
 	}
 	else if (request.method == POST) {
@@ -290,7 +290,7 @@ void ResponseHandler::handleBody(request_s& request) {
 			exit(EXIT_FAILURE);
 		}
 	}
-	if (this->_cgi_status_code == 200) {
+	if (request.cgi_ran) {
 		size_t pos = _body.find("\r\n\r\n");
 		this->extractCGIheaders(_body.substr(0, pos + 4));
 		if (pos != std::string::npos)

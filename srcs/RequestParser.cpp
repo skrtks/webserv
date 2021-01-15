@@ -324,11 +324,11 @@ void RequestParser::AddHeaderToEnv(const std::string &upperHeader, const std::st
 		this->_env[insert] = value;
 }
 
-request_s::request_s() : status_code(200), uri(), cgiparams(), server(), location(), transfer_buffer() {
+request_s::request_s() : status_code(200), uri(), cgiparams(), server(), location(), transfer_buffer(), cgi_ran(false) {
 
 }
 
-request_s::request_s(const request_s &x) : status_code(), server(), location(), transfer_buffer() {
+request_s::request_s(const request_s &x) : status_code(), server(), location(), transfer_buffer(), cgi_ran(false) {
 	*this = x;
 }
 
@@ -344,6 +344,7 @@ request_s &request_s::operator=(const request_s &x) {
 		location = x.location;
 		body = x.body;
 		transfer_buffer = x.transfer_buffer;
+		cgi_ran = x.cgi_ran;
 		env = x.env;
 	}
 	return *this;
@@ -382,6 +383,7 @@ void request_s::clear() {
 	this->location = NULL;
 	this->body.clear();
 	this->transfer_buffer = false;
+	this->cgi_ran = false;
 	this->env.clear();
 }
 
