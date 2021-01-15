@@ -95,8 +95,12 @@ request_s RequestParser::parseHeadersOnly(const std::string &req)
 	_headers.clear();
 	_status_code = 200;
 
-	parseRequestLine();
-	parseHeaders();
+	try {
+		parseRequestLine();
+		parseHeaders();
+	} catch (std::exception& e) {
+		std::cerr << _RED _BOLD "Bad request!\n";
+	}
 	request.headers = _headers;
 	request.method = _method;
 	request.version = _version;
