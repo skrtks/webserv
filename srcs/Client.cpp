@@ -26,8 +26,8 @@ Client::Client(Server* S) : parent(S), fd(), port(), open(true), addr(), size(si
 	this->host = inet_ntoa(addr.sin_addr);
 	this->port = htons(addr.sin_port);
 	this->ipaddress = host + ':' + ft::inttostring(port);
-
-	std::cerr << _YELLOW "Opened a new client for " << fd << " at " << ipaddress << std::endl << _END;
+	if (CONNECTION_LOGS)
+		std::cerr << _YELLOW "Opened a new client for " << fd << " at " << ipaddress << std::endl << _END;
 }
 
 Client::~Client() {
@@ -93,11 +93,13 @@ void Client::checkTimeout() {
 
 void Client::reset(const std::string& connection) {
 	if (connection == "close") {
-		std::cerr << "We ain't resetting, we're closing this client, baby" << std::endl;
+		if (CONNECTION_LOGS)
+			std::cerr << "We ain't resetting, we're closing this client, baby" << std::endl;
 		this->open = false;
 		return;
 	}
-	std::cerr << "Resetting client!\n";
+	if (CONNECTION_LOGS)
+		std::cerr << "Resetting client!\n";
 	this->open = true;
 	req.clear();
 	lastRequest = 0;

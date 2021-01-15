@@ -102,7 +102,7 @@ void Connection::startListening() {
 				}
 				c->checkTimeout();
 				if (!c->open) {
-					std::cerr << c->fd << " at " << c->ipaddress << " is closing\n";
+//					std::cerr << c->fd << " at " << c->ipaddress << " is closing\n";
 					FD_CLR(c->fd, &_readFdsBak);
 					FD_CLR(c->fd, &_writeFdsBak);
 					this->_allConnections.erase(c->fd);

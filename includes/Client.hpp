@@ -10,6 +10,9 @@
 #include	"RequestParser.hpp"
 #include	"Colours.hpp"
 
+# ifndef CONNECTION_LOGS
+#  define CONNECTION_LOGS 0
+# endif
 #define	BUFLEN 8192
 
 class Server;
