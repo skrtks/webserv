@@ -17,7 +17,6 @@
 #include <ctime>
 #include <cerrno>
 #include <sys/stat.h>
-#include <sstream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -197,7 +196,7 @@ void ResponseHandler::handleAutoIndex(request_s& request) {
 		request.uri += "/";
 	s = request.uri;
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
-    	perror("getcwd() error");
+    	throw std::runtime_error("getcwd() error");
 	else {
 		path += cwd;
 		path += "/";
@@ -473,7 +472,6 @@ void ResponseHandler::handleCONTENT_LANGUAGE() {
 }
 
 void ResponseHandler::handleCONTENT_LENGTH() {
-	std::stringstream	ss;
 	std::string			str;
 
 	_header_vals[CONTENT_LENGTH] = ft::inttostring(_body.length());
