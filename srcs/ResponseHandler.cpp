@@ -134,7 +134,7 @@ int ResponseHandler::generatePage(request_s& request) {
 	else if (request.method == POST) {
 		fd = handlePost(request, filepath, validfile);
 	} else {
-		fd = request.server->getpage(request.uri, _header_vals);
+		fd = request.server->getpage(request.uri, _header_vals, this->_autoindex);
 		if (fd == -1)
 			request.status_code = 404;
 	}
@@ -373,6 +373,14 @@ int ResponseHandler::handlePost(request_s &request, std::string& filepath, bool 
 
 void ResponseHandler::generateResponse(request_s& request) {
 	try {
+		if (request.server->getautoindex() == "on") {
+			this->_autoindex = true;
+			this->_autoindex_root.push_back("global");
+		}
+		else if (request.location->getautoindex() == "on") {
+			this->_autoindex = true;
+			this->_autoindex_root.push_back(request.location->getroot());
+		}
 		if (!request.location->checkifMethodAllowed(request.method)) {
 			request.status_code = 405;
 			throw std::runtime_error("Method not allowed.");

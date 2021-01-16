@@ -6,7 +6,7 @@
 /*   By: pde-bakk <pde-bakk@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2020/10/07 12:57:25 by pde-bakk      #+#    #+#                 */
-/*   Updated: 2021/01/15 11:41:16 by tuperera      ########   odam.nl         */
+/*   Updated: 2021/01/16 16:49:26 by tuperera      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -205,7 +205,7 @@ std::string	Server::getfilepath(const std::string& uri) const {
 }
 
 
-int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals) const {
+int Server::getpage(const std::string &uri, std::map<headerType, std::string>& headervals, bool autoindex) const {
 	struct stat statstruct = {};
 	int fd = -1;
 	Location*	loca = this->matchlocation(uri);
@@ -215,14 +215,15 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 		if (S_ISDIR(statstruct.st_mode)) {
 			if (filepath[filepath.length() - 1] != '/')
 				filepath += '/';
-			if (loca->getautoindex() == "on")
-				return (-3);
 			filepath += loca->getindex();
+			std::cout << filepath << std::endl;
 			if (!filepath.empty())
 				fd = open(filepath.c_str(), O_RDONLY);
+			if (autoindex == true && fd < 0)
+				return (-3);
 		} else if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
-	} else if (loca->getautoindex() == "on" && uri[uri.length() - 1] == '/')
+	} else if (autoindex == true && uri[uri.length() - 1] == '/')
 		return (-3);
  	headervals[CONTENT_LOCATION] = filepath;
 	return (fd);
