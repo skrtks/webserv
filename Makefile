@@ -21,7 +21,7 @@ CXXFLAGS = -W -Wall -Werror -Wextra -pedantic -std=c++98
 ifneq ($(filter 1, $(DEBUG) $(ASAN)),)
  CXXFLAGS += -g
  ifdef ASAN
-  CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+  CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer -O0
  endif
 else
  CXXFLAGS += -Ofast

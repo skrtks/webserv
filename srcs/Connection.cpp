@@ -74,7 +74,7 @@ void Connection::startListening() {
 			Server*	s = *it;
 			if (FD_ISSET(s->getSocketFd(), &_readFds)) {
 				int clientfd = s->addConnection();
-				this->_allConnections.insert(clientfd);
+				this->_allConnections.push_back(clientfd);
 				FD_SET(clientfd, &_readFdsBak);
 			}
 			std::vector<Client*>::iterator itc = s->_connections.begin();
@@ -108,7 +108,7 @@ void Connection::startListening() {
 				if (!c->open) {
 					FD_CLR(c->fd, &_readFdsBak);
 					FD_CLR(c->fd, &_writeFdsBak);
-					this->_allConnections.erase(c->fd);
+					this->_allConnections.remove(c->fd);
 					delete *itc;
 					s->_connections.erase(itc);
 					if (s->_connections.empty())
@@ -169,7 +169,7 @@ void Connection::loadConfiguration() {
 		std::cout << *(*it);
 		(*it)->startListening();
 		FD_SET((*it)->getSocketFd(), &_readFdsBak);
-		this->_allConnections.insert((*it)->getSocketFd());
+		this->_allConnections.push_back((*it)->getSocketFd());
 	}
 }
 
