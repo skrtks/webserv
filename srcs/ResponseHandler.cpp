@@ -15,14 +15,10 @@
 #include "libftGnl.hpp"
 #include "Base64.hpp"
 #include <ctime>
-#include <cerrno>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include "Base64.hpp"
 #include "Colours.hpp"
 
 std::string getCurrentDatetime() {
@@ -164,7 +160,7 @@ void ResponseHandler::handle404(request_s& request) {
 	int 	fd = open(request.server->geterrorpage().c_str(), O_RDONLY);
 	int		ret = 1024;
 	char	buf[1025];
-	_status_code = 404;
+	request.status_code = 404;
 	if (fd == -1) {
 		_body += "Sorry, something went wrong in handling the error. whoops.\n";
 		return;
