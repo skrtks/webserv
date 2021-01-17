@@ -213,17 +213,21 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 
 	if (stat(filepath.c_str(), &statstruct) != -1) {
 		if (S_ISDIR(statstruct.st_mode)) {
-			if (filepath[filepath.length() - 1] != '/')
-				filepath += '/';
-			if (loca->getautoindex() == "on")
+			if (loca->getautoindex() == "on" && uri[uri.length() - 1] == '/' && loca->_indexes.empty()) {
 				return (-3);
-			filepath += loca->getindex();
-			if (!filepath.empty())
-				fd = open(filepath.c_str(), O_RDONLY);
+			}
+			else if (loca->_indexes.empty())
+				fd = -1;
+			else {
+				if (filepath[filepath.length() - 1] != '/')
+					filepath += '/';
+				filepath += loca->getindex();
+				if (!filepath.empty())
+					fd = open(filepath.c_str(), O_RDONLY);
+			}
 		} else if (!filepath.empty())
 			fd = open(filepath.c_str(), O_RDONLY);
-	} else if (loca->getautoindex() == "on" && uri[uri.length() - 1] == '/')
-		return (-3);
+	}
  	headervals[CONTENT_LOCATION] = filepath;
 	return (fd);
 }
