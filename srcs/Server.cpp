@@ -29,12 +29,17 @@ Server::Server(int fd) : _port(80), _maxfilesize(1000000),
 }
 
 Server::~Server() {
-	close(_socketFd);
-	for (std::vector<Location*>::iterator it = _locations.begin(); it != _locations.end(); it++) {
-		delete *it;
+	for (std::vector<Client*>::iterator cli = _connections.begin(); cli != _connections.end(); cli++) {
+		delete *cli;
 	}
+	for (std::vector<Location*>::iterator loc = _locations.begin(); loc != _locations.end(); loc++) {
+		delete *loc;
+	}
+	_connections.clear();
 	_locations.clear();
 	_indexes.clear();
+	close(_socketFd);
+	_socketFd = -1;
 }
 
 Server::Server(const Server& x) : _port(), _maxfilesize(), _fd(), _socketFd(), addr() {
@@ -216,7 +221,6 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 			if (filepath[filepath.length() - 1] != '/')
 				filepath += '/';
 			filepath += loca->getindex();
-			std::cout << filepath << std::endl;
 			if (!filepath.empty())
 				fd = open(filepath.c_str(), O_RDONLY);
 			if (autoindex == true && fd < 0)
@@ -257,9 +261,8 @@ void Server::startListening() {
 			std::cerr << "Cannot bind (" << errno << " " << strerror(errno) << ")" << std::endl;
 			if (i == 5)
 				throw std::runtime_error(strerror(errno));
-		} else {
+		} else
 			break;
-		}
 	}
 	// Start listening for connections on port set in sFd, max BACKLOG waiting connections
 	if (listen(this->_socketFd, BACKLOG) == -1) {
@@ -277,14 +280,6 @@ int Server::addConnection() {
 	Client* newClient = new Client(this);
 	this->_connections.push_back(newClient);
 	return newClient->fd;
-}
-
-void Server::showclients(const fd_set& readfds, const fd_set& writefds) {
-	for (std::vector<Client*>::const_iterator it = this->_connections.begin(); it != this->_connections.end(); ++it) {
-		std::cerr << _CYAN " -- We have a client with fd " << (*it)->fd << " at " << (*it)->ipaddress << ".\n";
-		std::cerr << "It is " << (FD_ISSET((*it)->fd, &readfds) ? "" : "not") << " readable.\n";
-		std::cerr << "It is " << (FD_ISSET((*it)->fd, &writefds) ? "" : "not") << " writeable.\n";
-	}
 }
 
 void Server::addServerInfoToLocation(Location* loc) const {

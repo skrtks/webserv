@@ -74,7 +74,7 @@ void Connection::startListening() {
 			Server*	s = *it;
 			if (FD_ISSET(s->getSocketFd(), &_readFds)) {
 				int clientfd = s->addConnection();
-				this->_allConnections.insert(clientfd);
+				this->_allConnections[clientfd] = clientfd;
 				FD_SET(clientfd, &_readFdsBak);
 			}
 			std::vector<Client*>::iterator itc = s->_connections.begin();
@@ -143,23 +143,15 @@ void Connection::signalServer(int n) {
 void Connection::stopServer() {
 	// Go through existing connections and close them
 	std::vector<Server*>::iterator	sit;
-	std::vector<Client*>::iterator	cit;
 	for (sit = _servers.begin(); sit != _servers.end(); ++sit) {
-		for (cit = (*sit)->_connections.begin(); cit != (*sit)->_connections.end(); ++cit) {
-			delete *cit;
-		}
-		(*sit)->_connections.clear();
 		delete *sit;
-		sit = _servers.erase(sit);
-		if (_servers.empty())
-			break;
 	}
 	_servers.clear();
 	FD_ZERO(&_readFds);
 	FD_ZERO(&_writeFds);
 	FD_ZERO(&_readFdsBak);
 	FD_ZERO(&_writeFdsBak);
-	std::cerr << _GREEN "Server stopped gracefully.\n" << _END;
+	std::cout << _GREEN "Server stopped gracefully.\n" << _END;
 }
 
 void Connection::loadConfiguration() {
@@ -169,7 +161,7 @@ void Connection::loadConfiguration() {
 		std::cout << *(*it);
 		(*it)->startListening();
 		FD_SET((*it)->getSocketFd(), &_readFdsBak);
-		this->_allConnections.insert((*it)->getSocketFd());
+		this->_allConnections[(*it)->getSocketFd()] = (*it)->getSocketFd();
 	}
 }
 
@@ -223,5 +215,5 @@ bool Connection::checkIfEnded(const std::string& request) {
 }
 
 int Connection::getMaxFD() {
-	return (*std::max_element(this->_allConnections.begin(), this->_allConnections.end()) + 1);
+	return (*std::max_element(this->_allConnections.begin(), this->_allConnections.end())).second + 1;
 }

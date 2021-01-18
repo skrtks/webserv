@@ -58,7 +58,7 @@ std::vector<Server*>	parse(char *av) {
 		catch (std::exception& e) {
 			std::cerr << "Exception in parse try block: " << e.what() << std::endl;
 			close(fd);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 	close(fd);
