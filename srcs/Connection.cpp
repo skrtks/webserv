@@ -74,7 +74,7 @@ void Connection::startListening() {
 			Server*	s = *it;
 			if (FD_ISSET(s->getSocketFd(), &_readFds)) {
 				int clientfd = s->addConnection();
-				this->_allConnections.insert(clientfd);
+				this->_allConnections[clientfd] = clientfd;
 				FD_SET(clientfd, &_readFdsBak);
 			}
 			std::vector<Client*>::iterator itc = s->_connections.begin();
@@ -161,7 +161,7 @@ void Connection::loadConfiguration() {
 		std::cout << *(*it);
 		(*it)->startListening();
 		FD_SET((*it)->getSocketFd(), &_readFdsBak);
-		this->_allConnections.insert((*it)->getSocketFd());
+		this->_allConnections[(*it)->getSocketFd()] = (*it)->getSocketFd();
 	}
 }
 
@@ -215,5 +215,5 @@ bool Connection::checkIfEnded(const std::string& request) {
 }
 
 int Connection::getMaxFD() {
-	return (*std::max_element(this->_allConnections.begin(), this->_allConnections.end()) + 1);
+	return (*std::max_element(this->_allConnections.begin(), this->_allConnections.end())).second + 1;
 }

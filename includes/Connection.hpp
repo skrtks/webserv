@@ -13,7 +13,7 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 #include	"Server.hpp"
-#include	<set>
+#include	<map>
 
 class Connection {
 	int _socketFd;
@@ -21,7 +21,7 @@ class Connection {
 			_writeFds,
 			_readFdsBak, // temp file descriptor list for select()
 			_writeFdsBak;
-	std::set<int>	_allConnections;
+	std::map<int, int>	_allConnections;
 	std::vector<Server*> _servers;
 	char* _configPath;
 
