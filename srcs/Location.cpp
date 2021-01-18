@@ -158,8 +158,6 @@ void	Location::setup(int fd) {
 			std::cerr <<_RED _BOLD "Unable to parse key '" << key << "' in Location block " << this->getlocationmatch() << _END << std::endl;
 		(this->*(m.at(key)))(value);
 	}
-//	if (this->_indexes.empty())
-//		this->_indexes.push_back("index.html");
 }
 
 void	Location::setauth_basic_realm(const std::string &realm) {
