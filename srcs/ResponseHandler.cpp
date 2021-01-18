@@ -15,14 +15,10 @@
 #include "libftGnl.hpp"
 #include "Base64.hpp"
 #include <ctime>
-#include <cerrno>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include "Base64.hpp"
 #include "Colours.hpp"
 
 std::string getCurrentDatetime() {
@@ -36,7 +32,7 @@ std::string getCurrentDatetime() {
 	return datetime;
 }
 
-ResponseHandler::ResponseHandler() : _cgi_status_code(0) {
+ResponseHandler::ResponseHandler() : _cgi_status_code(0), _autoindex(), _status_code() {
 	_header_vals[ACCEPT_CHARSET].clear();
 	_header_vals[ACCEPT_LANGUAGE].clear();
 	_header_vals[ALLOW].clear();
@@ -93,7 +89,7 @@ ResponseHandler::~ResponseHandler() {
 	this->_body.clear();
 }
 
-ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code(0) {
+ResponseHandler::ResponseHandler(const ResponseHandler &src) : _cgi_status_code(0), _autoindex(), _status_code() {
 	*this = src;
 }
 
@@ -357,7 +353,6 @@ void ResponseHandler::handlePut(request_s& request) {
 }
 
 int ResponseHandler::handlePost(request_s &request, std::string& filepath, bool validfile) {
-	std::cerr << "handling post file, like a put request, filepath is " << filepath << ", validfile is " << validfile << std::endl;
 	request.status_code = 200;
 	if (!validfile)
 		request.status_code = 201;
