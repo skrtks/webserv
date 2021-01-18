@@ -145,14 +145,7 @@ void Connection::stopServer() {
 	std::vector<Server*>::iterator	sit;
 	std::vector<Client*>::iterator	cit;
 	for (sit = _servers.begin(); sit != _servers.end(); ++sit) {
-		for (cit = (*sit)->_connections.begin(); cit != (*sit)->_connections.end(); ++cit) {
-			delete *cit;
-		}
-		(*sit)->_connections.clear();
 		delete *sit;
-		sit = _servers.erase(sit);
-		if (_servers.empty())
-			break;
 	}
 	_servers.clear();
 	FD_ZERO(&_readFds);
