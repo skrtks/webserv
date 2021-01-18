@@ -143,7 +143,6 @@ void Connection::signalServer(int n) {
 void Connection::stopServer() {
 	// Go through existing connections and close them
 	std::vector<Server*>::iterator	sit;
-	std::vector<Client*>::iterator	cit;
 	for (sit = _servers.begin(); sit != _servers.end(); ++sit) {
 		delete *sit;
 	}
@@ -152,7 +151,7 @@ void Connection::stopServer() {
 	FD_ZERO(&_writeFds);
 	FD_ZERO(&_readFdsBak);
 	FD_ZERO(&_writeFdsBak);
-	std::cerr << _GREEN "Server stopped gracefully.\n" << _END;
+	std::cout << _GREEN "Server stopped gracefully.\n" << _END;
 }
 
 void Connection::loadConfiguration() {
