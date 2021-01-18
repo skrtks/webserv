@@ -42,7 +42,6 @@ private:	//setters
 public:
 		void		startListening();
 		int			addConnection();
-		void		showclients(const fd_set& readfds, const fd_set& writefds);
 		std::vector<Client*> _connections;
 
 		//getters

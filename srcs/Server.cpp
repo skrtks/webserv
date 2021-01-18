@@ -221,7 +221,6 @@ int Server::getpage(const std::string &uri, std::map<headerType, std::string>& h
 			if (filepath[filepath.length() - 1] != '/')
 				filepath += '/';
 			filepath += loca->getindex();
-			std::cout << filepath << std::endl;
 			if (!filepath.empty())
 				fd = open(filepath.c_str(), O_RDONLY);
 			if (autoindex == true && fd < 0)
@@ -281,14 +280,6 @@ int Server::addConnection() {
 	Client* newClient = new Client(this);
 	this->_connections.push_back(newClient);
 	return newClient->fd;
-}
-
-void Server::showclients(const fd_set& readfds, const fd_set& writefds) {
-	for (std::vector<Client*>::const_iterator it = this->_connections.begin(); it != this->_connections.end(); ++it) {
-		std::cerr << _CYAN " -- We have a client with fd " << (*it)->fd << " at " << (*it)->ipaddress << ".\n";
-		std::cerr << "It is " << (FD_ISSET((*it)->fd, &readfds) ? "" : "not") << " readable.\n";
-		std::cerr << "It is " << (FD_ISSET((*it)->fd, &writefds) ? "" : "not") << " writeable.\n";
-	}
 }
 
 void Server::addServerInfoToLocation(Location* loc) const {
