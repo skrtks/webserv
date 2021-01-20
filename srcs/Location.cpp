@@ -183,6 +183,8 @@ void	Location::sethtpasswdpath(const std::string &path) {
 		get_key_value(line, user, pass, ":");
 		this->_loginfo[user] = pass;
 	}
+	if (close(htpasswd_fd) == -1)
+		throw std::runtime_error("Failed to close .htpasswd file");
 }
 
 std::string	Location::gethtpasswdpath() const {
