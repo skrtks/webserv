@@ -452,7 +452,6 @@ void	ResponseHandler::handleStatusCode(request_s& request) {
 
 void ResponseHandler::handleALLOW(request_s& request) {
 	_header_vals[ALLOW] = request.location->getallowedmethods();
-	_response += "Allow: ";
 	_response += _header_vals[ALLOW];
 	_response += "\r\n";
 }
